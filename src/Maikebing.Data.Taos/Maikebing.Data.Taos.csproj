@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Maikebing.Data.Taos</AssemblyName>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
+    <PackageId>Maikebing.Data.Taos</PackageId>
+    <Description>Taos implementation of the System.Data.Common provider model.
+
+Commonly Used Types:
+Maikebing.Data.Taos.TaosCommand
+Maikebing.Data.Taos.TaosConnection
+Maikebing.Data.Taos.TaosConnectionStringBuilder
+Maikebing.Data.Taos.TaosDataReader
+Maikebing.Data.Taos.TaosException
+Maikebing.Data.Taos.TaosFactory
+Maikebing.Data.Taos.TaosParameter
+Maikebing.Data.Taos.TaosTransaction</Description>
+    <TargetFramework>netstandard2.0</TargetFramework>
+ 
+    <PackageTags>Taos;Data;ADO.NET</PackageTags>
+  </PropertyGroup>
+ 
+
+  <ItemGroup>
+    <Compile Update="SqliteCommand.cs">
+      <SubType>Component</SubType>
+    </Compile>
+  
+    <Compile Update="SqliteConnection.cs">
+      <SubType>Component</SubType>
+    </Compile>
+  </ItemGroup>
+ 
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+ 
+
+</Project>

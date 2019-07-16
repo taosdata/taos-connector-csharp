@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+ 
+    <Description>TaosData database provider for Entity Framework Core.</Description>
+    <TargetFramework>netstandard2.0</TargetFramework>
+ 
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.Data.Sqlite.Core\Maikebing.Data.Taos.csproj" />
+  </ItemGroup>
+
+ 
+ 
+ 
+</Project>
