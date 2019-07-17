@@ -148,8 +148,11 @@ namespace Maikebing.Data.Taos
             }
 
             client = new RestSharp.RestClient(new Uri(DataSource));
-            //client.ExecuteAsGet
             SetState(ConnectionState.Open);
+
+ 
+        
+    
         }
 
         /// <summary>

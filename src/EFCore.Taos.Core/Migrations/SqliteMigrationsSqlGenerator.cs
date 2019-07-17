@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore.Taos.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Taos.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
+using Maikebing.Data.Taos;
 
 namespace Microsoft.EntityFrameworkCore.Migrations
 {
@@ -25,7 +26,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
     public class TaosMigrationsSqlGenerator : MigrationsSqlGenerator
     {
         private readonly IMigrationsAnnotationProvider _migrationsAnnotations;
-
+        private readonly TaosConnectionStringBuilder _taosConnectionStringBuilder;
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -34,9 +35,13 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="migrationsAnnotations"> Provider-specific Migrations annotations to use. </param>
         public TaosMigrationsSqlGenerator(
             [NotNull] MigrationsSqlGeneratorDependencies dependencies,
+            TaosConnectionStringBuilder taosConnectionStringBuilder,
             [NotNull] IMigrationsAnnotationProvider migrationsAnnotations)
             : base(dependencies)
-            => _migrationsAnnotations = migrationsAnnotations;
+        {
+            _taosConnectionStringBuilder = taosConnectionStringBuilder;
+            _migrationsAnnotations = migrationsAnnotations;
+        }
 
         /// <summary>
         ///     Generates commands from a list of operations.
@@ -66,6 +71,8 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             IModel model)
         {
             var operations = new List<MigrationOperation>();
+
+            
             foreach (var operation in migrationOperations)
             {
                 if (operation is AddForeignKeyOperation foreignKeyOperation)
@@ -73,7 +80,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                     var table = migrationOperations
                         .OfType<CreateTableOperation>()
                         .FirstOrDefault(o => o.Name == foreignKeyOperation.Table);
-
+                    table.Schema = _taosConnectionStringBuilder.DataBase;
                     if (table != null)
                     {
                         table.ForeignKeys.Add(foreignKeyOperation);
@@ -86,6 +93,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 else if (operation is CreateTableOperation createTableOperation)
                 {
                     var spatialiteColumns = new Stack<AddColumnOperation>();
+                    createTableOperation.Schema = _taosConnectionStringBuilder.DataBase;
                     for (var i = createTableOperation.Columns.Count - 1; i >= 0; i--)
                     {
                         var addColumnOperation = createTableOperation.Columns[i];
@@ -319,7 +327,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         {
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
-
+          
             // Lifts a primary key definition into the typename.
             // This handles the quirks of creating integer primary keys using autoincrement, not default rowid behavior.
             if (operation.PrimaryKey?.Columns.Length == 1)
@@ -336,10 +344,74 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                     operation.PrimaryKey = null;
                 }
             }
-
-            base.Generate(operation, model, builder);
+            Generate(operation, model, builder, true);
         }
+        
 
+        /// <summary>
+        ///     Builds commands for the given <see cref="CreateTableOperation" /> by making calls on the given
+        ///     <see cref="MigrationCommandListBuilder" />.
+        /// </summary>
+        /// <param name="operation"> The operation. </param>
+        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
+        /// <param name="builder"> The command builder to use to build the commands. </param>
+        /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
+        protected  override void Generate(
+            [NotNull] CreateTableOperation operation,
+            [CanBeNull] IModel model,
+            [NotNull] MigrationCommandListBuilder builder,
+            bool terminate)
+        {
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
+
+            builder
+                .Append("CREATE TABLE ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+                .AppendLine(" (");
+
+            using (builder.Indent())
+            {
+                for (var i = 0; i < operation.Columns.Count; i++)
+                {
+                    var column = operation.Columns[i];
+                    ColumnDefinition(column, model, builder);
+
+                    if (i != operation.Columns.Count - 1)
+                    {
+                        builder.AppendLine(",");
+                    }
+                }
+
+                if (operation.PrimaryKey != null)
+                {
+                    builder.AppendLine(",");
+                    PrimaryKeyConstraint(operation.PrimaryKey, model, builder);
+                }
+
+                foreach (var uniqueConstraint in operation.UniqueConstraints)
+                {
+                    builder.AppendLine(",");
+                    UniqueConstraint(uniqueConstraint, model, builder);
+                }
+
+                foreach (var foreignKey in operation.ForeignKeys)
+                {
+                    builder.AppendLine(",");
+                    ForeignKeyConstraint(foreignKey, model, builder);
+                }
+
+                builder.AppendLine();
+            }
+
+            builder.Append(")");
+
+            if (terminate)
+            {
+                builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+                EndStatement(builder);
+            }
+        }
         /// <summary>
         ///     Generates a SQL fragment for a column definition in an <see cref="AddColumnOperation" />.
         /// </summary>
@@ -364,76 +436,38 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 operation,
                 model,
                 builder);
-
-        /// <summary>
-        ///     Generates a SQL fragment for a column definition for the given column metadata.
-        /// </summary>
-        /// <param name="schema"> The schema that contains the table, or <c>null</c> to use the default schema. </param>
-        /// <param name="table"> The table that contains the column. </param>
-        /// <param name="name"> The column name. </param>
-        /// <param name="clrType"> The CLR <see cref="Type" /> that the column is mapped to. </param>
-        /// <param name="type"> The database/store type for the column, or <c>null</c> if none has been specified. </param>
-        /// <param name="unicode">
-        ///     Indicates whether or not the column can contain Unicode data, or <c>null</c> if this is not applicable or not specified.
-        /// </param>
-        /// <param name="maxLength">
-        ///     The maximum amount of data that the column can contain, or <c>null</c> if this is not applicable or not specified.
-        /// </param>
-        /// <param name="fixedLength"> Indicates whether or not the column is constrained to fixed-length data. </param>
-        /// <param name="rowVersion">
-        ///     Indicates whether or not this column is an automatic concurrency token, such as a SQL Server timestamp/rowversion.
-        /// </param>
-        /// <param name="nullable"> Indicates whether or not the column can store <c>NULL</c> values. </param>
-        /// <param name="defaultValue"> The default value for the column. </param>
-        /// <param name="defaultValueSql"> The SQL expression to use for the column's default constraint. </param>
-        /// <param name="computedColumnSql"> The SQL expression to use to compute the column value. </param>
-        /// <param name="annotatable"> The <see cref="MigrationOperation" /> to use to find any custom annotations. </param>
-        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
-        /// <param name="builder"> The command builder to use to add the SQL fragment. </param>
-        protected override void ColumnDefinition(
-            string schema,
-            string table,
-            string name,
-            Type clrType,
-            string type,
-            bool? unicode,
-            int? maxLength,
-            bool? fixedLength,
-            bool rowVersion,
-            bool nullable,
-            object defaultValue,
-            string defaultValueSql,
-            string computedColumnSql,
-            IAnnotatable annotatable,
-            IModel model,
-            MigrationCommandListBuilder builder)
+        protected override  void ColumnDefinition(
+         [CanBeNull] string schema,
+         [NotNull] string table,
+         [NotNull] string name,
+         [NotNull] Type clrType,
+         [CanBeNull] string type,
+         bool? unicode,
+         int? maxLength,
+         bool? fixedLength,
+         bool rowVersion,
+         bool nullable,
+         [CanBeNull] object defaultValue,
+         [CanBeNull] string defaultValueSql,
+         [CanBeNull] string computedColumnSql,
+         [NotNull] IAnnotatable annotatable,
+         [CanBeNull] IModel model,
+         [NotNull] MigrationCommandListBuilder builder)
         {
-            base.ColumnDefinition(
-                schema, table, name, clrType, type, unicode, maxLength, fixedLength, rowVersion, nullable,
-                defaultValue, defaultValueSql, computedColumnSql, annotatable, model, builder);
+            Check.NotEmpty(name, nameof(name));
+            Check.NotNull(clrType, nameof(clrType));
+            Check.NotNull(annotatable, nameof(annotatable));
+            Check.NotNull(builder, nameof(builder));
 
-            var inlinePk = annotatable[TaosAnnotationNames.InlinePrimaryKey] as bool?;
-            if (inlinePk == true)
-            {
-                var inlinePkName = annotatable[
-                    TaosAnnotationNames.InlinePrimaryKeyName] as string;
-                if (!string.IsNullOrEmpty(inlinePkName))
-                {
-                    builder
-                        .Append(" CONSTRAINT ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(inlinePkName));
-                }
+            builder
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
+                .Append(" ")
+                .Append(type ?? GetColumnType(schema, table, name, clrType, unicode, maxLength, fixedLength, rowVersion, model));
 
-                builder.Append(" PRIMARY KEY");
-                var autoincrement = annotatable[TaosAnnotationNames.Autoincrement] as bool?
-                                    // NB: Migrations scaffolded with version 1.0.0 don't have the prefix. See #6461
-                                    ?? annotatable[TaosAnnotationNames.LegacyAutoincrement] as bool?;
-                if (autoincrement == true)
-                {
-                    builder.Append(" AUTOINCREMENT");
-                }
-            }
+
+            DefaultValue(defaultValue, defaultValueSql, builder);
         }
+       
 
         #region Invalid migration operations
 

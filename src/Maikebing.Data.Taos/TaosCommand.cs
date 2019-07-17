@@ -313,7 +313,7 @@ namespace Maikebing.Data.Taos
 
                 var request = new RestRequest(Method.POST);
                 request.AddHeader("User-Agent", "Maikebing.Data.Taos/0.0.1");
-                request.AddHeader("Authorization", "Basic cm9vdDp0YW9zZGF0YQ==");
+                request.AddHeader("Authorization", $"Basic {Connection.Token}");
                 request.AddHeader("Content-Type", "text/plain");
                 request.AddParameter("undefined",  _commandText, "application/json", ParameterType.RequestBody);
                 IRestResponse response = client.Execute(request);

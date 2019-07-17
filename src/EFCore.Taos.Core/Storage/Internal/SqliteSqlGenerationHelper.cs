@@ -27,7 +27,7 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public override string DelimitIdentifier(string name, string schema)
-            => base.DelimitIdentifier(name);
+            => $"{base.DelimitIdentifier(schema)}.{base.DelimitIdentifier(name)}";
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used

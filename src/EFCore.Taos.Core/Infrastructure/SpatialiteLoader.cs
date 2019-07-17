@@ -77,13 +77,13 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
         {
             Check.NotNull(connection, nameof(connection));
 
-            var extension = FindExtension();
+         //   var extension = FindExtension();
 
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = "SELECT load_extension('" + extension + "');";
-                command.ExecuteNonQuery();
-            }
+            //using (var command = connection.CreateCommand())
+            //{
+            //    command.CommandText = "SELECT load_extension('" + extension + "');";
+            //    command.ExecuteNonQuery();
+            //}
         }
 
         private static string FindExtension()

@@ -1,7 +1,9 @@
 ﻿using Maikebing.Data.Taos;
+using Microsoft.EntityFrameworkCore;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TaosADODemo
 {
@@ -46,9 +48,23 @@ namespace TaosADODemo
 
                 Console.WriteLine("DROP DATABASE {0} {1}", database, connection.CreateCommand($"DROP DATABASE   {database}").ExecuteNonQuery());
 
-                Console.ReadKey();
+              
                 connection.Close();
             }
+
+            using (var context = new TaosContext())
+            {
+                context.Database.EnsureCreated();
+                context.sensor.Add(new sensor() { ts = DateTime.Now, degree = 1.222, pm25 = 222 });
+                context.SaveChanges();
+                context.sensor.Load();
+                foreach (var x in    context.sensor.ToArray())
+                {
+                    Console.WriteLine($"{ x.ts } { x.degree }  {x.pm25}");
+                    Console.WriteLine();
+                }
+            }
+            Console.ReadKey();
         }
     }
 }

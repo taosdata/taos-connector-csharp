@@ -23,6 +23,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Update;
 using Microsoft.EntityFrameworkCore.Update.Internal;
 using Microsoft.EntityFrameworkCore.Utilities;
+using Maikebing.Data.Taos;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
@@ -63,10 +64,10 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>
         ///     The same service collection so that multiple calls can be chained.
         /// </returns>
-        public static IServiceCollection AddEntityFrameworkTaos([NotNull] this IServiceCollection serviceCollection)
+        public static IServiceCollection AddEntityFrameworkTaos([NotNull] this IServiceCollection serviceCollection,string connectionString)
         {
+             
             Check.NotNull(serviceCollection, nameof(serviceCollection));
-
             var builder = new EntityFrameworkRelationalServicesBuilder(serviceCollection)
                 .TryAdd<IDatabaseProvider, DatabaseProvider<TaosOptionsExtension>>()
                 .TryAdd<IRelationalTypeMappingSource, TaosTypeMappingSource>()
@@ -86,6 +87,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .TryAdd<IQuerySqlGeneratorFactory, TaosQuerySqlGeneratorFactory>()
                 .TryAdd<ISqlTranslatingExpressionVisitorFactory, TaosSqlTranslatingExpressionVisitorFactory>()
                 .TryAdd<IRelationalResultOperatorHandler, TaosResultOperatorHandler>()
+                .TryAddProviderSpecificServices(b=>b.TryAddSingleton( ( new TaosConnectionStringBuilder(connectionString))))
                 .TryAddProviderSpecificServices(
                     b => b.TryAddScoped<ITaosRelationalConnection, TaosRelationalConnection>());
 

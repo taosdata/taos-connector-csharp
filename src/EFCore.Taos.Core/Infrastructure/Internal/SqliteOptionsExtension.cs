@@ -93,8 +93,7 @@ namespace Microsoft.EntityFrameworkCore.Taos.Infrastructure.Internal
         public override bool ApplyServices(IServiceCollection services)
         {
             Check.NotNull(services, nameof(services));
-
-            services.AddEntityFrameworkTaos();
+            services.AddEntityFrameworkTaos(this.ConnectionString);
 
             return true;
         }

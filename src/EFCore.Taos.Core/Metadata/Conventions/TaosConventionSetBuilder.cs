@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using JetBrains.Annotations;
+using Maikebing.EntityFrameworkCore.Taos.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Internal;
+using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
@@ -21,15 +23,22 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
             : base(dependencies)
         {
         }
+        public override ConventionSet AddConventions(ConventionSet conventionSet)
+        {
+            Check.NotNull(conventionSet, nameof(conventionSet));
+            base.AddConventions(conventionSet);
+            ReplaceConvention(conventionSet.ModelAnnotationChangedConventions, (RelationalDbFunctionConvention)new  TaosDbFunctionConvention());
 
-        /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public static ConventionSet Build()
+            return conventionSet;
+        }
+            /// <summary>
+            ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
+            ///     directly from your code. This API may change or be removed in future releases.
+            /// </summary>
+            public static ConventionSet Build()
         {
             var serviceProvider = new ServiceCollection()
-                .AddEntityFrameworkTaos()
+                .AddEntityFrameworkTaos("")
                 .AddDbContext<DbContext>(o => o.UseTaos("Filename=_.db"))
                 .BuildServiceProvider();
 

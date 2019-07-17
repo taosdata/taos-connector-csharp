@@ -1,7 +1,9 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using JetBrains.Annotations;
 using Maikebing.Data.Taos;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -41,9 +43,14 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         public override void Create()
         {
             Dependencies.Connection.Open();
+
+            _rawSqlCommandBuilder
+                .Build($"create database {Dependencies.Connection.DbConnection.Database};")
+                .ExecuteNonQuery(Dependencies.Connection);
+
             Dependencies.Connection.Close();
         }
-
+        List<_SHOWDATABASES> _SHOWDATABASEs;
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -54,7 +61,14 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
             {
                 try
                 {
+
                     readOnlyConnection.Open(errorsExpected: true);
+                    _SHOWDATABASEs = _rawSqlCommandBuilder
+                                 .Build($"SHOW DATABASES;")
+                                 .ExecuteReader(Dependencies.Connection)
+                                 .DbDataReader
+                                 .ToObject<_SHOWDATABASES>();
+                    return _SHOWDATABASEs!=null &&  _SHOWDATABASEs.Any(m => m.name == _connection.DbConnection.Database);
                 }
                 catch (TaosException ex) when (ex.TaosErrorCode == Taos_CANTOPEN)
                 {
@@ -71,11 +85,10 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         /// </summary>
         protected override bool HasTables()
         {
-            var count = (long)_rawSqlCommandBuilder
-                .Build("SELECT COUNT(*) FROM \"Taos_master\" WHERE \"type\" = 'table' AND \"rootpage\" IS NOT NULL;")
-                .ExecuteScalar(Dependencies.Connection);
-
-            return count != 0;
+            var count = _SHOWDATABASEs?
+                .Find(db=> db.name==_connection.DbConnection.Database)
+                ?.ntables;
+            return count.HasValue && count != 0;
         }
 
         /// <summary>
@@ -84,12 +97,13 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         /// </summary>
         public override void Delete()
         {
-            string path = null;
-
             Dependencies.Connection.Open();
             try
             {
-                path = Dependencies.Connection.DbConnection.DataSource;
+                _rawSqlCommandBuilder
+                          .Build($"DROP DATABASE    {Dependencies.Connection.DbConnection.Database};")
+                          .ExecuteNonQuery(Dependencies.Connection);
+
             }
             catch
             {
@@ -98,11 +112,6 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
             finally
             {
                 Dependencies.Connection.Close();
-            }
-
-            if (!string.IsNullOrEmpty(path))
-            {
-                File.Delete(path);
             }
         }
     }

@@ -65,8 +65,8 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         {
             if (base.Open(errorsExpected))
             {
-                LoadSpatialite();
-                EnableForeignKeys();
+              //  LoadSpatialite();
+                //EnableForeignKeys();
                 return true;
             }
 
@@ -81,8 +81,8 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         {
             if (await base.OpenAsync(cancellationToken, errorsExpected))
             {
-                LoadSpatialite();
-                EnableForeignKeys();
+              //  LoadSpatialite();
+                //EnableForeignKeys();
                 return true;
             }
 
