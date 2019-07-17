@@ -25,7 +25,7 @@ Maikebing.Data.Taos.TaosTransaction</Description>
  
     <PackageProjectUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</PackageProjectUrl>
  
-    <PackageIconUrl></PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/maikebing/Maikebing.EntityFrameworkCore.Taos/master/docs/48876650.jfif</PackageIconUrl>
  
     <RepositoryUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</RepositoryUrl>
  
@@ -37,6 +37,8 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
  
     <Copyright>Copyright Maikebing</Copyright>
+ 
+    <Version>1.0.1</Version>
   </PropertyGroup>
  
 
