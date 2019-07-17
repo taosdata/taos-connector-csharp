@@ -16,7 +16,9 @@ namespace TaosADODemo
             {
                 DataSource = "http://td.gitclub.cn/rest/sql",
                 DataBase = database,
-                Token = "cm9vdDp0YW9zZGF0YQ=="
+               // Token = "cm9vdDp0YW9zZGF0YQ=="
+                Username="root",
+                 Password= "taosdata"
             };
             using (var connection = new TaosConnection(builder.ConnectionString))
             {

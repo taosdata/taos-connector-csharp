@@ -25,12 +25,14 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于Ma
 ```C#
 
 string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
-var builder = new TaosConnectionStringBuilder()
-{
-    DataSource = "http://td.gitclub.cn/rest/sql",
-    DataBase = database,
-    Token = "cm9vdDp0YW9zZGF0YQ=="
-};
+ var builder = new TaosConnectionStringBuilder()
+    {
+        DataSource = "http://td.gitclub.cn/rest/sql",
+        DataBase = database,
+        // Token = "cm9vdDp0YW9zZGF0YQ=="
+        Username="root",
+        Password= "taosdata"
+    };
 using (var connection = new TaosConnection(builder.ConnectionString))
 {
     connection.Open();

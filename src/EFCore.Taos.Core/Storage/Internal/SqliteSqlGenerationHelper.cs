@@ -27,13 +27,22 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public override string DelimitIdentifier(string name, string schema)
-            => $"{base.DelimitIdentifier(schema)}.{base.DelimitIdentifier(name)}";
+            => string.IsNullOrEmpty(schema)?name:$"{schema}.{name}";
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public override void DelimitIdentifier(StringBuilder builder, string name, string schema)
-            => builder.AppendFormat("{0}.{1}",schema, name);
+        {
+            if (string.IsNullOrEmpty(schema))
+            {
+                builder.Append(name);
+            }
+            else
+            {
+                builder.AppendFormat("{0}.{1}", schema, name);
+            }
+        }
     }
 }

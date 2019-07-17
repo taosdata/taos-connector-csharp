@@ -325,7 +325,6 @@ namespace Maikebing.Data.Taos
                 {
                     var tr= Newtonsoft.Json.JsonConvert.DeserializeObject<TaosResult>(response.Content);
                     dataReader = new TaosDataReader(this, tr, closeConnection);
-                   
                 }
                 else
                 {

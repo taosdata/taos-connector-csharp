@@ -19,39 +19,41 @@ namespace Maikebing.Data.Taos
     public class TaosConnectionStringBuilder : DbConnectionStringBuilder
     {
         private const string DataSourceKeyword = "Data Source";
+        private const string UserNameKeyword = "Username";
+        private const string PasswordKeyword = "Password";
         private const string DataSourceNoSpaceKeyword = "DataSource";
-        private const string TokenKeyword = "Token";
         private const string DataBaseKeyword = "DataBase";
 
         private enum Keywords
         {
             DataSource,
-            Token,
-            DataBase
-
+            DataBase,
+            Username,
+            Password
         }
 
         private static readonly IReadOnlyList<string> _validKeywords;
         private static readonly IReadOnlyDictionary<string, Keywords> _keywords;
 
         private string _dataSource = string.Empty;
-        private string _token = string.Empty;
         private string _dataBase=string.Empty;
-
+        private string _userName = string.Empty;
+        private string _password = string.Empty;
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[3];
+            var validKeywords = new string[4];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
-            validKeywords[(int)Keywords.Token] = TokenKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
+            validKeywords[(int)Keywords.Username] = UserNameKeyword;
+            validKeywords[(int)Keywords.Password] = PasswordKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(3, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(5, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
-                [TokenKeyword] = Keywords.Token,
+                [UserNameKeyword] = Keywords.Username,
+                [PasswordKeyword] = Keywords.Password,
                 [DataBaseKeyword] = Keywords.DataBase,
-                // aliases
                 [DataSourceNoSpaceKeyword] = Keywords.DataSource
             };
         }
@@ -81,8 +83,18 @@ namespace Maikebing.Data.Taos
             get => _dataSource;
             set => base[DataSourceKeyword] = _dataSource = value;
         }
+        public virtual string Username
+        {
+            get => _userName;
+            set => base[UserNameKeyword] = _userName = value;
+        }
+        public virtual string Password
+        {
+            get => _password;
+            set => base[PasswordKeyword] = _password = value;
+        }
+       
 
- 
 
         /// <summary>
         ///     Gets a collection containing the keys used by the connection string.
@@ -113,8 +125,8 @@ namespace Maikebing.Data.Taos
 
         public virtual string Token
     {
-            get => _token;
-            set => base[TokenKeyword] = _token = value;
+            get => Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{Username}:{Password}"));
+      
         }
         public virtual string DataBase
         {
@@ -145,8 +157,11 @@ namespace Maikebing.Data.Taos
                     case Keywords.DataSource:
                         DataSource = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
-                    case Keywords.Token:
-                        Token= Convert.ToString(value, CultureInfo.InvariantCulture);
+                    case Keywords.Username:
+                        Username= Convert.ToString(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.Password:
+                        Password = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
                     case Keywords.DataBase:
                         DataBase = Convert.ToString(value, CultureInfo.InvariantCulture);
@@ -263,9 +278,10 @@ namespace Maikebing.Data.Taos
             {
                 case Keywords.DataSource:
                     return DataSource;
-
-                case Keywords.Token:
-                    return Token;
+                case Keywords.Password:
+                    return Password;
+                case Keywords.Username:
+                    return Username;
                 case Keywords.DataBase:
                     return DataBase;
                 default:
@@ -286,8 +302,11 @@ namespace Maikebing.Data.Taos
                 case Keywords.DataSource:
                     _dataSource = string.Empty;
                     return;
-                case Keywords.Token:
-                    _token = string.Empty;
+                case Keywords.Password:
+                    _password = string.Empty;
+                    return;
+                case Keywords.Username:
+                    _userName = string.Empty;
                     return;
                 case Keywords.DataBase:
                     _dataBase = string.Empty;
