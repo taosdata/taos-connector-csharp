@@ -9,7 +9,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
-using Maikebing.Data.Taos.Properties;
 
 namespace Maikebing.Data.Taos
 {
@@ -21,40 +20,38 @@ namespace Maikebing.Data.Taos
     {
         private const string DataSourceKeyword = "Data Source";
         private const string DataSourceNoSpaceKeyword = "DataSource";
-        private const string ModeKeyword = "Mode";
-        private const string CacheKeyword = "Cache";
-        private const string FilenameKeyword = "Filename";
+        private const string TokenKeyword = "Token";
+        private const string DataBaseKeyword = "DataBase";
 
         private enum Keywords
         {
             DataSource,
-            Mode,
-            Cache
+            Token,
+            DataBase
+
         }
 
         private static readonly IReadOnlyList<string> _validKeywords;
         private static readonly IReadOnlyDictionary<string, Keywords> _keywords;
 
         private string _dataSource = string.Empty;
-        private TaosOpenMode _mode = TaosOpenMode.ReadWriteCreate;
-        private TaosCacheMode _cache = TaosCacheMode.Default;
+        private string _token = string.Empty;
+        private string _dataBase=string.Empty;
 
         static TaosConnectionStringBuilder()
         {
             var validKeywords = new string[3];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
-            validKeywords[(int)Keywords.Mode] = ModeKeyword;
-            validKeywords[(int)Keywords.Cache] = CacheKeyword;
+            validKeywords[(int)Keywords.Token] = TokenKeyword;
+            validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             _validKeywords = validKeywords;
 
             _keywords = new Dictionary<string, Keywords>(3, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
-                [ModeKeyword] = Keywords.Mode,
-                [CacheKeyword] = Keywords.Cache,
-
+                [TokenKeyword] = Keywords.Token,
+                [DataBaseKeyword] = Keywords.DataBase,
                 // aliases
-                [FilenameKeyword] = Keywords.DataSource,
                 [DataSourceNoSpaceKeyword] = Keywords.DataSource
             };
         }
@@ -85,15 +82,7 @@ namespace Maikebing.Data.Taos
             set => base[DataSourceKeyword] = _dataSource = value;
         }
 
-        /// <summary>
-        ///     Gets or sets the connection mode.
-        /// </summary>
-        /// <value>The connection mode.</value>
-        public virtual TaosOpenMode Mode
-        {
-            get => _mode;
-            set => base[ModeKeyword] = _mode = value;
-        }
+ 
 
         /// <summary>
         ///     Gets a collection containing the keys used by the connection string.
@@ -120,16 +109,19 @@ namespace Maikebing.Data.Taos
             }
         }
 
-        /// <summary>
-        ///     Gets or sets the caching mode used by the connection.
-        /// </summary>
-        /// <value>The caching mode used by the connection.</value>
-        /// <seealso href="http://Taos.org/sharedcache.html">Taos Shared-Cache Mode</seealso>
-        public virtual TaosCacheMode Cache
-        {
-            get => _cache;
-            set => base[CacheKeyword] = _cache = value;
+     
+
+        public virtual string Token
+    {
+            get => _token;
+            set => base[TokenKeyword] = _token = value;
         }
+        public virtual string DataBase
+        {
+            get => _dataBase;
+            set => base[DataBaseKeyword] = _dataBase = value;
+        }
+
 
         /// <summary>
         ///     Gets or sets the value associated with the specified key.
@@ -153,15 +145,12 @@ namespace Maikebing.Data.Taos
                     case Keywords.DataSource:
                         DataSource = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
-
-                    case Keywords.Mode:
-                        Mode = ConvertToEnum<TaosOpenMode>(value);
+                    case Keywords.Token:
+                        Token= Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
-
-                    case Keywords.Cache:
-                        Cache = ConvertToEnum<TaosCacheMode>(value);
+                    case Keywords.DataBase:
+                        DataBase = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
-
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
                         return;
@@ -183,7 +172,7 @@ namespace Maikebing.Data.Taos
             }
             else if (value.GetType().GetTypeInfo().IsEnum)
             {
-                throw new ArgumentException(Resources.ConvertFailed(value.GetType(), typeof(TEnum)));
+                throw new ArgumentException($"ConvertFailed{value.GetType()},{typeof(TEnum)}");
             }
             else
             {
@@ -195,7 +184,7 @@ namespace Maikebing.Data.Taos
                 throw new ArgumentOutOfRangeException(
                     nameof(value),
                     value,
-                    Resources.InvalidEnumValue(typeof(TEnum), enumValue));
+                    $"Invalid Enum Value{typeof(TEnum)},{enumValue}");
             }
 
             return enumValue;
@@ -275,12 +264,10 @@ namespace Maikebing.Data.Taos
                 case Keywords.DataSource:
                     return DataSource;
 
-                case Keywords.Mode:
-                    return Mode;
-
-                case Keywords.Cache:
-                    return Cache;
-
+                case Keywords.Token:
+                    return Token;
+                case Keywords.DataBase:
+                    return DataBase;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -289,7 +276,7 @@ namespace Maikebing.Data.Taos
 
         private static Keywords GetIndex(string keyword)
             => !_keywords.TryGetValue(keyword, out var index)
-                ? throw new ArgumentException(Resources.KeywordNotSupported(keyword))
+                ? throw new ArgumentException($"Keyword Not Supported{keyword}")
                 : index;
 
         private void Reset(Keywords index)
@@ -299,15 +286,12 @@ namespace Maikebing.Data.Taos
                 case Keywords.DataSource:
                     _dataSource = string.Empty;
                     return;
-
-                case Keywords.Mode:
-                    _mode = TaosOpenMode.ReadWriteCreate;
+                case Keywords.Token:
+                    _token = string.Empty;
                     return;
-
-                case Keywords.Cache:
-                    _cache = TaosCacheMode.Default;
+                case Keywords.DataBase:
+                    _dataBase = string.Empty;
                     return;
-
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return;

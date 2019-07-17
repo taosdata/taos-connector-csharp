@@ -5,18 +5,18 @@ using System;
 using System.Reflection;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Infrastructure.Internal;
 
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     SQLite specific extension methods for <see cref="DbContext.Database" />.
+    ///     Taos specific extension methods for <see cref="DbContext.Database" />.
     /// </summary>
-    public static class SqliteDatabaseFacadeExtensions
+    public static class TaosDatabaseFacadeExtensions
     {
         /// <summary>
         ///     <para>
-        ///         Returns true if the database provider currently in use is the SQLite provider.
+        ///         Returns true if the database provider currently in use is the Taos provider.
         ///     </para>
         ///     <para>
         ///         This method can only be used after the <see cref="DbContext" /> has been configured because
@@ -26,10 +26,10 @@ namespace Microsoft.EntityFrameworkCore
         ///     </para>
         /// </summary>
         /// <param name="database"> The facade from <see cref="DbContext.Database" />. </param>
-        /// <returns> True if SQLite is being used; false otherwise. </returns>
-        public static bool IsSqlite([NotNull] this DatabaseFacade database)
+        /// <returns> True if Taos is being used; false otherwise. </returns>
+        public static bool IsTaos([NotNull] this DatabaseFacade database)
             => database.ProviderName.Equals(
-                typeof(SqliteOptionsExtension).GetTypeInfo().Assembly.GetName().Name,
+                typeof(TaosOptionsExtension).GetTypeInfo().Assembly.GetName().Name,
                 StringComparison.Ordinal);
     }
 }

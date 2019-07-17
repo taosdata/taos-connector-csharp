@@ -4,22 +4,22 @@
 using System;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Sqlite.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Migrations.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Migrations.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteHistoryRepository : HistoryRepository
+    public class TaosHistoryRepository : HistoryRepository
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteHistoryRepository([NotNull] HistoryRepositoryDependencies dependencies)
+        public TaosHistoryRepository([NotNull] HistoryRepositoryDependencies dependencies)
             : base(dependencies)
         {
         }
@@ -34,7 +34,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Migrations.Internal
             {
                 var stringTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(string));
 
-                return "SELECT COUNT(*) FROM \"sqlite_master\" WHERE \"name\" = " +
+                return "SELECT COUNT(*) FROM \"Taos_master\" WHERE \"name\" = " +
                        stringTypeMapping.GenerateSqlLiteral(TableName) +
                        " AND \"type\" = 'table';";
             }
@@ -63,7 +63,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Migrations.Internal
         /// </summary>
         public override string GetBeginIfNotExistsScript(string migrationId)
         {
-            throw new NotSupportedException(SqliteStrings.MigrationScriptGenerationNotSupported);
+            throw new NotSupportedException(TaosStrings.MigrationScriptGenerationNotSupported);
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Migrations.Internal
         /// </summary>
         public override string GetBeginIfExistsScript(string migrationId)
         {
-            throw new NotSupportedException(SqliteStrings.MigrationScriptGenerationNotSupported);
+            throw new NotSupportedException(TaosStrings.MigrationScriptGenerationNotSupported);
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Migrations.Internal
         /// </summary>
         public override string GetEndIfScript()
         {
-            throw new NotSupportedException(SqliteStrings.MigrationScriptGenerationNotSupported);
+            throw new NotSupportedException(TaosStrings.MigrationScriptGenerationNotSupported);
         }
     }
 }

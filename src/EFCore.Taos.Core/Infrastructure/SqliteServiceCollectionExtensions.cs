@@ -11,14 +11,14 @@ using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.ExpressionTranslators;
 using Microsoft.EntityFrameworkCore.Query.ExpressionVisitors;
 using Microsoft.EntityFrameworkCore.Query.Sql;
-using Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Migrations.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionTranslators.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionVisitors.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Query.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Query.Sql.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Update.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Infrastructure.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Migrations.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Query.ExpressionTranslators.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Query.ExpressionVisitors.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Query.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Query.Sql.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Storage.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Update.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Update;
 using Microsoft.EntityFrameworkCore.Update.Internal;
@@ -28,13 +28,13 @@ using Microsoft.EntityFrameworkCore.Utilities;
 namespace Microsoft.Extensions.DependencyInjection
 {
     /// <summary>
-    ///     SQLite specific extension methods for <see cref="IServiceCollection" />.
+    ///     Taos specific extension methods for <see cref="IServiceCollection" />.
     /// </summary>
-    public static class SqliteServiceCollectionExtensions
+    public static class TaosServiceCollectionExtensions
     {
         /// <summary>
         ///     <para>
-        ///         Adds the services required by the SQLite database provider for Entity Framework
+        ///         Adds the services required by the Taos database provider for Entity Framework
         ///         to an <see cref="IServiceCollection" />. You use this method when using dependency injection
         ///         in your application, such as with ASP.NET. For more information on setting up dependency
         ///         injection, see http://go.microsoft.com/fwlink/?LinkId=526890.
@@ -52,9 +52,9 @@ namespace Microsoft.Extensions.DependencyInjection
         ///               var connectionString = "connection string to database";
         /// 
         ///               services
-        ///                   .AddEntityFrameworkSqlite()
+        ///                   .AddEntityFrameworkTaos()
         ///                   .AddDbContext&lt;MyContext&gt;((serviceProvider, options) =>
-        ///                       options.UseSqlite(connectionString)
+        ///                       options.UseTaos(connectionString)
         ///                              .UseInternalServiceProvider(serviceProvider));
         ///           }
         ///       </code>
@@ -63,31 +63,31 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>
         ///     The same service collection so that multiple calls can be chained.
         /// </returns>
-        public static IServiceCollection AddEntityFrameworkSqlite([NotNull] this IServiceCollection serviceCollection)
+        public static IServiceCollection AddEntityFrameworkTaos([NotNull] this IServiceCollection serviceCollection)
         {
             Check.NotNull(serviceCollection, nameof(serviceCollection));
 
             var builder = new EntityFrameworkRelationalServicesBuilder(serviceCollection)
-                .TryAdd<IDatabaseProvider, DatabaseProvider<SqliteOptionsExtension>>()
-                .TryAdd<IRelationalTypeMappingSource, SqliteTypeMappingSource>()
-                .TryAdd<ISqlGenerationHelper, SqliteSqlGenerationHelper>()
-                .TryAdd<IMigrationsAnnotationProvider, SqliteMigrationsAnnotationProvider>()
-                .TryAdd<IModelValidator, SqliteModelValidator>()
-                .TryAdd<IConventionSetBuilder, SqliteConventionSetBuilder>()
-                .TryAdd<IUpdateSqlGenerator, SqliteUpdateSqlGenerator>()
-                .TryAdd<ISingletonUpdateSqlGenerator, SqliteUpdateSqlGenerator>()
-                .TryAdd<IModificationCommandBatchFactory, SqliteModificationCommandBatchFactory>()
-                .TryAdd<IRelationalConnection>(p => p.GetService<ISqliteRelationalConnection>())
-                .TryAdd<IMigrationsSqlGenerator, SqliteMigrationsSqlGenerator>()
-                .TryAdd<IRelationalDatabaseCreator, SqliteDatabaseCreator>()
-                .TryAdd<IHistoryRepository, SqliteHistoryRepository>()
-                .TryAdd<IMemberTranslator, SqliteCompositeMemberTranslator>()
-                .TryAdd<ICompositeMethodCallTranslator, SqliteCompositeMethodCallTranslator>()
-                .TryAdd<IQuerySqlGeneratorFactory, SqliteQuerySqlGeneratorFactory>()
-                .TryAdd<ISqlTranslatingExpressionVisitorFactory, SqliteSqlTranslatingExpressionVisitorFactory>()
-                .TryAdd<IRelationalResultOperatorHandler, SqliteResultOperatorHandler>()
+                .TryAdd<IDatabaseProvider, DatabaseProvider<TaosOptionsExtension>>()
+                .TryAdd<IRelationalTypeMappingSource, TaosTypeMappingSource>()
+                .TryAdd<ISqlGenerationHelper, TaosSqlGenerationHelper>()
+                .TryAdd<IMigrationsAnnotationProvider, TaosMigrationsAnnotationProvider>()
+                .TryAdd<IModelValidator, TaosModelValidator>()
+                .TryAdd<IConventionSetBuilder, TaosConventionSetBuilder>()
+                .TryAdd<IUpdateSqlGenerator, TaosUpdateSqlGenerator>()
+                .TryAdd<ISingletonUpdateSqlGenerator, TaosUpdateSqlGenerator>()
+                .TryAdd<IModificationCommandBatchFactory, TaosModificationCommandBatchFactory>()
+                .TryAdd<IRelationalConnection>(p => p.GetService<ITaosRelationalConnection>())
+                .TryAdd<IMigrationsSqlGenerator, TaosMigrationsSqlGenerator>()
+                .TryAdd<IRelationalDatabaseCreator, TaosDatabaseCreator>()
+                .TryAdd<IHistoryRepository, TaosHistoryRepository>()
+                .TryAdd<IMemberTranslator, TaosCompositeMemberTranslator>()
+                .TryAdd<ICompositeMethodCallTranslator, TaosCompositeMethodCallTranslator>()
+                .TryAdd<IQuerySqlGeneratorFactory, TaosQuerySqlGeneratorFactory>()
+                .TryAdd<ISqlTranslatingExpressionVisitorFactory, TaosSqlTranslatingExpressionVisitorFactory>()
+                .TryAdd<IRelationalResultOperatorHandler, TaosResultOperatorHandler>()
                 .TryAddProviderSpecificServices(
-                    b => b.TryAddScoped<ISqliteRelationalConnection, SqliteRelationalConnection>());
+                    b => b.TryAddScoped<ITaosRelationalConnection, TaosRelationalConnection>());
 
             builder.TryAddCoreServices();
 

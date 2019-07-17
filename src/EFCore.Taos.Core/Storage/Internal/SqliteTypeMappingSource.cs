@@ -7,13 +7,13 @@ using System.Linq;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteTypeMappingSource : RelationalTypeMappingSource
+    public class TaosTypeMappingSource : RelationalTypeMappingSource
     {
         private static readonly HashSet<string> _spatialiteTypes
             = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -45,21 +45,21 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
                 { typeof(byte[]), _blob },
                 { typeof(bool), new BoolTypeMapping(IntegerTypeName) },
                 { typeof(byte), new ByteTypeMapping(IntegerTypeName) },
-                { typeof(char), new SqliteCharTypeMapping(IntegerTypeName) },
+                { typeof(char), new TaosCharTypeMapping(IntegerTypeName) },
                 { typeof(int), new IntTypeMapping(IntegerTypeName) },
                 { typeof(long), _integer },
                 { typeof(sbyte), new SByteTypeMapping(IntegerTypeName) },
                 { typeof(short), new ShortTypeMapping(IntegerTypeName) },
                 { typeof(uint), new UIntTypeMapping(IntegerTypeName) },
-                { typeof(ulong), new SqliteULongTypeMapping(IntegerTypeName) },
+                { typeof(ulong), new TaosULongTypeMapping(IntegerTypeName) },
                 { typeof(ushort), new UShortTypeMapping(IntegerTypeName) },
-                { typeof(DateTime), new SqliteDateTimeTypeMapping(TextTypeName) },
-                { typeof(DateTimeOffset), new SqliteDateTimeOffsetTypeMapping(TextTypeName) },
+                { typeof(DateTime), new TaosDateTimeTypeMapping(TextTypeName) },
+                { typeof(DateTimeOffset), new TaosDateTimeOffsetTypeMapping(TextTypeName) },
                 { typeof(TimeSpan), new TimeSpanTypeMapping(TextTypeName) },
-                { typeof(decimal), new SqliteDecimalTypeMapping(TextTypeName) },
+                { typeof(decimal), new TaosDecimalTypeMapping(TextTypeName) },
                 { typeof(double), _real },
                 { typeof(float), new FloatTypeMapping(RealTypeName) },
-                { typeof(Guid), new SqliteGuidTypeMapping(BlobTypeName) }
+                { typeof(Guid), new TaosGuidTypeMapping(BlobTypeName) }
             };
 
         private readonly Dictionary<string, RelationalTypeMapping> _storeTypeMappings
@@ -75,7 +75,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteTypeMappingSource(
+        public TaosTypeMappingSource(
             [NotNull] TypeMappingSourceDependencies dependencies,
             [NotNull] RelationalTypeMappingSourceDependencies relationalDependencies)
             : base(dependencies, relationalDependencies)
@@ -116,7 +116,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
                 : storeTypeName != null
                     ? storeTypeName.Length != 0
                         ? _typeRules.Select(r => r(storeTypeName)).FirstOrDefault(r => r != null) ?? _text
-                        : _text // This may seem odd, but it's okay because we are matching SQLite's loose typing.
+                        : _text // This may seem odd, but it's okay because we are matching Taos's loose typing.
                     : null;
         }
 

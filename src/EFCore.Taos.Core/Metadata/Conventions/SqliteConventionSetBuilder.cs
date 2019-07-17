@@ -11,13 +11,13 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteConventionSetBuilder : RelationalConventionSetBuilder
+    public class TaosConventionSetBuilder : RelationalConventionSetBuilder
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteConventionSetBuilder([NotNull] RelationalConventionSetBuilderDependencies dependencies)
+        public TaosConventionSetBuilder([NotNull] RelationalConventionSetBuilderDependencies dependencies)
             : base(dependencies)
         {
         }
@@ -29,8 +29,8 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
         public static ConventionSet Build()
         {
             var serviceProvider = new ServiceCollection()
-                .AddEntityFrameworkSqlite()
-                .AddDbContext<DbContext>(o => o.UseSqlite("Filename=_.db"))
+                .AddEntityFrameworkTaos()
+                .AddDbContext<DbContext>(o => o.UseTaos("Filename=_.db"))
                 .BuildServiceProvider();
 
             using (var serviceScope = serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())

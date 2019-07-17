@@ -6,19 +6,19 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Microsoft.Data.Sqlite;
+using Maikebing.Data.Taos;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteRelationalConnection : RelationalConnection, ISqliteRelationalConnection
+    public class TaosRelationalConnection : RelationalConnection, ITaosRelationalConnection
     {
         private readonly IRawSqlCommandBuilder _rawSqlCommandBuilder;
         private readonly bool _loadSpatialite;
@@ -28,7 +28,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteRelationalConnection(
+        public TaosRelationalConnection(
             [NotNull] RelationalConnectionDependencies dependencies,
             [NotNull] IRawSqlCommandBuilder rawSqlCommandBuilder)
             : base(dependencies)
@@ -37,7 +37,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
 
             _rawSqlCommandBuilder = rawSqlCommandBuilder;
 
-            var optionsExtension = dependencies.ContextOptions.Extensions.OfType<SqliteOptionsExtension>().FirstOrDefault();
+            var optionsExtension = dependencies.ContextOptions.Extensions.OfType<TaosOptionsExtension>().FirstOrDefault();
             if (optionsExtension != null)
             {
                 _loadSpatialite = optionsExtension.LoadSpatialite;
@@ -49,7 +49,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        protected override DbConnection CreateDbConnection() => new SqliteConnection(ConnectionString);
+        protected override DbConnection CreateDbConnection() => new TaosConnection(ConnectionString);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -96,10 +96,8 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
                 return;
             }
 
-            var connection = (SqliteConnection)DbConnection;
-            connection.EnableExtensions();
+            var connection = (TaosConnection)DbConnection;
             SpatialiteLoader.Load(DbConnection);
-            connection.EnableExtensions(false);
         }
 
         private void EnableForeignKeys()
@@ -118,16 +116,15 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public virtual ISqliteRelationalConnection CreateReadOnlyConnection()
+        public virtual ITaosRelationalConnection CreateReadOnlyConnection()
         {
-            var connectionStringBuilder = new SqliteConnectionStringBuilder(ConnectionString)
+            var connectionStringBuilder = new TaosConnectionStringBuilder(ConnectionString)
             {
-                Mode = SqliteOpenMode.ReadOnly
             };
 
-            var contextOptions = new DbContextOptionsBuilder().UseSqlite(connectionStringBuilder.ToString()).Options;
+            var contextOptions = new DbContextOptionsBuilder().UseTaos(connectionStringBuilder.ToString()).Options;
 
-            return new SqliteRelationalConnection(Dependencies.With(contextOptions), _rawSqlCommandBuilder);
+            return new TaosRelationalConnection(Dependencies.With(contextOptions), _rawSqlCommandBuilder);
         }
     }
 }

@@ -9,22 +9,22 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Sqlite.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Storage.Internal;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Migrations.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Migrations.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteMigrationsAnnotationProvider : MigrationsAnnotationProvider
+    public class TaosMigrationsAnnotationProvider : MigrationsAnnotationProvider
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteMigrationsAnnotationProvider([NotNull] MigrationsAnnotationProviderDependencies dependencies)
+        public TaosMigrationsAnnotationProvider([NotNull] MigrationsAnnotationProviderDependencies dependencies)
             : base(dependencies)
         {
         }
@@ -36,9 +36,9 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Migrations.Internal
         public override IEnumerable<IAnnotation> For(IModel model)
         {
             if (model.GetEntityTypes().SelectMany(t => t.GetProperties()).Any(
-                p => SqliteTypeMappingSource.IsSpatialiteType(p.Relational().ColumnType)))
+                p => TaosTypeMappingSource.IsSpatialiteType(p.Relational().ColumnType)))
             {
-                yield return new Annotation(SqliteAnnotationNames.InitSpatialMetaData, true);
+                yield return new Annotation(TaosAnnotationNames.InitSpatialMetaData, true);
             }
         }
 
@@ -52,19 +52,19 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Migrations.Internal
                 && property.ClrType.UnwrapNullableType().IsInteger()
                 && !HasConverter(property))
             {
-                yield return new Annotation(SqliteAnnotationNames.Autoincrement, true);
+                yield return new Annotation(TaosAnnotationNames.Autoincrement, true);
             }
 
-            var srid = property.Sqlite().Srid;
+            var srid = property.Taos().Srid;
             if (srid != null)
             {
-                yield return new Annotation(SqliteAnnotationNames.Srid, srid);
+                yield return new Annotation(TaosAnnotationNames.Srid, srid);
             }
 
-            var dimension = property.Sqlite().Dimension;
+            var dimension = property.Taos().Dimension;
             if (dimension != null)
             {
-                yield return new Annotation(SqliteAnnotationNames.Dimension, dimension);
+                yield return new Annotation(TaosAnnotationNames.Dimension, dimension);
             }
         }
 

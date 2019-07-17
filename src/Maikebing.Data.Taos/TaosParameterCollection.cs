@@ -6,8 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-using Maikebing.Data.Taos.Properties;
-using TaosPCL;
 
 namespace Maikebing.Data.Taos
 {
@@ -320,25 +318,14 @@ namespace Maikebing.Data.Taos
         protected override void SetParameter(string parameterName, DbParameter value)
             => SetParameter(IndexOfChecked(parameterName), value);
 
-        internal int Bind(Taos3_stmt stmt)
-        {
-            var bound = 0;
-            foreach (var parameter in _parameters)
-            {
-                if (parameter.Bind(stmt))
-                {
-                    bound++;
-                }
-            }
-            return bound;
-        }
+      
 
         private int IndexOfChecked(string parameterName)
         {
             var index = IndexOf(parameterName);
             if (index == -1)
             {
-                throw new IndexOutOfRangeException(Resources.ParameterNotFound(parameterName));
+                throw new IndexOutOfRangeException($"ParameterNotFound{parameterName}");
             }
 
             return index;

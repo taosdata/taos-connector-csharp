@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
 {
     /// <summary>
     ///     <para>
-    ///         Event IDs for SQLite events that correspond to messages logged to an <see cref="ILogger" />
+    ///         Event IDs for Taos events that correspond to messages logged to an <see cref="ILogger" />
     ///         and events sent to a <see cref="DiagnosticSource" />.
     ///     </para>
     ///     <para>
@@ -16,7 +16,7 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
     ///         behavior of warnings.
     ///     </para>
     /// </summary>
-    public static class SqliteEventId
+    public static class TaosEventId
     {
         // Warning: These values must not change between releases.
         // Only add new values to the end of sections, never in the middle.
@@ -45,7 +45,7 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
 
         /// <summary>
         ///     <para>
-        ///         A schema was configured for an entity type, but SQLite does not support schemas.
+        ///         A schema was configured for an entity type, but Taos does not support schemas.
         ///     </para>
         ///     <para>
         ///         This event is in the <see cref="DbLoggerCategory.Model.Validation" /> category.
@@ -58,7 +58,7 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
 
         /// <summary>
         ///     <para>
-        ///         A sequence was configured for an entity type, but SQLite does not support sequences.
+        ///         A sequence was configured for an entity type, but Taos does not support sequences.
         ///     </para>
         ///     <para>
         ///         This event is in the <see cref="DbLoggerCategory.Model.Validation" /> category.
@@ -79,7 +79,7 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
         public static readonly EventId ColumnFound = MakeScaffoldingId(Id.ColumnFound);
 
         /// <summary>
-        ///     SQLite does not support schemas.
+        ///     Taos does not support schemas.
         ///     This event is in the <see cref="DbLoggerCategory.Scaffolding" /> category.
         /// </summary>
         public static readonly EventId SchemasNotSupportedWarning = MakeScaffoldingId(Id.SchemasNotSupportedWarning);

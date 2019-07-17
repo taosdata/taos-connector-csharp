@@ -8,24 +8,24 @@ using Microsoft.EntityFrameworkCore.Utilities;
 namespace Microsoft.EntityFrameworkCore
 {
     /// <summary>
-    ///     SQLite specific extension methods for metadata.
+    ///     Taos specific extension methods for metadata.
     /// </summary>
-    public static class SqliteMetadataExtensions
+    public static class TaosMetadataExtensions
     {
         /// <summary>
-        ///     Gets the SQLite specific metadata for a property.
+        ///     Gets the Taos specific metadata for a property.
         /// </summary>
         /// <param name="property"> The property to get metadata for. </param>
-        /// <returns> The SQLite specific metadata for the property. </returns>
-        public static SqlitePropertyAnnotations Sqlite([NotNull] this IMutableProperty property)
-            => (SqlitePropertyAnnotations)Sqlite((IProperty)property);
+        /// <returns> The Taos specific metadata for the property. </returns>
+        public static TaosPropertyAnnotations Taos([NotNull] this IMutableProperty property)
+            => (TaosPropertyAnnotations)Taos((IProperty)property);
 
         /// <summary>
-        ///     Gets the SQLite specific metadata for a property.
+        ///     Gets the Taos specific metadata for a property.
         /// </summary>
         /// <param name="property"> The property to get metadata for. </param>
-        /// <returns> The SQLite specific metadata for the property. </returns>
-        public static ISqlitePropertyAnnotations Sqlite([NotNull] this IProperty property)
-            => new SqlitePropertyAnnotations(Check.NotNull(property, nameof(property)));
+        /// <returns> The Taos specific metadata for the property. </returns>
+        public static ITaosPropertyAnnotations Taos([NotNull] this IProperty property)
+            => new TaosPropertyAnnotations(Check.NotNull(property, nameof(property)));
     }
 }

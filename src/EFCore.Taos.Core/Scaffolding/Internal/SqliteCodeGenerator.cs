@@ -5,19 +5,19 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteCodeGenerator : ProviderCodeGenerator
+    public class TaosCodeGenerator : ProviderCodeGenerator
     {
         /// <summary>
-        ///     Initializes a new instance of the <see cref="SqliteCodeGenerator" /> class.
+        ///     Initializes a new instance of the <see cref="TaosCodeGenerator" /> class.
         /// </summary>
         /// <param name="dependencies"> The dependencies. </param>
-        public SqliteCodeGenerator([NotNull] ProviderCodeGeneratorDependencies dependencies)
+        public TaosCodeGenerator([NotNull] ProviderCodeGeneratorDependencies dependencies)
             : base(dependencies)
         {
         }
@@ -30,7 +30,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
             string connectionString,
             MethodCallCodeFragment providerOptions)
             => new MethodCallCodeFragment(
-                nameof(SqliteDbContextOptionsBuilderExtensions.UseSqlite),
+                nameof(TaosDbContextOptionsBuilderExtensions.UseTaos),
                 providerOptions == null
                 ? new object[] { connectionString }
                 : new object[] { connectionString, new NestedClosureCodeFragment("x", providerOptions) });

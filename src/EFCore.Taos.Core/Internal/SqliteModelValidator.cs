@@ -12,13 +12,13 @@ namespace Microsoft.EntityFrameworkCore.Internal
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteModelValidator : RelationalModelValidator
+    public class TaosModelValidator : RelationalModelValidator
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteModelValidator(
+        public TaosModelValidator(
             [NotNull] ModelValidatorDependencies dependencies,
             [NotNull] RelationalModelValidatorDependencies relationalDependencies)
             : base(dependencies, relationalDependencies)

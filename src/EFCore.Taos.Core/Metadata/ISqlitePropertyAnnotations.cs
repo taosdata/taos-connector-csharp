@@ -4,10 +4,10 @@
 namespace Microsoft.EntityFrameworkCore.Metadata
 {
     /// <summary>
-    ///     API for SQLite-specific annotations accessed through
-    ///     <see cref="SqliteMetadataExtensions.Sqlite(IProperty)" />.
+    ///     API for Taos-specific annotations accessed through
+    ///     <see cref="TaosMetadataExtensions.Taos(IProperty)" />.
     /// </summary>
-    public interface ISqlitePropertyAnnotations : IRelationalPropertyAnnotations
+    public interface ITaosPropertyAnnotations : IRelationalPropertyAnnotations
     {
         /// <summary>
         ///     Gets the SRID to use when creating a column for this property.

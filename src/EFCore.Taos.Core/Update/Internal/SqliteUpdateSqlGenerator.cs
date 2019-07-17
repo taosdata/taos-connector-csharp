@@ -4,23 +4,23 @@
 using System;
 using System.Text;
 using JetBrains.Annotations;
-using Microsoft.EntityFrameworkCore.Sqlite.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Internal;
 using Microsoft.EntityFrameworkCore.Update;
 using Microsoft.EntityFrameworkCore.Utilities;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Update.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Update.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteUpdateSqlGenerator : UpdateSqlGenerator
+    public class TaosUpdateSqlGenerator : UpdateSqlGenerator
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteUpdateSqlGenerator([NotNull] UpdateSqlGeneratorDependencies dependencies)
+        public TaosUpdateSqlGenerator([NotNull] UpdateSqlGeneratorDependencies dependencies)
             : base(dependencies)
         {
         }
@@ -73,7 +73,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Update.Internal
         /// </summary>
         public override string GenerateNextSequenceValueOperation(string name, string schema)
         {
-            throw new NotSupportedException(SqliteStrings.SequencesNotSupported);
+            throw new NotSupportedException(TaosStrings.SequencesNotSupported);
         }
     }
 }

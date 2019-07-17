@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Internal
 {
@@ -13,7 +13,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public static class SqliteLoggerExtensions
+    public static class TaosLoggerExtensions
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -24,7 +24,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] IEntityType entityType,
             [NotNull] string schema)
         {
-            var definition = SqliteStrings.LogSchemaConfigured;
+            var definition = TaosStrings.LogSchemaConfigured;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -64,7 +64,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Model.Validation> diagnostics,
             [NotNull] ISequence sequence)
         {
-            var definition = SqliteStrings.LogSequenceConfigured;
+            var definition = TaosStrings.LogSequenceConfigured;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -105,7 +105,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             bool notNull,
             [CanBeNull] string defaultValue)
         {
-            var definition = SqliteStrings.LogFoundColumn;
+            var definition = TaosStrings.LogFoundColumn;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -126,7 +126,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
         public static void SchemasNotSupportedWarning(
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics)
         {
-            var definition = SqliteStrings.LogUsingSchemaSelectionsWarning;
+            var definition = TaosStrings.LogUsingSchemaSelectionsWarning;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -145,7 +145,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics,
             [CanBeNull] string foreignKeyName)
         {
-            var definition = SqliteStrings.LogForeignKeyScaffoldErrorPrincipalTableNotFound;
+            var definition = TaosStrings.LogForeignKeyScaffoldErrorPrincipalTableNotFound;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -167,7 +167,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics,
             [CanBeNull] string tableName)
         {
-            var definition = SqliteStrings.LogFoundTable;
+            var definition = TaosStrings.LogFoundTable;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -189,7 +189,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [NotNull] this IDiagnosticsLogger<DbLoggerCategory.Scaffolding> diagnostics,
             [CanBeNull] string tableName)
         {
-            var definition = SqliteStrings.LogMissingTable;
+            var definition = TaosStrings.LogMissingTable;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -214,7 +214,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [CanBeNull] string principalColumnName,
             [CanBeNull] string principalTableName)
         {
-            var definition = SqliteStrings.LogPrincipalColumnNotFound;
+            var definition = TaosStrings.LogPrincipalColumnNotFound;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -238,7 +238,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [CanBeNull] string tableName,
             bool? unique)
         {
-            var definition = SqliteStrings.LogFoundIndex;
+            var definition = TaosStrings.LogFoundIndex;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -263,7 +263,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [CanBeNull] string principalTableName,
             [CanBeNull] string deleteAction)
         {
-            var definition = SqliteStrings.LogFoundForeignKey;
+            var definition = TaosStrings.LogFoundForeignKey;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -286,7 +286,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [CanBeNull] string primaryKeyName,
             [CanBeNull] string tableName)
         {
-            var definition = SqliteStrings.LogFoundPrimaryKey;
+            var definition = TaosStrings.LogFoundPrimaryKey;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)
@@ -309,7 +309,7 @@ namespace Microsoft.EntityFrameworkCore.Internal
             [CanBeNull] string uniqueConstraintName,
             [CanBeNull] string tableName)
         {
-            var definition = SqliteStrings.LogFoundUniqueConstraint;
+            var definition = TaosStrings.LogFoundUniqueConstraint;
 
             var warningBehavior = definition.GetLogBehavior(diagnostics);
             if (warningBehavior != WarningBehavior.Ignore)

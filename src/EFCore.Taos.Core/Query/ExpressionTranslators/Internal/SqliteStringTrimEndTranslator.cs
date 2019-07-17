@@ -8,13 +8,13 @@ using System.Reflection;
 using Microsoft.EntityFrameworkCore.Query.Expressions;
 using Microsoft.EntityFrameworkCore.Query.ExpressionTranslators;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionTranslators.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Query.ExpressionTranslators.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteStringTrimEndTranslator : IMethodCallTranslator
+    public class TaosStringTrimEndTranslator : IMethodCallTranslator
     {
         // Method defined in netcoreapp2.0 only
         private static readonly MethodInfo _methodInfoWithoutArgs

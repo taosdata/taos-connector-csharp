@@ -11,18 +11,18 @@ using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
-using Microsoft.EntityFrameworkCore.Sqlite.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
 namespace Microsoft.EntityFrameworkCore.Migrations
 {
     /// <summary>
-    ///     SQLite-specific implementation of <see cref="MigrationsSqlGenerator" />.
+    ///     Taos-specific implementation of <see cref="MigrationsSqlGenerator" />.
     /// </summary>
-    public class SqliteMigrationsSqlGenerator : MigrationsSqlGenerator
+    public class TaosMigrationsSqlGenerator : MigrationsSqlGenerator
     {
         private readonly IMigrationsAnnotationProvider _migrationsAnnotations;
 
@@ -32,7 +32,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// </summary>
         /// <param name="dependencies"> Parameter object containing dependencies for this service. </param>
         /// <param name="migrationsAnnotations"> Provider-specific Migrations annotations to use. </param>
-        public SqliteMigrationsSqlGenerator(
+        public TaosMigrationsSqlGenerator(
             [NotNull] MigrationsSqlGeneratorDependencies dependencies,
             [NotNull] IMigrationsAnnotationProvider migrationsAnnotations)
             : base(dependencies)
@@ -48,7 +48,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             => base.Generate(RewriteOperations(operations, model), model);
 
         private bool IsSpatialiteColumn(AddColumnOperation operation, IModel model)
-            => SqliteTypeMappingSource.IsSpatialiteType(
+            => TaosTypeMappingSource.IsSpatialiteType(
                 operation.ColumnType
                     ?? GetColumnType(
                         operation.Schema,
@@ -118,8 +118,8 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(AlterDatabaseOperation operation, IModel model, MigrationCommandListBuilder builder)
         {
-            if (operation[SqliteAnnotationNames.InitSpatialMetaData] as bool? != true
-                || operation.OldDatabase[SqliteAnnotationNames.InitSpatialMetaData] as bool? == true)
+            if (operation[TaosAnnotationNames.InitSpatialMetaData] as bool? != true
+                || operation.OldDatabase[TaosAnnotationNames.InitSpatialMetaData] as bool? == true)
             {
                 return;
             }
@@ -150,8 +150,8 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             var stringTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(string));
             var longTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(long));
 
-            var srid = operation[SqliteAnnotationNames.Srid] as int? ?? 0;
-            var dimension = operation[SqliteAnnotationNames.Dimension] as string;
+            var srid = operation[TaosAnnotationNames.Srid] as int? ?? 0;
+            var dimension = operation[TaosAnnotationNames.Dimension] as string;
 
             var geometryType = operation.ColumnType
                 ?? GetColumnType(
@@ -201,12 +201,10 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
         /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
-        protected override void Generate(
-            DropIndexOperation operation,
-            IModel model,
-            MigrationCommandListBuilder builder,
-            bool terminate)
+        protected override void Generate([NotNull] DropIndexOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder)
         {
+     
+     
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
 
@@ -214,12 +212,9 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 .Append("DROP INDEX ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
 
-            if (terminate)
-            {
                 builder
                     .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
                     .EndCommand();
-            }
         }
 
         /// <summary>
@@ -237,7 +232,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             if (index == null)
             {
                 throw new NotSupportedException(
-                    SqliteStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+                    TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
             }
 
             var dropOperation = new DropIndexOperation
@@ -259,7 +254,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             };
             createOperation.AddAnnotations(_migrationsAnnotations.For(index));
 
-            Generate(dropOperation, model, builder, terminate: false);
+         //   Generate(dropOperation, model, builder, terminate: false);
             builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
 
             Generate(createOperation, model, builder);
@@ -332,10 +327,10 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 var columnOp = operation.Columns.FirstOrDefault(o => o.Name == operation.PrimaryKey.Columns[0]);
                 if (columnOp != null)
                 {
-                    columnOp.AddAnnotation(SqliteAnnotationNames.InlinePrimaryKey, true);
+                    columnOp.AddAnnotation(TaosAnnotationNames.InlinePrimaryKey, true);
                     if (!string.IsNullOrEmpty(operation.PrimaryKey.Name))
                     {
-                        columnOp.AddAnnotation(SqliteAnnotationNames.InlinePrimaryKeyName, operation.PrimaryKey.Name);
+                        columnOp.AddAnnotation(TaosAnnotationNames.InlinePrimaryKeyName, operation.PrimaryKey.Name);
                     }
 
                     operation.PrimaryKey = null;
@@ -417,11 +412,11 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 schema, table, name, clrType, type, unicode, maxLength, fixedLength, rowVersion, nullable,
                 defaultValue, defaultValueSql, computedColumnSql, annotatable, model, builder);
 
-            var inlinePk = annotatable[SqliteAnnotationNames.InlinePrimaryKey] as bool?;
+            var inlinePk = annotatable[TaosAnnotationNames.InlinePrimaryKey] as bool?;
             if (inlinePk == true)
             {
                 var inlinePkName = annotatable[
-                    SqliteAnnotationNames.InlinePrimaryKeyName] as string;
+                    TaosAnnotationNames.InlinePrimaryKeyName] as string;
                 if (!string.IsNullOrEmpty(inlinePkName))
                 {
                     builder
@@ -430,9 +425,9 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 }
 
                 builder.Append(" PRIMARY KEY");
-                var autoincrement = annotatable[SqliteAnnotationNames.Autoincrement] as bool?
+                var autoincrement = annotatable[TaosAnnotationNames.Autoincrement] as bool?
                                     // NB: Migrations scaffolded with version 1.0.0 don't have the prefix. See #6461
-                                    ?? annotatable[SqliteAnnotationNames.LegacyAutoincrement] as bool?;
+                                    ?? annotatable[TaosAnnotationNames.LegacyAutoincrement] as bool?;
                 if (autoincrement == true)
                 {
                     builder.Append(" AUTOINCREMENT");
@@ -451,7 +446,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(AddForeignKeyOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
-                SqliteStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
         /// <summary>
         ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
@@ -462,7 +457,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(AddPrimaryKeyOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
-                SqliteStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
         /// <summary>
         ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
@@ -473,7 +468,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(AddUniqueConstraintOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
-                SqliteStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
         /// <summary>
         ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
@@ -484,7 +479,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(DropColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
-                SqliteStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
         /// <summary>
         ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
@@ -495,7 +490,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(DropForeignKeyOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
-                SqliteStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
         /// <summary>
         ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
@@ -506,7 +501,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(DropPrimaryKeyOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
-                SqliteStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
         /// <summary>
         ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
@@ -517,7 +512,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(DropUniqueConstraintOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
-                SqliteStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
         /// <summary>
         ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
@@ -528,14 +523,14 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(AlterColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
-                SqliteStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
         #endregion
 
         #region Ignored schema operations
 
         /// <summary>
-        ///     Ignored, since schemas are not supported by SQLite and are silently ignored to improve testing compatibility.
+        ///     Ignored, since schemas are not supported by Taos and are silently ignored to improve testing compatibility.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
@@ -545,7 +540,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         }
 
         /// <summary>
-        ///     Ignored, since schemas are not supported by SQLite and are silently ignored to improve testing compatibility.
+        ///     Ignored, since schemas are not supported by Taos and are silently ignored to improve testing compatibility.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
@@ -559,49 +554,49 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         #region Sequences not supported
 
         /// <summary>
-        ///     Throws <see cref="NotSupportedException" /> since SQLite does not support sequences.
+        ///     Throws <see cref="NotSupportedException" /> since Taos does not support sequences.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(RestartSequenceOperation operation, IModel model, MigrationCommandListBuilder builder)
-            => throw new NotSupportedException(SqliteStrings.SequencesNotSupported);
+            => throw new NotSupportedException(TaosStrings.SequencesNotSupported);
 
         /// <summary>
-        ///     Throws <see cref="NotSupportedException" /> since SQLite does not support sequences.
+        ///     Throws <see cref="NotSupportedException" /> since Taos does not support sequences.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(CreateSequenceOperation operation, IModel model, MigrationCommandListBuilder builder)
-            => throw new NotSupportedException(SqliteStrings.SequencesNotSupported);
+            => throw new NotSupportedException(TaosStrings.SequencesNotSupported);
 
         /// <summary>
-        ///     Throws <see cref="NotSupportedException" /> since SQLite does not support sequences.
+        ///     Throws <see cref="NotSupportedException" /> since Taos does not support sequences.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(RenameSequenceOperation operation, IModel model, MigrationCommandListBuilder builder)
-            => throw new NotSupportedException(SqliteStrings.SequencesNotSupported);
+            => throw new NotSupportedException(TaosStrings.SequencesNotSupported);
 
         /// <summary>
-        ///     Throws <see cref="NotSupportedException" /> since SQLite does not support sequences.
+        ///     Throws <see cref="NotSupportedException" /> since Taos does not support sequences.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(AlterSequenceOperation operation, IModel model, MigrationCommandListBuilder builder)
-            => throw new NotSupportedException(SqliteStrings.SequencesNotSupported);
+            => throw new NotSupportedException(TaosStrings.SequencesNotSupported);
 
         /// <summary>
-        ///     Throws <see cref="NotSupportedException" /> since SQLite does not support sequences.
+        ///     Throws <see cref="NotSupportedException" /> since Taos does not support sequences.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(DropSequenceOperation operation, IModel model, MigrationCommandListBuilder builder)
-            => throw new NotSupportedException(SqliteStrings.SequencesNotSupported);
+            => throw new NotSupportedException(TaosStrings.SequencesNotSupported);
 
         #endregion
     }

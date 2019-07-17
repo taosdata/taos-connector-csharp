@@ -7,19 +7,19 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Internal
 {
     /// <summary>
     ///		This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public static class SqliteStrings
+    public static class TaosStrings
     {
         private static readonly ResourceManager _resourceManager
-            = new ResourceManager("Microsoft.EntityFrameworkCore.Sqlite.Properties.SqliteStrings", typeof(SqliteStrings).GetTypeInfo().Assembly);
+            = new ResourceManager("Microsoft.EntityFrameworkCore.Taos.Properties.TaosStrings", typeof(TaosStrings).GetTypeInfo().Assembly);
 
         /// <summary>
-        ///     SQLite does not support this migration operation ('{operation}'). For more information, see http://go.microsoft.com/fwlink/?LinkId=723262.
+        ///     Taos does not support this migration operation ('{operation}'). For more information, see http://go.microsoft.com/fwlink/?LinkId=723262.
         /// </summary>
         public static string InvalidMigrationOperation([CanBeNull] object operation)
             => string.Format(
@@ -27,54 +27,54 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
                 operation);
 
         /// <summary>
-        ///     Generating idempotent scripts for migration is not currently supported by SQLite. For more information, see http://go.microsoft.com/fwlink/?LinkId=723262.
+        ///     Generating idempotent scripts for migration is not currently supported by Taos. For more information, see http://go.microsoft.com/fwlink/?LinkId=723262.
         /// </summary>
         public static string MigrationScriptGenerationNotSupported
             => GetString("MigrationScriptGenerationNotSupported");
 
         /// <summary>
-        ///     The entity type '{entityType}' is configured to use schema '{schema}'. SQLite does not support schemas. This configuration will be ignored by the SQLite provider.
+        ///     The entity type '{entityType}' is configured to use schema '{schema}'. Taos does not support schemas. This configuration will be ignored by the Taos provider.
         /// </summary>
         public static readonly EventDefinition<string, string> LogSchemaConfigured
             = new EventDefinition<string, string>(
-                SqliteEventId.SchemaConfiguredWarning,
+                TaosEventId.SchemaConfiguredWarning,
                 LogLevel.Warning,
-                "SqliteEventId.SchemaConfiguredWarning",
+                "TaosEventId.SchemaConfiguredWarning",
                 LoggerMessage.Define<string, string>(
                     LogLevel.Warning,
-                    SqliteEventId.SchemaConfiguredWarning,
+                    TaosEventId.SchemaConfiguredWarning,
                     _resourceManager.GetString("LogSchemaConfigured")));
 
         /// <summary>
-        ///     The model was configured with the database sequence '{sequence}'. SQLite does not support sequences.
+        ///     The model was configured with the database sequence '{sequence}'. Taos does not support sequences.
         /// </summary>
         public static readonly EventDefinition<string> LogSequenceConfigured
             = new EventDefinition<string>(
-                SqliteEventId.SequenceConfiguredWarning,
+                TaosEventId.SequenceConfiguredWarning,
                 LogLevel.Warning,
-                "SqliteEventId.SequenceConfiguredWarning",
+                "TaosEventId.SequenceConfiguredWarning",
                 LoggerMessage.Define<string>(
                     LogLevel.Warning,
-                    SqliteEventId.SequenceConfiguredWarning,
+                    TaosEventId.SequenceConfiguredWarning,
                     _resourceManager.GetString("LogSequenceConfigured")));
 
         /// <summary>
-        ///     SQLite does not support sequences. For more information, see http://go.microsoft.com/fwlink/?LinkId=723262.
+        ///     Taos does not support sequences. For more information, see http://go.microsoft.com/fwlink/?LinkId=723262.
         /// </summary>
         public static string SequencesNotSupported
             => GetString("SequencesNotSupported");
 
         /// <summary>
-        ///     SQLite doesn't support schemas. The specified schema selection arguments will be ignored.
+        ///     Taos doesn't support schemas. The specified schema selection arguments will be ignored.
         /// </summary>
         public static readonly EventDefinition LogUsingSchemaSelectionsWarning
             = new EventDefinition(
-                SqliteEventId.SchemasNotSupportedWarning,
+                TaosEventId.SchemasNotSupportedWarning,
                 LogLevel.Warning,
-                "SqliteEventId.SchemasNotSupportedWarning",
+                "TaosEventId.SchemasNotSupportedWarning",
                 LoggerMessage.Define(
                     LogLevel.Warning,
-                    SqliteEventId.SchemasNotSupportedWarning,
+                    TaosEventId.SchemasNotSupportedWarning,
                     _resourceManager.GetString("LogUsingSchemaSelectionsWarning")));
 
         /// <summary>
@@ -82,12 +82,12 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         /// </summary>
         public static readonly EventDefinition<string, string, string, bool, string> LogFoundColumn
             = new EventDefinition<string, string, string, bool, string>(
-                SqliteEventId.ColumnFound,
+                TaosEventId.ColumnFound,
                 LogLevel.Debug,
-                "SqliteEventId.ColumnFound",
+                "TaosEventId.ColumnFound",
                 LoggerMessage.Define<string, string, string, bool, string>(
                     LogLevel.Debug,
-                    SqliteEventId.ColumnFound,
+                    TaosEventId.ColumnFound,
                     _resourceManager.GetString("LogFoundColumn")));
 
         /// <summary>
@@ -95,12 +95,12 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         /// </summary>
         public static readonly EventDefinition<string, long, string, string> LogFoundForeignKey
             = new EventDefinition<string, long, string, string>(
-                SqliteEventId.ForeignKeyFound,
+                TaosEventId.ForeignKeyFound,
                 LogLevel.Debug,
-                "SqliteEventId.ForeignKeyFound",
+                "TaosEventId.ForeignKeyFound",
                 LoggerMessage.Define<string, long, string, string>(
                     LogLevel.Debug,
-                    SqliteEventId.ForeignKeyFound,
+                    TaosEventId.ForeignKeyFound,
                     _resourceManager.GetString("LogFoundForeignKey")));
 
         /// <summary>
@@ -108,12 +108,12 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         /// </summary>
         public static readonly EventDefinition<string> LogForeignKeyScaffoldErrorPrincipalTableNotFound
             = new EventDefinition<string>(
-                SqliteEventId.ForeignKeyReferencesMissingTableWarning,
+                TaosEventId.ForeignKeyReferencesMissingTableWarning,
                 LogLevel.Warning,
-                "SqliteEventId.ForeignKeyReferencesMissingTableWarning",
+                "TaosEventId.ForeignKeyReferencesMissingTableWarning",
                 LoggerMessage.Define<string>(
                     LogLevel.Warning,
-                    SqliteEventId.ForeignKeyReferencesMissingTableWarning,
+                    TaosEventId.ForeignKeyReferencesMissingTableWarning,
                     _resourceManager.GetString("LogForeignKeyScaffoldErrorPrincipalTableNotFound")));
 
         /// <summary>
@@ -121,12 +121,12 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         /// </summary>
         public static readonly EventDefinition<string> LogFoundTable
             = new EventDefinition<string>(
-                SqliteEventId.TableFound,
+                TaosEventId.TableFound,
                 LogLevel.Debug,
-                "SqliteEventId.TableFound",
+                "TaosEventId.TableFound",
                 LoggerMessage.Define<string>(
                     LogLevel.Debug,
-                    SqliteEventId.TableFound,
+                    TaosEventId.TableFound,
                     _resourceManager.GetString("LogFoundTable")));
 
         /// <summary>
@@ -134,12 +134,12 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         /// </summary>
         public static readonly EventDefinition<string> LogMissingTable
             = new EventDefinition<string>(
-                SqliteEventId.MissingTableWarning,
+                TaosEventId.MissingTableWarning,
                 LogLevel.Warning,
-                "SqliteEventId.MissingTableWarning",
+                "TaosEventId.MissingTableWarning",
                 LoggerMessage.Define<string>(
                     LogLevel.Warning,
-                    SqliteEventId.MissingTableWarning,
+                    TaosEventId.MissingTableWarning,
                     _resourceManager.GetString("LogMissingTable")));
 
         /// <summary>
@@ -147,12 +147,12 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         /// </summary>
         public static readonly EventDefinition<string, string, string, string> LogPrincipalColumnNotFound
             = new EventDefinition<string, string, string, string>(
-                SqliteEventId.ForeignKeyPrincipalColumnMissingWarning,
+                TaosEventId.ForeignKeyPrincipalColumnMissingWarning,
                 LogLevel.Warning,
-                "SqliteEventId.ForeignKeyPrincipalColumnMissingWarning",
+                "TaosEventId.ForeignKeyPrincipalColumnMissingWarning",
                 LoggerMessage.Define<string, string, string, string>(
                     LogLevel.Warning,
-                    SqliteEventId.ForeignKeyPrincipalColumnMissingWarning,
+                    TaosEventId.ForeignKeyPrincipalColumnMissingWarning,
                     _resourceManager.GetString("LogPrincipalColumnNotFound")));
 
         /// <summary>
@@ -160,12 +160,12 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         /// </summary>
         public static readonly EventDefinition<string, string, bool?> LogFoundIndex
             = new EventDefinition<string, string, bool?>(
-                SqliteEventId.IndexFound,
+                TaosEventId.IndexFound,
                 LogLevel.Debug,
-                "SqliteEventId.IndexFound",
+                "TaosEventId.IndexFound",
                 LoggerMessage.Define<string, string, bool?>(
                     LogLevel.Debug,
-                    SqliteEventId.IndexFound,
+                    TaosEventId.IndexFound,
                     _resourceManager.GetString("LogFoundIndex")));
 
         /// <summary>
@@ -173,12 +173,12 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         /// </summary>
         public static readonly EventDefinition<string, string> LogFoundPrimaryKey
             = new EventDefinition<string, string>(
-                SqliteEventId.PrimaryKeyFound,
+                TaosEventId.PrimaryKeyFound,
                 LogLevel.Debug,
-                "SqliteEventId.PrimaryKeyFound",
+                "TaosEventId.PrimaryKeyFound",
                 LoggerMessage.Define<string, string>(
                     LogLevel.Debug,
-                    SqliteEventId.PrimaryKeyFound,
+                    TaosEventId.PrimaryKeyFound,
                     _resourceManager.GetString("LogFoundPrimaryKey")));
 
         /// <summary>
@@ -186,12 +186,12 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Internal
         /// </summary>
         public static readonly EventDefinition<string, string> LogFoundUniqueConstraint
             = new EventDefinition<string, string>(
-                SqliteEventId.UniqueConstraintFound,
+                TaosEventId.UniqueConstraintFound,
                 LogLevel.Debug,
-                "SqliteEventId.UniqueConstraintFound",
+                "TaosEventId.UniqueConstraintFound",
                 LoggerMessage.Define<string, string>(
                     LogLevel.Debug,
-                    SqliteEventId.UniqueConstraintFound,
+                    TaosEventId.UniqueConstraintFound,
                     _resourceManager.GetString("LogFoundUniqueConstraint")));
 
         private static string GetString(string name, params string[] formatterNames)

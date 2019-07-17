@@ -5,19 +5,19 @@ using System.Data;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteDecimalTypeMapping : DecimalTypeMapping
+    public class TaosDecimalTypeMapping : DecimalTypeMapping
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteDecimalTypeMapping([NotNull] string storeType, DbType? dbType = null)
+        public TaosDecimalTypeMapping([NotNull] string storeType, DbType? dbType = null)
             : base(storeType, dbType)
         {
         }
@@ -26,7 +26,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        protected SqliteDecimalTypeMapping(RelationalTypeMappingParameters parameters)
+        protected TaosDecimalTypeMapping(RelationalTypeMappingParameters parameters)
             : base(parameters)
         {
         }
@@ -37,7 +37,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         /// <param name="parameters"> The parameters for this mapping. </param>
         /// <returns> The newly created mapping. </returns>
         protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-            => new SqliteDecimalTypeMapping(parameters);
+            => new TaosDecimalTypeMapping(parameters);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used

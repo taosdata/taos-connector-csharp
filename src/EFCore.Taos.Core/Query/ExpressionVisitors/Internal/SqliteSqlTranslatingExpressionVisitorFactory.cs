@@ -7,19 +7,19 @@ using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.Expressions;
 using Microsoft.EntityFrameworkCore.Query.ExpressionVisitors;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionVisitors.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Query.ExpressionVisitors.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteSqlTranslatingExpressionVisitorFactory : SqlTranslatingExpressionVisitorFactory
+    public class TaosSqlTranslatingExpressionVisitorFactory : SqlTranslatingExpressionVisitorFactory
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteSqlTranslatingExpressionVisitorFactory(
+        public TaosSqlTranslatingExpressionVisitorFactory(
             [NotNull] SqlTranslatingExpressionVisitorDependencies dependencies)
             : base(dependencies)
         {
@@ -34,7 +34,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionVisitors.Internal
             SelectExpression targetSelectExpression = null,
             Expression topLevelPredicate = null,
             bool inProjection = false)
-            => new SqliteSqlTranslatingExpressionVisitor(
+            => new TaosSqlTranslatingExpressionVisitor(
                 Dependencies, queryModelVisitor, targetSelectExpression, topLevelPredicate, inProjection);
     }
 }

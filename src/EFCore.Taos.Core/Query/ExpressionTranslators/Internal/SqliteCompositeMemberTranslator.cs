@@ -5,28 +5,28 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Query.ExpressionTranslators;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionTranslators.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Query.ExpressionTranslators.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteCompositeMemberTranslator : RelationalCompositeMemberTranslator
+    public class TaosCompositeMemberTranslator : RelationalCompositeMemberTranslator
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteCompositeMemberTranslator([NotNull] RelationalCompositeMemberTranslatorDependencies dependencies)
+        public TaosCompositeMemberTranslator([NotNull] RelationalCompositeMemberTranslatorDependencies dependencies)
             : base(dependencies)
         {
-            var sqliteTranslators = new List<IMemberTranslator>
+            var TaosTranslators = new List<IMemberTranslator>
             {
-                new SqliteDateTimeMemberTranslator(),
-                new SqliteStringLengthTranslator()
+                new TaosDateTimeMemberTranslator(),
+                new TaosStringLengthTranslator()
             };
 
-            AddTranslators(sqliteTranslators);
+            AddTranslators(TaosTranslators);
         }
     }
 }

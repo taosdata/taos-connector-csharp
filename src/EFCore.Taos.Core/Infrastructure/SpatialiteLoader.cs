@@ -9,7 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using JetBrains.Annotations;
-using Microsoft.Data.Sqlite;
+using Maikebing.Data.Taos;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyModel;
 using RuntimeEnvironment = Microsoft.DotNet.PlatformAbstractions.RuntimeEnvironment;
@@ -58,7 +58,7 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
 
                 return true;
             }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1)
+            catch (TaosException ex) when (ex.TaosErrorCode == 1)
             {
                 return false;
             }
@@ -167,7 +167,7 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
 
             var extension = "mod_spatialite";
 
-            // Workaround ericsink/SQLitePCL.raw#225
+            // Workaround ericsink/TaosPCL.raw#225
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 extension += _sharedLibraryExtension;

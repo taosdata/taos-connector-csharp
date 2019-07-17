@@ -3,8 +3,6 @@
 
 using System;
 using System.Data.Common;
-using Maikebing.Data.Taos.Properties;
-using TaosPCL;
 
 namespace Maikebing.Data.Taos
 {
@@ -57,29 +55,9 @@ namespace Maikebing.Data.Taos
         /// <remarks>
         ///     No exception is thrown for non-error result codes.
         /// </remarks>
-        public static void ThrowExceptionForRC(int rc, Taos3 db)
+        public static void ThrowExceptionForRC(int rc ,object db)
         {
-            if (rc == raw.Taos_OK
-                || rc == raw.Taos_ROW
-                || rc == raw.Taos_DONE)
-            {
-                return;
-            }
-
-            string message;
-            int extendedErrorCode;
-            if (db == null || db.ptr == IntPtr.Zero || rc != raw.Taos3_errcode(db))
-            {
-                message = raw.Taos3_errstr(rc) + " " + Resources.DefaultNativeError;
-                extendedErrorCode = rc;
-            }
-            else
-            {
-                message = raw.Taos3_errmsg(db);
-                extendedErrorCode = raw.Taos3_extended_errcode(db);
-            }
-
-            throw new TaosException(Resources.TaosNativeError(rc, message), rc, extendedErrorCode);
+           
         }
     }
 }

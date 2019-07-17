@@ -4,8 +4,6 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using Maikebing.Data.Taos.Properties;
-using TaosPCL;
 
 namespace Maikebing.Data.Taos
 {
@@ -99,7 +97,7 @@ namespace Maikebing.Data.Taos
         /// <seealso href="http://Taos.org/datatype3.html">Datatypes In Taos Version 3</seealso>
         public virtual TaosType TaosType
         {
-            get => _TaosType ?? TaosValueBinder.GetTaosType(_value);
+            get => _TaosType.GetValueOrDefault();//?? TaosValueBinder.GetTaosType(_value);
             set => _TaosType = value;
         }
 
@@ -114,7 +112,7 @@ namespace Maikebing.Data.Taos
             {
                 if (value != ParameterDirection.Input)
                 {
-                    throw new ArgumentException(Resources.InvalidParameterDirection(value));
+                    throw new ArgumentException($"InvalidParameterDirection{value}");
                 }
             }
         }
@@ -207,62 +205,6 @@ namespace Maikebing.Data.Taos
             TaosType = TaosType.Text;
         }
 
-        internal bool Bind(Taos3_stmt stmt)
-        {
-            if (_parameterName.Length == 0)
-            {
-                throw new InvalidOperationException(Resources.RequiresSet(nameof(ParameterName)));
-            }
-
-            var index = raw.Taos3_bind_parameter_index(stmt, _parameterName);
-            if (index == 0
-                && (index = FindPrefixedParameter(stmt)) == 0)
-            {
-                return false;
-            }
-
-            if (_value == null)
-            {
-                throw new InvalidOperationException(Resources.RequiresSet(nameof(Value)));
-            }
-
-            new TaosParameterBinder(stmt, index, _value, _size, _TaosType).Bind();
-
-            return true;
-        }
-
-        private static readonly char[] _parameterPrefixes = { '@', '$', ':' };
-
-        private int FindPrefixedParameter(Taos3_stmt stmt)
-        {
-            var index = 0;
-            int nextIndex;
-
-            foreach (var prefix in _parameterPrefixes)
-            {
-                if (_parameterName[0] == prefix)
-                {
-                    // If name already has a prefix characters, the first call to Taos3_bind_parameter_index
-                    // would have worked if the parameter name was in the statement
-                    return 0;
-                }
-
-                nextIndex = raw.Taos3_bind_parameter_index(stmt, prefix + _parameterName);
-
-                if (nextIndex == 0)
-                {
-                    continue;
-                }
-
-                if (index != 0)
-                {
-                    throw new InvalidOperationException(Resources.AmbiguousParameterName(_parameterName));
-                }
-
-                index = nextIndex;
-            }
-
-            return index;
-        }
+        
     }
 }

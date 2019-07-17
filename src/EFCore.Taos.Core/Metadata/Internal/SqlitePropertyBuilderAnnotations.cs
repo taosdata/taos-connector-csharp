@@ -5,19 +5,19 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Metadata.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Metadata.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqlitePropertyBuilderAnnotations : SqlitePropertyAnnotations
+    public class TaosPropertyBuilderAnnotations : TaosPropertyAnnotations
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqlitePropertyBuilderAnnotations(
+        public TaosPropertyBuilderAnnotations(
             [NotNull] InternalPropertyBuilder internalBuilder,
             ConfigurationSource configurationSource)
             : base(new RelationalAnnotationsBuilder(internalBuilder, configurationSource))

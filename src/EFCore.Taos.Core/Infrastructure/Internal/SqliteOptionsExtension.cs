@@ -8,13 +8,13 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Infrastructure.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteOptionsExtension : RelationalOptionsExtension, IDbContextOptionsExtensionWithDebugInfo
+    public class TaosOptionsExtension : RelationalOptionsExtension, IDbContextOptionsExtensionWithDebugInfo
     {
         private bool _enforceForeignKeys = true;
         private bool _loadSpatialite;
@@ -24,7 +24,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteOptionsExtension()
+        public TaosOptionsExtension()
         {
         }
 
@@ -34,7 +34,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        protected SqliteOptionsExtension([NotNull] SqliteOptionsExtension copyFrom)
+        protected TaosOptionsExtension([NotNull] TaosOptionsExtension copyFrom)
             : base(copyFrom)
         {
             _enforceForeignKeys = copyFrom._enforceForeignKeys;
@@ -46,7 +46,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         protected override RelationalOptionsExtension Clone()
-            => new SqliteOptionsExtension(this);
+            => new TaosOptionsExtension(this);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -64,9 +64,9 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public virtual SqliteOptionsExtension WithEnforceForeignKeys(bool enforceForeignKeys)
+        public virtual TaosOptionsExtension WithEnforceForeignKeys(bool enforceForeignKeys)
         {
-            var clone = (SqliteOptionsExtension)Clone();
+            var clone = (TaosOptionsExtension)Clone();
 
             clone._enforceForeignKeys = enforceForeignKeys;
 
@@ -77,9 +77,9 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public virtual SqliteOptionsExtension WithLoadSpatialite(bool loadSpatialite)
+        public virtual TaosOptionsExtension WithLoadSpatialite(bool loadSpatialite)
         {
-            var clone = (SqliteOptionsExtension)Clone();
+            var clone = (TaosOptionsExtension)Clone();
 
             clone._loadSpatialite = loadSpatialite;
 
@@ -94,7 +94,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal
         {
             Check.NotNull(services, nameof(services));
 
-            services.AddEntityFrameworkSqlite();
+            services.AddEntityFrameworkTaos();
 
             return true;
         }
@@ -105,7 +105,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal
         /// </summary>
         public virtual void PopulateDebugInfo(IDictionary<string, string> debugInfo)
         {
-            debugInfo["Sqlite"] = "1";
+            debugInfo["Taos"] = "1";
         }
 
         /// <summary>

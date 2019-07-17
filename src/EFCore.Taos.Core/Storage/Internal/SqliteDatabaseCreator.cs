@@ -3,30 +3,30 @@
 
 using System.IO;
 using JetBrains.Annotations;
-using Microsoft.Data.Sqlite;
+using Maikebing.Data.Taos;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteDatabaseCreator : RelationalDatabaseCreator
+    public class TaosDatabaseCreator : RelationalDatabaseCreator
     {
         // ReSharper disable once InconsistentNaming
-        private const int SQLITE_CANTOPEN = 14;
+        private const int Taos_CANTOPEN = 14;
 
-        private readonly ISqliteRelationalConnection _connection;
+        private readonly ITaosRelationalConnection _connection;
         private readonly IRawSqlCommandBuilder _rawSqlCommandBuilder;
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteDatabaseCreator(
+        public TaosDatabaseCreator(
             [NotNull] RelationalDatabaseCreatorDependencies dependencies,
-            [NotNull] ISqliteRelationalConnection connection,
+            [NotNull] ITaosRelationalConnection connection,
             [NotNull] IRawSqlCommandBuilder rawSqlCommandBuilder)
             : base(dependencies)
         {
@@ -56,7 +56,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
                 {
                     readOnlyConnection.Open(errorsExpected: true);
                 }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == SQLITE_CANTOPEN)
+                catch (TaosException ex) when (ex.TaosErrorCode == Taos_CANTOPEN)
                 {
                     return false;
                 }
@@ -72,7 +72,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         protected override bool HasTables()
         {
             var count = (long)_rawSqlCommandBuilder
-                .Build("SELECT COUNT(*) FROM \"sqlite_master\" WHERE \"type\" = 'table' AND \"rootpage\" IS NOT NULL;")
+                .Build("SELECT COUNT(*) FROM \"Taos_master\" WHERE \"type\" = 'table' AND \"rootpage\" IS NOT NULL;")
                 .ExecuteScalar(Dependencies.Connection);
 
             return count != 0;

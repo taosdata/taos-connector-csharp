@@ -3,18 +3,18 @@
 
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Scaffolding;
-using Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal;
-using Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Design.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Design.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteDesignTimeServices : IDesignTimeServices
+    public class TaosDesignTimeServices : IDesignTimeServices
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
@@ -22,9 +22,9 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Design.Internal
         /// </summary>
         public virtual void ConfigureDesignTimeServices(IServiceCollection serviceCollection)
             => serviceCollection
-                .AddSingleton<IRelationalTypeMappingSource, SqliteTypeMappingSource>()
-                .AddSingleton<IDatabaseModelFactory, SqliteDatabaseModelFactory>()
-                .AddSingleton<IProviderConfigurationCodeGenerator, SqliteCodeGenerator>()
+                .AddSingleton<IRelationalTypeMappingSource, TaosTypeMappingSource>()
+                .AddSingleton<IDatabaseModelFactory, TaosDatabaseModelFactory>()
+                .AddSingleton<IProviderConfigurationCodeGenerator, TaosCodeGenerator>()
                 .AddSingleton<IAnnotationCodeGenerator, AnnotationCodeGenerator>();
     }
 }

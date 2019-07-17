@@ -16,13 +16,13 @@ using Remotion.Linq;
 using Remotion.Linq.Clauses;
 using Remotion.Linq.Clauses.ResultOperators;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Query.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Query.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteResultOperatorHandler : RelationalResultOperatorHandler
+    public class TaosResultOperatorHandler : RelationalResultOperatorHandler
     {
         private static readonly IDictionary<Type, IReadOnlyCollection<Type>> _restrictedOperators
             = new Dictionary<Type, IReadOnlyCollection<Type>>
@@ -57,7 +57,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Query.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteResultOperatorHandler(
+        public TaosResultOperatorHandler(
             [NotNull] IModel model,
             [NotNull] ISqlTranslatingExpressionVisitorFactory sqlTranslatingExpressionVisitorFactory,
             [NotNull] ISelectExpressionFactory selectExpressionFactory,

@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
 using System.Text;
-using Maikebing.Data.Taos.Properties;
-using TaosPCL;
+using Newtonsoft.Json.Linq;
 
 namespace Maikebing.Data.Taos
 {
@@ -20,28 +20,18 @@ namespace Maikebing.Data.Taos
     {
         private readonly TaosCommand _command;
         private readonly bool _closeConnection;
-        private readonly Queue<(Taos3_stmt stmt, bool)> _stmtQueue;
-        private Taos3_stmt _stmt;
-        private TaosDataRecord _record;
         private bool _hasRows;
         private bool _stepped;
         private bool _done;
-        private bool _closed;
 
         internal TaosDataReader(
             TaosCommand command,
-            Queue<(Taos3_stmt, bool)> stmtQueue,
             int recordsAffected,
             bool closeConnection)
-        {
-            if (stmtQueue.Count != 0)
-            {
-                (_stmt, _hasRows) = stmtQueue.Dequeue();
-                _record = new TaosDataRecord(_stmt, command.Connection);
-            }
+        { 
 
             _command = command;
-            _stmtQueue = stmtQueue;
+       
             RecordsAffected = recordsAffected;
             _closeConnection = closeConnection;
         }
@@ -50,25 +40,20 @@ namespace Maikebing.Data.Taos
         ///     Gets the depth of nesting for the current row. Always zero.
         /// </summary>
         /// <value>The depth of nesting for the current row.</value>
-        public override int Depth
-            => 0;
+        public override int Depth             => 0;
+
+        int _fieldCount;
+        private bool _closed;
+        private IEnumerator<JToken> _record;
 
         /// <summary>
         ///     Gets the number of columns in the current row.
         /// </summary>
         /// <value>The number of columns in the current row.</value>
-        public override int FieldCount
-            => _closed
-                ? throw new InvalidOperationException(Resources.DataReaderClosed(nameof(FieldCount)))
-                : _record.FieldCount;
+        public override int FieldCount => _fieldCount;
 
-        /// <summary>
-        ///     Gets a handle to underlying prepared statement.
-        /// </summary>
-        /// <value>A handle to underlying prepared statement.</value>
-        /// <seealso href="http://Taos.org/c3ref/stmt.html">Prepared Statement Object</seealso>
-        public virtual Taos3_stmt Handle
-            => _stmt;
+
+     
 
         /// <summary>
         ///     Gets a value indicating whether the data reader contains any rows.
@@ -96,7 +81,7 @@ namespace Maikebing.Data.Taos
         /// <param name="name">The name of the column. The value is case-sensitive.</param>
         /// <returns>The value.</returns>
         public override object this[string name]
-            => _record[name];
+            => _record.Current[name];
 
         /// <summary>
         ///     Gets the value of the specified column.
@@ -104,7 +89,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value.</returns>
         public override object this[int ordinal]
-            => _record[ordinal];
+            =>  _record.Current[ordinal];
 
         /// <summary>
         ///     Gets an enumerator that can be used to iterate through the rows in the data reader.
@@ -121,7 +106,7 @@ namespace Maikebing.Data.Taos
         {
             if (_closed)
             {
-                throw new InvalidOperationException(Resources.DataReaderClosed(nameof(Read)));
+                throw new InvalidOperationException($"DataReaderClosed{nameof(Read)}");
             }
 
             if (!_stepped)
@@ -131,11 +116,9 @@ namespace Maikebing.Data.Taos
                 return _hasRows;
             }
 
-            var rc = raw.Taos3_step(_stmt);
-            TaosException.ThrowExceptionForRC(rc, _command.Connection.Handle);
-            _record.Clear();
+        
+            _record.Reset();
 
-            _done = rc == raw.Taos_DONE;
 
             return !_done;
         }
@@ -146,17 +129,7 @@ namespace Maikebing.Data.Taos
         /// <returns>true if there are more result sets; otherwise, false.</returns>
         public override bool NextResult()
         {
-            if (_stmtQueue.Count == 0)
-            {
-                return false;
-            }
-
-            raw.Taos3_reset(_stmt);
-
-            (_stmt, _hasRows) = _stmtQueue.Dequeue();
-            _record = new TaosDataRecord(_stmt, _command.Connection);
-            _stepped = false;
-            _done = false;
+          
 
             return true;
         }
@@ -182,18 +155,7 @@ namespace Maikebing.Data.Taos
 
             _command.DataReader = null;
 
-            if (_stmt != null)
-            {
-                raw.Taos3_reset(_stmt);
-                _stmt = null;
-                _record = null;
-            }
-
-            while (_stmtQueue.Count != 0)
-            {
-                raw.Taos3_reset(_stmtQueue.Dequeue().stmt);
-            }
-
+        
             _closed = true;
 
             if (_closeConnection)
@@ -211,10 +173,10 @@ namespace Maikebing.Data.Taos
         {
             if (_closed)
             {
-                throw new InvalidOperationException(Resources.DataReaderClosed(nameof(GetName)));
+                throw new InvalidOperationException($"DataReaderClosed{nameof(GetName)}");
             }
 
-            return _record.GetName(ordinal);
+            return "";//_recordordinal);
         }
 
         /// <summary>
@@ -223,7 +185,7 @@ namespace Maikebing.Data.Taos
         /// <param name="name">The name of the column.</param>
         /// <returns>The zero-based column ordinal.</returns>
         public override int GetOrdinal(string name)
-            => _record.GetOrdinal(name);
+            =>  0;// _record.Current;
 
         /// <summary>
         ///     Gets the declared data type name of the specified column. The storage class is returned for computed
@@ -237,10 +199,10 @@ namespace Maikebing.Data.Taos
         {
             if (_closed)
             {
-                throw new InvalidOperationException(Resources.DataReaderClosed(nameof(GetDataTypeName)));
+                throw new InvalidOperationException($"DataReaderClosed{nameof(GetDataTypeName)}");
             }
 
-            return _record.GetDataTypeName(ordinal);
+            return  _record.Current[ordinal].Type.ToString();
         }
 
         /// <summary>
@@ -252,10 +214,10 @@ namespace Maikebing.Data.Taos
         {
             if (_closed)
             {
-                throw new InvalidOperationException(Resources.DataReaderClosed(nameof(GetFieldType)));
+                throw new InvalidOperationException($"DataReaderClosed{nameof(GetFieldType)}");
             }
 
-            return _record.GetFieldType(ordinal);
+            return Type.GetType( _record.Current[ordinal].Type.ToString());
         }
 
         /// <summary>
@@ -264,11 +226,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>true if the specified column is <see cref="DBNull" />; otherwise, false.</returns>
         public override bool IsDBNull(int ordinal)
-            => _closed
-                ? throw new InvalidOperationException(Resources.DataReaderClosed(nameof(IsDBNull)))
-                : !_stepped || _done
-                    ? throw new InvalidOperationException(Resources.NoData)
-                    : _record.IsDBNull(ordinal);
+                => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="bool" />.
@@ -276,7 +234,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override bool GetBoolean(int ordinal)
-            => _record.GetBoolean(ordinal);
+            => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="byte" />.
@@ -284,7 +242,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override byte GetByte(int ordinal)
-            => _record.GetByte(ordinal);
+           => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="char" />.
@@ -292,7 +250,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override char GetChar(int ordinal)
-            => _record.GetChar(ordinal);
+                     => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="DateTime" />.
@@ -300,7 +258,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override DateTime GetDateTime(int ordinal)
-            => _record.GetDateTime(ordinal);
+                => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="DateTimeOffset" />.
@@ -308,7 +266,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public virtual DateTimeOffset GetDateTimeOffset(int ordinal)
-            => _record.GetDateTimeOffset(ordinal);
+                  => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="TimeSpan" />.
@@ -316,7 +274,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public virtual TimeSpan GetTimeSpan(int ordinal)
-            => _record.GetTimeSpan(ordinal);
+                    => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="decimal" />.
@@ -324,7 +282,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override decimal GetDecimal(int ordinal)
-            => _record.GetDecimal(ordinal);
+                   => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="double" />.
@@ -332,7 +290,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override double GetDouble(int ordinal)
-            => _record.GetDouble(ordinal);
+                => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="float" />.
@@ -340,7 +298,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override float GetFloat(int ordinal)
-            => _record.GetFloat(ordinal);
+                      => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="Guid" />.
@@ -348,7 +306,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override Guid GetGuid(int ordinal)
-            => _record.GetGuid(ordinal);
+                  => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="short" />.
@@ -356,7 +314,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override short GetInt16(int ordinal)
-            => _record.GetInt16(ordinal);
+                => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="int" />.
@@ -364,7 +322,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override int GetInt32(int ordinal)
-            => _record.GetInt32(ordinal);
+                    => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="long" />.
@@ -372,7 +330,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override long GetInt64(int ordinal)
-            => _record.GetInt64(ordinal);
+                   => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="string" />.
@@ -380,7 +338,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override string GetString(int ordinal)
-            => _record.GetString(ordinal);
+                    => throw new NotImplementedException();
 
         /// <summary>
         ///     Reads a stream of bytes from the specified column. Not supported.
@@ -392,7 +350,7 @@ namespace Maikebing.Data.Taos
         /// <param name="length">The maximum number of bytes to read.</param>
         /// <returns>The actual number of bytes read.</returns>
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
-            => _record.GetBytes(ordinal, dataOffset, buffer, bufferOffset, length);
+                      => throw new NotImplementedException();
 
         /// <summary>
         ///     Reads a stream of characters from the specified column. Not supported.
@@ -404,7 +362,7 @@ namespace Maikebing.Data.Taos
         /// <param name="length">The maximum number of characters to read.</param>
         /// <returns>The actual number of characters read.</returns>
         public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
-            => _record.GetChars(ordinal, dataOffset, buffer, bufferOffset, length);
+           => throw new NotImplementedException();
 
         /// <summary>
         ///     Retrieves data as a Stream. If the reader includes rowid (or any of its aliases), a
@@ -414,7 +372,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The returned object.</returns>
         public override Stream GetStream(int ordinal)
-            => _record.GetStream(ordinal);
+              => throw new NotImplementedException();
 
         /// <summary>
         ///     Gets the value of the specified column.
@@ -427,10 +385,10 @@ namespace Maikebing.Data.Taos
             if (typeof(T) == typeof(DBNull)
                 && (!_stepped || _done))
             {
-                throw new InvalidOperationException(Resources.NoData);
+                throw new InvalidOperationException("NoData");
             }
-
-            return _record.GetFieldValue<T>(ordinal);
+             throw new NotImplementedException();
+            return default ( T );//         
         }
 
         /// <summary>
@@ -442,14 +400,14 @@ namespace Maikebing.Data.Taos
         {
             if (_closed)
             {
-                throw new InvalidOperationException(Resources.DataReaderClosed(nameof(GetValue)));
+                throw new InvalidOperationException($"DataReaderClosed{nameof(GetValue)}");
             }
             if (!_stepped || _done)
             {
-                throw new InvalidOperationException(Resources.NoData);
+                throw new InvalidOperationException("NoData");
             }
 
-            return _record.GetValue(ordinal);
+            return _record.Current.Values(ordinal);
         }
 
         /// <summary>
@@ -458,7 +416,7 @@ namespace Maikebing.Data.Taos
         /// <param name="values">An array into which the values are copied.</param>
         /// <returns>The number of values copied into the array.</returns>
         public override int GetValues(object[] values)
-            => _record.GetValues(values);
+            => _record.Current.Values().Count();
 
         /// <summary>
         ///     Returns a System.Data.DataTable that describes the column metadata of the System.Data.Common.DbDataReader.
@@ -517,68 +475,68 @@ namespace Maikebing.Data.Taos
 
             for (var i = 0; i < FieldCount; i++)
             {
-                var schemaRow = schemaTable.NewRow();
-                schemaRow[ColumnName] = GetName(i);
-                schemaRow[ColumnOrdinal] = i;
-                schemaRow[ColumnSize] = DBNull.Value;
-                schemaRow[NumericPrecision] = DBNull.Value;
-                schemaRow[NumericScale] = DBNull.Value;
-                schemaRow[BaseServerName] = _command.Connection.DataSource;
-                var databaseName = raw.Taos3_column_database_name(_stmt, i);
-                schemaRow[BaseCatalogName] = databaseName;
-                var columnName = raw.Taos3_column_origin_name(_stmt, i);
-                schemaRow[BaseColumnName] = columnName;
-                schemaRow[BaseSchemaName] = DBNull.Value;
-                var tableName = raw.Taos3_column_table_name(_stmt, i);
-                schemaRow[BaseTableName] = tableName;
-                schemaRow[DataType] = GetFieldType(i);
-                schemaRow[DataTypeName] = GetDataTypeName(i);
-                schemaRow[IsAliased] = columnName != GetName(i);
-                schemaRow[IsExpression] = columnName == null;
-                schemaRow[IsLong] = DBNull.Value;
+                //var schemaRow = schemaTable.NewRow();
+                //schemaRow[ColumnName] = GetName(i);
+                //schemaRow[ColumnOrdinal] = i;
+                //schemaRow[ColumnSize] = DBNull.Value;
+                //schemaRow[NumericPrecision] = DBNull.Value;
+                //schemaRow[NumericScale] = DBNull.Value;
+                //schemaRow[BaseServerName] = _command.Connection.DataSource;
+                //var databaseName = raw.Taos3_column_database_name(_stmt, i);
+                //schemaRow[BaseCatalogName] = databaseName;
+                //var columnName = raw.Taos3_column_origin_name(_stmt, i);
+                //schemaRow[BaseColumnName] = columnName;
+                //schemaRow[BaseSchemaName] = DBNull.Value;
+                //var tableName = raw.Taos3_column_table_name(_stmt, i);
+                //schemaRow[BaseTableName] = tableName;
+                //schemaRow[DataType] = GetFieldType(i);
+                //schemaRow[DataTypeName] = GetDataTypeName(i);
+                //schemaRow[IsAliased] = columnName != GetName(i);
+                //schemaRow[IsExpression] = columnName == null;
+                //schemaRow[IsLong] = DBNull.Value;
 
-                if (!string.IsNullOrEmpty(tableName)
-                    && !string.IsNullOrEmpty(columnName))
-                {
-                    using (var command = _command.Connection.CreateCommand())
-                    {
-                        command.CommandText = new StringBuilder()
-                            .AppendLine("SELECT COUNT(*)")
-                            .AppendLine("FROM pragma_index_list($table) i, pragma_index_info(i.name) c")
-                            .AppendLine("WHERE \"unique\" = 1 AND c.name = $column AND")
-                            .AppendLine("NOT EXISTS (SELECT * FROM pragma_index_info(i.name) c2 WHERE c2.name != c.name);").ToString();
-                        command.Parameters.AddWithValue("$table", tableName);
-                        command.Parameters.AddWithValue("$column", columnName);
+                //if (!string.IsNullOrEmpty(tableName)
+                //    && !string.IsNullOrEmpty(columnName))
+                //{
+                //    using (var command = _command.Connection.CreateCommand())
+                //    {
+                //        command.CommandText = new StringBuilder()
+                //            .AppendLine("SELECT COUNT(*)")
+                //            .AppendLine("FROM pragma_index_list($table) i, pragma_index_info(i.name) c")
+                //            .AppendLine("WHERE \"unique\" = 1 AND c.name = $column AND")
+                //            .AppendLine("NOT EXISTS (SELECT * FROM pragma_index_info(i.name) c2 WHERE c2.name != c.name);").ToString();
+                //        command.Parameters.AddWithValue("$table", tableName);
+                //        command.Parameters.AddWithValue("$column", columnName);
 
-                        var cnt = (long)command.ExecuteScalar();
-                        schemaRow[IsUnique] = cnt != 0;
+                //        var cnt = (long)command.ExecuteScalar();
+                //        schemaRow[IsUnique] = cnt != 0;
 
-                        command.Parameters.Clear();
-                        var columnType = "typeof(\"" + columnName.Replace("\"", "\"\"") + "\")";
-                        command.CommandText = new StringBuilder()
-                            .AppendLine($"SELECT {columnType}")
-                            .AppendLine($"FROM \"{tableName}\"")
-                            .AppendLine($"WHERE {columnType} != 'null'")
-                            .AppendLine($"GROUP BY {columnType}")
-                            .AppendLine("ORDER BY count() DESC")
-                            .AppendLine("LIMIT 1;").ToString();
+                //        command.Parameters.Clear();
+                //        var columnType = "typeof(\"" + columnName.Replace("\"", "\"\"") + "\")";
+                //        command.CommandText = new StringBuilder()
+                //            .AppendLine($"SELECT {columnType}")
+                //            .AppendLine($"FROM \"{tableName}\"")
+                //            .AppendLine($"WHERE {columnType} != 'null'")
+                //            .AppendLine($"GROUP BY {columnType}")
+                //            .AppendLine("ORDER BY count() DESC")
+                //            .AppendLine("LIMIT 1;").ToString();
 
-                        var type = (string)command.ExecuteScalar();
-                        schemaRow[DataType] = TaosDataRecord.GetFieldType(type);
-                    }
+                //        var type = (string)command.ExecuteScalar();
+                //        schemaRow[DataType] = TaosDataRecord.GetFieldType(type);
+                //    }
 
-                    if (!string.IsNullOrEmpty(databaseName))
-                    {
-                        var rc = raw.Taos3_table_column_metadata(_command.Connection.Handle, databaseName, tableName, columnName, out var dataType, out var collSeq, out var notNull, out var primaryKey, out var autoInc);
-                        TaosException.ThrowExceptionForRC(rc, _command.Connection.Handle);
+                //    if (!string.IsNullOrEmpty(databaseName))
+                //    {
+                //        var rc = raw.Taos3_table_column_metadata(_command.Connection.Handle, databaseName, tableName, columnName, out var dataType, out var collSeq, out var notNull, out var primaryKey, out var autoInc);
+                //        TaosException.ThrowExceptionForRC(rc, _command.Connection.Handle);
 
-                        schemaRow[IsKey] = primaryKey != 0;
-                        schemaRow[AllowDBNull] = notNull == 0;
-                        schemaRow[IsAutoIncrement] = autoInc != 0;
-                    }
-                }
+                //        schemaRow[IsKey] = primaryKey != 0;
+                //        schemaRow[AllowDBNull] = notNull == 0;
+                //        schemaRow[IsAutoIncrement] = autoInc != 0;
+                //    }
+                //}
 
-                schemaTable.Rows.Add(schemaRow);
+             //   schemaTable.Rows.Add(schemaRow);
             }
 
             return schemaTable;

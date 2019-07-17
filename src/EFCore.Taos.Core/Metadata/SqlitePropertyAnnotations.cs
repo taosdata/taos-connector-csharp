@@ -2,21 +2,21 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using JetBrains.Annotations;
-using Microsoft.EntityFrameworkCore.Sqlite.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Taos.Metadata.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Metadata
 {
     /// <summary>
-    ///     Properties for SQLite-specific annotations accessed through
-    ///     <see cref="SqliteMetadataExtensions.Sqlite(IMutableProperty)" />.
+    ///     Properties for Taos-specific annotations accessed through
+    ///     <see cref="TaosMetadataExtensions.Taos(IMutableProperty)" />.
     /// </summary>
-    public class SqlitePropertyAnnotations : RelationalPropertyAnnotations, ISqlitePropertyAnnotations
+    public class TaosPropertyAnnotations : RelationalPropertyAnnotations, ITaosPropertyAnnotations
     {
         /// <summary>
         ///     Constructs an instance for annotations of the given <see cref="IProperty" />.
         /// </summary>
         /// <param name="property"> The <see cref="IProperty" /> to use. </param>
-        public SqlitePropertyAnnotations([NotNull] IProperty property)
+        public TaosPropertyAnnotations([NotNull] IProperty property)
             : base(property)
         {
         }
@@ -28,7 +28,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata
         /// <param name="annotations">
         ///     The <see cref="RelationalAnnotations" /> helper representing the <see cref="IProperty" /> to annotate.
         /// </param>
-        protected SqlitePropertyAnnotations([NotNull] RelationalAnnotations annotations)
+        protected TaosPropertyAnnotations([NotNull] RelationalAnnotations annotations)
             : base(annotations)
         {
         }
@@ -38,7 +38,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata
         /// </summary>
         public virtual int? Srid
         {
-            get => (int?)Annotations.Metadata[SqliteAnnotationNames.Srid];
+            get => (int?)Annotations.Metadata[TaosAnnotationNames.Srid];
             set => SetSrid(value);
         }
 
@@ -48,14 +48,14 @@ namespace Microsoft.EntityFrameworkCore.Metadata
         /// <param name="value"> The SRID. </param>
         /// <returns> true if the annotation was set; otherwise, false. </returns>
         protected virtual bool SetSrid(int? value)
-            => Annotations.SetAnnotation(SqliteAnnotationNames.Srid, value);
+            => Annotations.SetAnnotation(TaosAnnotationNames.Srid, value);
 
         /// <summary>
         ///     Gets or sets the dimension to use when creating a column for this property.
         /// </summary>
         public virtual string Dimension
         {
-            get => (string)Annotations.Metadata[SqliteAnnotationNames.Dimension];
+            get => (string)Annotations.Metadata[TaosAnnotationNames.Dimension];
             set => SetDimension(value);
         }
 
@@ -65,6 +65,6 @@ namespace Microsoft.EntityFrameworkCore.Metadata
         /// <param name="value"> The dimension. </param>
         /// <returns> true if the annotation was set; otherwise, false. </returns>
         protected virtual bool SetDimension(string value)
-            => Annotations.SetAnnotation(SqliteAnnotationNames.Dimension, value);
+            => Annotations.SetAnnotation(TaosAnnotationNames.Dimension, value);
     }
 }

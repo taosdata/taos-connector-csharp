@@ -5,19 +5,19 @@ using System.Text;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteSqlGenerationHelper : RelationalSqlGenerationHelper
+    public class TaosSqlGenerationHelper : RelationalSqlGenerationHelper
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteSqlGenerationHelper([NotNull] RelationalSqlGenerationHelperDependencies dependencies)
+        public TaosSqlGenerationHelper([NotNull] RelationalSqlGenerationHelperDependencies dependencies)
             : base(dependencies)
         {
         }

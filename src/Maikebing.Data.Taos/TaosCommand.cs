@@ -71,7 +71,7 @@ namespace Maikebing.Data.Taos
             {
                 if (value != CommandType.Text)
                 {
-                    throw new ArgumentException(Resources.InvalidCommandType(value));
+                    throw new ArgumentException($"Invalid CommandType{value}");
                 }
             }
         }
@@ -87,12 +87,11 @@ namespace Maikebing.Data.Taos
             {
                 if (DataReader != null)
                 {
-                    throw new InvalidOperationException(Resources.SetRequiresNoOpenReader(nameof(CommandText)));
+                    throw new InvalidOperationException($"SetRequiresNoOpenReader{nameof(CommandText)}");
                 }
 
                 if (value != _commandText)
                 {
-                    DisposePreparedStatements();
                     _commandText = value;
                 }
             }
@@ -109,12 +108,11 @@ namespace Maikebing.Data.Taos
             {
                 if (DataReader != null)
                 {
-                    throw new InvalidOperationException(Resources.SetRequiresNoOpenReader(nameof(Connection)));
+                    throw new InvalidOperationException($"SetRequiresNoOpenReader{nameof(Connection)}");
                 }
 
                 if (value != _connection)
                 {
-                    DisposePreparedStatements();
 
                     _connection?.RemoveCommand(this);
                     _connection = value;
@@ -198,7 +196,6 @@ namespace Maikebing.Data.Taos
         /// </param>
         protected override void Dispose(bool disposing)
         {
-            DisposePreparedStatements(disposing);
 
             base.Dispose(disposing);
         }
@@ -224,33 +221,22 @@ namespace Maikebing.Data.Taos
         {
             if (_connection?.State != ConnectionState.Open)
             {
-                throw new InvalidOperationException(Resources.CallRequiresOpenConnection(nameof(Prepare)));
+                throw new InvalidOperationException($"CallRequiresOpenConnection{nameof(Prepare)}");
             }
 
             if (string.IsNullOrEmpty(_commandText))
             {
-                throw new InvalidOperationException(Resources.CallRequiresSetCommandText(nameof(Prepare)));
+                throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(Prepare)}");
             }
-
-            if (_preparedStatements.Count != 0)
-            {
-                return;
-            }
-
+ 
             var timer = Stopwatch.StartNew();
 
             try
             {
-                using (var enumerator = PrepareAndEnumerateStatements(timer).GetEnumerator())
-                {
-                    while (enumerator.MoveNext())
-                    {
-                    }
-                }
+                
             }
             catch
             {
-                DisposePreparedStatements();
 
                 throw;
             }
@@ -282,114 +268,113 @@ namespace Maikebing.Data.Taos
             if ((behavior & ~(CommandBehavior.Default | CommandBehavior.SequentialAccess | CommandBehavior.SingleResult
                               | CommandBehavior.SingleRow | CommandBehavior.CloseConnection)) != 0)
             {
-                throw new ArgumentException(Resources.InvalidCommandBehavior(behavior));
+                throw new ArgumentException($"InvalidCommandBehavior{behavior}");
             }
 
             if (DataReader != null)
             {
-                throw new InvalidOperationException(Resources.DataReaderOpen);
+                throw new InvalidOperationException($"DataReaderOpen");
             }
 
             if (_connection?.State != ConnectionState.Open)
             {
-                throw new InvalidOperationException(Resources.CallRequiresOpenConnection(nameof(ExecuteReader)));
+                throw new InvalidOperationException($"CallRequiresOpenConnection{nameof(ExecuteReader)}");
             }
 
             if (string.IsNullOrEmpty(_commandText))
             {
-                throw new InvalidOperationException(Resources.CallRequiresSetCommandText(nameof(ExecuteReader)));
+                throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(ExecuteReader)}");
             }
 
             if (Transaction != _connection.Transaction)
             {
                 throw new InvalidOperationException(
                     Transaction == null
-                        ? Resources.TransactionRequired
-                        : Resources.TransactionConnectionMismatch);
+                        ? "TransactionRequired"
+                        : "TransactionConnectionMismatch");
             }
             if (_connection.Transaction?.ExternalRollback == true)
             {
-                throw new InvalidOperationException(Resources.TransactionCompleted);
+                throw new InvalidOperationException("TransactionCompleted");
             }
 
             var hasChanges = false;
             var changes = 0;
             int rc;
-            var stmts = new Queue<(Taos3_stmt, bool)>();
-            var unprepared = _preparedStatements.Count == 0;
-            var timer = Stopwatch.StartNew();
+            //var stmts = new Queue<(Taos3_stmt, bool)>();
+            var unprepared=false;// _preparedStatements.Count == 0;
+            //var timer = Stopwatch.StartNew();
 
             try
             {
-                foreach (var stmt in unprepared
-                    ? PrepareAndEnumerateStatements(timer)
-                    : _preparedStatements)
-                {
-                    var boundParams = 0;
+                //    foreach (var stmt in unprepared
+                //        ? PrepareAndEnumerateStatements(timer)
+                //        : _preparedStatements)
+                //    {
+                //        var boundParams = 0;
 
-                    if (_parameters.IsValueCreated)
-                    {
-                        boundParams = _parameters.Value.Bind(stmt);
-                    }
+                //        if (_parameters.IsValueCreated)
+                //        {
+                //            boundParams = _parameters.Value.Bind(stmt);
+                //        }
 
-                    var expectedParams = raw.Taos3_bind_parameter_count(stmt);
-                    if (expectedParams != boundParams)
-                    {
-                        var unboundParams = new List<string>();
-                        for (var i = 1; i <= expectedParams; i++)
-                        {
-                            var name = raw.Taos3_bind_parameter_name(stmt, i);
+                //        var expectedParams = raw.Taos3_bind_parameter_count(stmt);
+                //        if (expectedParams != boundParams)
+                //        {
+                //            var unboundParams = new List<string>();
+                //            for (var i = 1; i <= expectedParams; i++)
+                //            {
+                //                var name = raw.Taos3_bind_parameter_name(stmt, i);
 
-                            if (_parameters.IsValueCreated
-                                || !_parameters.Value.Cast<TaosParameter>().Any(p => p.ParameterName == name))
-                            {
-                                unboundParams.Add(name);
-                            }
-                        }
+                //                if (_parameters.IsValueCreated
+                //                    || !_parameters.Value.Cast<TaosParameter>().Any(p => p.ParameterName == name))
+                //                {
+                //                    unboundParams.Add(name);
+                //                }
+                //            }
 
-                        throw new InvalidOperationException(Resources.MissingParameters(string.Join(", ", unboundParams)));
-                    }
+                //            throw new InvalidOperationException(Resources.MissingParameters(string.Join(", ", unboundParams)));
+                //        }
 
-                    while (IsBusy(rc = raw.Taos3_step(stmt)))
-                    {
-                        if (timer.ElapsedMilliseconds >= CommandTimeout * 1000)
-                        {
-                            break;
-                        }
+                //        while (IsBusy(rc = raw.Taos3_step(stmt)))
+                //        {
+                //            if (timer.ElapsedMilliseconds >= CommandTimeout * 1000)
+                //            {
+                //                break;
+                //            }
 
-                        raw.Taos3_reset(stmt);
+                //            raw.Taos3_reset(stmt);
 
-                        // TODO: Consider having an async path that uses Task.Delay()
-                        Thread.Sleep(150);
-                    }
+                //            // TODO: Consider having an async path that uses Task.Delay()
+                //            Thread.Sleep(150);
+                //        }
 
-                    TaosException.ThrowExceptionForRC(rc, _connection.Handle);
+                //        TaosException.ThrowExceptionForRC(rc, _connection.Handle);
 
-                    if (rc == raw.Taos_ROW
-                        // NB: This is only a heuristic to separate SELECT statements from INSERT/UPDATE/DELETE statements.
-                        //     It will result in false positives, but it's the best we can do without re-parsing SQL
-                        || raw.Taos3_stmt_readonly(stmt) != 0)
-                    {
-                        stmts.Enqueue((stmt, rc != raw.Taos_DONE));
-                    }
-                    else
-                    {
-                        raw.Taos3_reset(stmt);
-                        hasChanges = true;
-                        changes += raw.Taos3_changes(_connection.Handle);
-                    }
-                }
+                //        if (rc == raw.Taos_ROW
+                //            // NB: This is only a heuristic to separate SELECT statements from INSERT/UPDATE/DELETE statements.
+                //            //     It will result in false positives, but it's the best we can do without re-parsing SQL
+                //            || raw.Taos3_stmt_readonly(stmt) != 0)
+                //        {
+                //            stmts.Enqueue((stmt, rc != raw.Taos_DONE));
+                //        }
+                //        else
+                //        {
+                //            raw.Taos3_reset(stmt);
+                //            hasChanges = true;
+                //            changes += raw.Taos3_changes(_connection.Handle);
+                //        }
+                //    }
             }
             catch when (unprepared)
             {
-                DisposePreparedStatements();
 
                 throw;
             }
 
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
-
-            return DataReader = new TaosDataReader(this, stmts, hasChanges ? changes : -1, closeConnection);
+            //TODO: 这里要实现代码
+            return null;
         }
 
         /// <summary>
@@ -474,11 +459,11 @@ namespace Maikebing.Data.Taos
         {
             if (_connection?.State != ConnectionState.Open)
             {
-                throw new InvalidOperationException(Resources.CallRequiresOpenConnection(nameof(ExecuteNonQuery)));
+                throw new InvalidOperationException($"CallRequiresOpenConnection{nameof(ExecuteNonQuery)}");
             }
             if (_commandText == null)
             {
-                throw new InvalidOperationException(Resources.CallRequiresSetCommandText(nameof(ExecuteNonQuery)));
+                throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(ExecuteNonQuery)}");
             }
 
             var reader = ExecuteReader();
@@ -496,11 +481,11 @@ namespace Maikebing.Data.Taos
         {
             if (_connection?.State != ConnectionState.Open)
             {
-                throw new InvalidOperationException(Resources.CallRequiresOpenConnection(nameof(ExecuteScalar)));
+                throw new InvalidOperationException($"CallRequiresOpenConnection{nameof(ExecuteScalar)}");
             }
             if (_commandText == null)
             {
-                throw new InvalidOperationException(Resources.CallRequiresSetCommandText(nameof(ExecuteScalar)));
+                throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(ExecuteScalar)}");
             }
 
             using (var reader = ExecuteReader())
@@ -518,68 +503,6 @@ namespace Maikebing.Data.Taos
         {
         }
 
-        private IEnumerable<Taos3_stmt> PrepareAndEnumerateStatements(Stopwatch timer)
-        {
-            int rc;
-            Taos3_stmt stmt;
-            var tail = _commandText;
-            do
-            {
-                string nextTail;
-                while (IsBusy(rc = raw.Taos3_prepare_v2(_connection.Handle, tail, out stmt, out nextTail)))
-                {
-                    if (timer.ElapsedMilliseconds >= CommandTimeout * 1000)
-                    {
-                        break;
-                    }
-
-                    Thread.Sleep(150);
-                }
-                tail = nextTail;
-
-                TaosException.ThrowExceptionForRC(rc, _connection.Handle);
-
-                // Statement was empty, white space, or a comment
-                if (stmt.ptr == IntPtr.Zero)
-                {
-                    if (!string.IsNullOrEmpty(tail))
-                    {
-                        continue;
-                    }
-
-                    break;
-                }
-
-                _preparedStatements.Add(stmt);
-
-                yield return stmt;
-            }
-            while (!string.IsNullOrEmpty(tail));
-        }
-
-        private void DisposePreparedStatements(bool disposing = true)
-        {
-            if (disposing
-                && DataReader != null)
-            {
-                DataReader.Dispose();
-                DataReader = null;
-            }
-
-            if (_preparedStatements != null)
-            {
-                foreach (var stmt in _preparedStatements)
-                {
-                    stmt.Dispose();
-                }
-
-                _preparedStatements.Clear();
-            }
-        }
-
-        private static bool IsBusy(int rc)
-            => rc == raw.Taos_LOCKED
-                || rc == raw.Taos_BUSY
-                || rc == raw.Taos_LOCKED_SHAREDCACHE;
+      
     }
 }

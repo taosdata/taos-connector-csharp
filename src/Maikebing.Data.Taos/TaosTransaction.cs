@@ -4,8 +4,6 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using Maikebing.Data.Taos.Properties;
-using TaosPCL;
 
 namespace Maikebing.Data.Taos
 {
@@ -21,35 +19,18 @@ namespace Maikebing.Data.Taos
 
         internal TaosTransaction(TaosConnection connection, IsolationLevel isolationLevel)
         {
-            if ((isolationLevel == IsolationLevel.ReadUncommitted
-                 && connection.ConnectionStringBuilder.Cache != TaosCacheMode.Shared)
-                || isolationLevel == IsolationLevel.ReadCommitted
-                || isolationLevel == IsolationLevel.RepeatableRead)
-            {
-                isolationLevel = IsolationLevel.Serializable;
-            }
+             
 
             _connection = connection;
             _isolationLevel = isolationLevel;
 
-            if (isolationLevel == IsolationLevel.ReadUncommitted)
-            {
-                connection.ExecuteNonQuery("PRAGMA read_uncommitted = 1;");
-            }
-            else if (isolationLevel == IsolationLevel.Serializable)
-            {
-                connection.ExecuteNonQuery("PRAGMA read_uncommitted = 0;");
-            }
-            else if (isolationLevel != IsolationLevel.Unspecified)
-            {
-                throw new ArgumentException(Resources.InvalidIsolationLevel(isolationLevel));
-            }
+            
 
-            connection.ExecuteNonQuery(
-                IsolationLevel == IsolationLevel.Serializable
-                    ? "BEGIN IMMEDIATE;"
-                    : "BEGIN;");
-            raw.Taos3_rollback_hook(connection.Handle, RollbackExternal, null);
+            //connection.ExecuteNonQuery(
+            //    IsolationLevel == IsolationLevel.Serializable
+            //        ? "BEGIN IMMEDIATE;"
+            //        : "BEGIN;");
+          
         }
 
         /// <summary>
@@ -74,28 +55,20 @@ namespace Maikebing.Data.Taos
         ///     closed.
         /// </summary>
         /// <value>The isolation level for the transaction.</value>
-        public override IsolationLevel IsolationLevel
-            => _completed || _connection.State != ConnectionState.Open
-                ? throw new InvalidOperationException(Resources.TransactionCompleted)
-                : _isolationLevel != IsolationLevel.Unspecified
-                    ? _isolationLevel
-                    : (_connection.ConnectionStringBuilder.Cache == TaosCacheMode.Shared
-                       && _connection.ExecuteScalar<long>("PRAGMA read_uncommitted;") != 0)
-                        ? IsolationLevel.ReadUncommitted
-                        : IsolationLevel.Serializable;
+        public override IsolationLevel IsolationLevel => IsolationLevel.Unspecified;
+         
 
         /// <summary>
         ///     Applies the changes made in the transaction.
         /// </summary>
         public override void Commit()
         {
-            if (_externalRollback || _completed || _connection.State != ConnectionState.Open)
-            {
-                throw new InvalidOperationException(Resources.TransactionCompleted);
-            }
-
-            raw.Taos3_rollback_hook(_connection.Handle, null, null);
-            _connection.ExecuteNonQuery("COMMIT;");
+            //if (_externalRollback || _completed || _connection.State != ConnectionState.Open)
+            //{
+            //    throw new InvalidOperationException(Resources.TransactionCompleted);
+            //}
+ 
+            //_connection.ExecuteNonQuery("COMMIT;");
             Complete();
         }
 
@@ -104,10 +77,10 @@ namespace Maikebing.Data.Taos
         /// </summary>
         public override void Rollback()
         {
-            if (_completed || _connection.State != ConnectionState.Open)
-            {
-                throw new InvalidOperationException(Resources.TransactionCompleted);
-            }
+            //if (_completed || _connection.State != ConnectionState.Open)
+            //{
+            //    throw new InvalidOperationException(Resources.TransactionCompleted);
+            //}
 
             RollbackInternal();
         }
@@ -137,18 +110,18 @@ namespace Maikebing.Data.Taos
 
         private void RollbackInternal()
         {
-            if (!_externalRollback)
-            {
-                raw.Taos3_rollback_hook(_connection.Handle, null, null);
-                _connection.ExecuteNonQuery("ROLLBACK;");
-            }
+            //if (!_externalRollback)
+            //{
+            //    raw.Taos3_rollback_hook(_connection.Handle, null, null);
+            //    _connection.ExecuteNonQuery("ROLLBACK;");
+            //}
 
             Complete();
         }
 
         private void RollbackExternal(object userData)
         {
-            raw.Taos3_rollback_hook(_connection.Handle, null, null);
+            //raw.Taos3_rollback_hook(_connection.Handle, null, null);
             _externalRollback = true;
         }
     }

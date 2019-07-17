@@ -5,13 +5,13 @@ using System.Data;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteDateTimeOffsetTypeMapping : DateTimeOffsetTypeMapping
+    public class TaosDateTimeOffsetTypeMapping : DateTimeOffsetTypeMapping
     {
         private const string DateTimeOffsetFormatConst = @"'{0:yyyy\-MM\-dd HH\:mm\:ss.FFFFFFFzzz}'";
 
@@ -19,7 +19,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteDateTimeOffsetTypeMapping(
+        public TaosDateTimeOffsetTypeMapping(
             [NotNull] string storeType,
             DbType? dbType = null)
             : base(storeType, dbType)
@@ -30,7 +30,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        protected SqliteDateTimeOffsetTypeMapping(RelationalTypeMappingParameters parameters)
+        protected TaosDateTimeOffsetTypeMapping(RelationalTypeMappingParameters parameters)
             : base(parameters)
         {
         }
@@ -41,7 +41,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal
         /// <param name="parameters"> The parameters for this mapping. </param>
         /// <returns> The newly created mapping. </returns>
         protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-            => new SqliteDateTimeOffsetTypeMapping(parameters);
+            => new TaosDateTimeOffsetTypeMapping(parameters);
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used

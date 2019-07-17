@@ -22,11 +22,11 @@ Maikebing.Data.Taos.TaosTransaction</Description>
  
 
   <ItemGroup>
-    <Compile Update="SqliteCommand.cs">
+    <Compile Update="TaosCommand.cs">
       <SubType>Component</SubType>
     </Compile>
   
-    <Compile Update="SqliteConnection.cs">
+    <Compile Update="TaosConnection.cs">
       <SubType>Component</SubType>
     </Compile>
   </ItemGroup>
@@ -34,6 +34,12 @@ Maikebing.Data.Taos.TaosTransaction</Description>
 
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+ 
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="RestSharp" Version="106.6.10" />
   </ItemGroup>
  
 

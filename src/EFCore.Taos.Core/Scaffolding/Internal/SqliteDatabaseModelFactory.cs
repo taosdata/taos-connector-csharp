@@ -10,7 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
-using Microsoft.Data.Sqlite;
+using Maikebing.Data.Taos;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -20,13 +20,13 @@ using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteDatabaseModelFactory : IDatabaseModelFactory
+    public class TaosDatabaseModelFactory : IDatabaseModelFactory
     {
         private readonly IDiagnosticsLogger<DbLoggerCategory.Scaffolding> _logger;
         private readonly IRelationalTypeMappingSource _typeMappingSource;
@@ -35,7 +35,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteDatabaseModelFactory(
+        public TaosDatabaseModelFactory(
             [NotNull] IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger,
             [NotNull] IRelationalTypeMappingSource typeMappingSource)
         {
@@ -56,7 +56,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
             Check.NotNull(tables, nameof(tables));
             Check.NotNull(schemas, nameof(schemas));
 
-            using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new TaosConnection(connectionString))
             {
                 return Create(connection, tables, schemas);
             }
@@ -84,7 +84,6 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
             {
                 connection.Open();
 
-                ((SqliteConnection)connection).EnableExtensions();
                 SpatialiteLoader.TryLoad(connection);
             }
 
@@ -149,8 +148,8 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
             {
                 command.CommandText = new StringBuilder()
                     .AppendLine("SELECT \"name\"")
-                    .AppendLine("FROM \"sqlite_master\"")
-                    .Append("WHERE \"type\" = 'table' AND instr(\"name\", 'sqlite_') <> 1 AND \"name\" NOT IN ('")
+                    .AppendLine("FROM \"Taos_master\"")
+                    .Append("WHERE \"type\" = 'table' AND instr(\"name\", 'Taos_') <> 1 AND \"name\" NOT IN ('")
                     .Append(HistoryRepository.DefaultTableName)
                     .Append("', 'ElementaryGeometries', 'geometry_columns', 'geometry_columns_auth', ")
                     .Append("'geometry_columns_field_infos', 'geometry_columns_statistics', 'geometry_columns_time', ")
@@ -314,7 +313,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
                     return GetRowidPrimaryKey(connection, table, columns);
                 }
 
-                if (!name.StartsWith("sqlite_", StringComparison.Ordinal))
+                if (!name.StartsWith("Taos_", StringComparison.Ordinal))
                 {
                     primaryKey.Name = name;
                 }
@@ -415,7 +414,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
                     {
                         var uniqueConstraint = new DatabaseUniqueConstraint();
                         var name = reader1.GetString(0);
-                        if (!name.StartsWith("sqlite_", StringComparison.Ordinal))
+                        if (!name.StartsWith("Taos_", StringComparison.Ordinal))
                         {
                             uniqueConstraint.Name = name;
                         }
@@ -465,7 +464,7 @@ namespace Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal
                 command1.CommandText = new StringBuilder()
                     .AppendLine("SELECT \"name\", \"unique\"")
                     .AppendLine("FROM pragma_index_list(@table)")
-                    .AppendLine("WHERE \"origin\" = 'c' AND instr(\"name\", 'sqlite_') <> 1")
+                    .AppendLine("WHERE \"origin\" = 'c' AND instr(\"name\", 'Taos_') <> 1")
                     .AppendLine("ORDER BY \"seq\";")
                     .ToString();
 

@@ -11,19 +11,19 @@ using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.Expressions;
 using Microsoft.EntityFrameworkCore.Query.ExpressionVisitors;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionVisitors.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Query.ExpressionVisitors.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteSqlTranslatingExpressionVisitor : SqlTranslatingExpressionVisitor
+    public class TaosSqlTranslatingExpressionVisitor : SqlTranslatingExpressionVisitor
     {
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteSqlTranslatingExpressionVisitor(
+        public TaosSqlTranslatingExpressionVisitor(
             [NotNull] SqlTranslatingExpressionVisitorDependencies dependencies,
             [NotNull] RelationalQueryModelVisitor queryModelVisitor,
             [NotNull] SelectExpression targetSelectExpression = null,

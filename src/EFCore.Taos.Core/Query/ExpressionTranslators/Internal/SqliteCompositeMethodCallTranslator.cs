@@ -4,41 +4,41 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Query.ExpressionTranslators;
 
-namespace Microsoft.EntityFrameworkCore.Sqlite.Query.ExpressionTranslators.Internal
+namespace Microsoft.EntityFrameworkCore.Taos.Query.ExpressionTranslators.Internal
 {
     /// <summary>
     ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
-    public class SqliteCompositeMethodCallTranslator : RelationalCompositeMethodCallTranslator
+    public class TaosCompositeMethodCallTranslator : RelationalCompositeMethodCallTranslator
     {
-        private static readonly IMethodCallTranslator[] _sqliteTranslators =
+        private static readonly IMethodCallTranslator[] _TaosTranslators =
         {
-            new SqliteContainsOptimizedTranslator(),
-            new SqliteDateTimeAddTranslator(),
-            new SqliteEndsWithOptimizedTranslator(),
-            new SqliteMathTranslator(),
-            new SqliteStartsWithOptimizedTranslator(),
-            new SqliteStringIsNullOrWhiteSpaceTranslator(),
-            new SqliteStringToLowerTranslator(),
-            new SqliteStringToUpperTranslator(),
-            new SqliteStringTrimEndTranslator(),
-            new SqliteStringTrimStartTranslator(),
-            new SqliteStringTrimTranslator(),
-            new SqliteStringIndexOfTranslator(),
-            new SqliteStringReplaceTranslator(),
-            new SqliteStringSubstringTranslator()
+            new TaosContainsOptimizedTranslator(),
+            new TaosDateTimeAddTranslator(),
+            new TaosEndsWithOptimizedTranslator(),
+            new TaosMathTranslator(),
+            new TaosStartsWithOptimizedTranslator(),
+            new TaosStringIsNullOrWhiteSpaceTranslator(),
+            new TaosStringToLowerTranslator(),
+            new TaosStringToUpperTranslator(),
+            new TaosStringTrimEndTranslator(),
+            new TaosStringTrimStartTranslator(),
+            new TaosStringTrimTranslator(),
+            new TaosStringIndexOfTranslator(),
+            new TaosStringReplaceTranslator(),
+            new TaosStringSubstringTranslator()
         };
 
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public SqliteCompositeMethodCallTranslator(
+        public TaosCompositeMethodCallTranslator(
             [NotNull] RelationalCompositeMethodCallTranslatorDependencies dependencies)
             : base(dependencies)
         {
-            AddTranslators(_sqliteTranslators);
+            AddTranslators(_TaosTranslators);
         }
     }
 }

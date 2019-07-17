@@ -1,4 +1,4 @@
 <#
-    Session["ResourceFile"] = "SqliteStrings.resx";
+    Session["ResourceFile"] = "TaosStrings.resx";
 #>
 <#@ include file="..\..\..\tools\Resources.tt" #>
