@@ -279,7 +279,11 @@ namespace Maikebing.Data.Taos
 
             if (_connection?.State != ConnectionState.Open)
             {
-                throw new InvalidOperationException($"CallRequiresOpenConnection{nameof(ExecuteReader)}");
+                _connection.Open();
+                if (_connection?.State != ConnectionState.Open)
+                {
+                    throw new InvalidOperationException($"CallRequiresOpenConnection{nameof(ExecuteReader)}");
+                }
             }
 
             if (string.IsNullOrEmpty(_commandText))

@@ -34,6 +34,6 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public override void DelimitIdentifier(StringBuilder builder, string name, string schema)
-            => base.DelimitIdentifier(builder, name);
+            => builder.AppendFormat("{0}.{1}",schema, name);
     }
 }

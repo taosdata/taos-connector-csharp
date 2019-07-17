@@ -137,7 +137,16 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
             EndStatement(builder);
         }
-
+        protected override void Generate([NotNull] InsertDataOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder)
+        {
+            operation.Schema = _taosConnectionStringBuilder.DataBase;
+            base.Generate(operation, model, builder);
+        }
+        protected override void Generate([NotNull] InsertDataOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder, bool terminate)
+        {
+            operation.Schema = _taosConnectionStringBuilder.DataBase;
+            base.Generate(operation, model, builder, terminate);
+        }
         /// <summary>
         ///     Builds commands for the given <see cref="AddColumnOperation" /> by making calls on the given
         ///     <see cref="MigrationCommandListBuilder" />.
@@ -411,6 +420,10 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
                 EndStatement(builder);
             }
+        }
+        protected override void Generate([NotNull] SqlOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder)
+        {
+            base.Generate(operation, model, builder);
         }
         /// <summary>
         ///     Generates a SQL fragment for a column definition in an <see cref="AddColumnOperation" />.

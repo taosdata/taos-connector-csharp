@@ -233,112 +233,98 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override bool GetBoolean(int ordinal)
-            => _record.Current[ordinal].Value<bool>();
+        public override bool GetBoolean(int ordinal) => GetFieldValue<bool>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="byte" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override byte GetByte(int ordinal)
-           => _record.Current[ordinal].Value<byte>();
+        public override byte GetByte(int ordinal) => GetFieldValue<byte>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="char" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override char GetChar(int ordinal)
-                     => _record.Current[ordinal].Value<char>();
+        public override char GetChar(int ordinal) => GetFieldValue<char>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="DateTime" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override DateTime GetDateTime(int ordinal)
-                => _record.Current[ordinal].Value<DateTime>();
+        public override DateTime GetDateTime(int ordinal) => GetFieldValue<DateTime>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="DateTimeOffset" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public virtual DateTimeOffset GetDateTimeOffset(int ordinal)
-                  => _record.Current[ordinal].Value<DateTimeOffset>();
+        public virtual DateTimeOffset GetDateTimeOffset(int ordinal) => GetFieldValue<DateTimeOffset>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="TimeSpan" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public virtual TimeSpan GetTimeSpan(int ordinal)
-                    => _record.Current[ordinal].Value<TimeSpan>();
+        public virtual TimeSpan GetTimeSpan(int ordinal) => GetFieldValue<TimeSpan>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="decimal" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override decimal GetDecimal(int ordinal)
-                   => _record.Current[ordinal].Value<decimal>();
+        public override decimal GetDecimal(int ordinal) => GetFieldValue<decimal>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="double" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override double GetDouble(int ordinal)
-                => _record.Current[ordinal].Value<double>();
+        public override double GetDouble(int ordinal) => GetFieldValue<double>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="float" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override float GetFloat(int ordinal)
-                      => _record.Current[ordinal].Value<float>();
+        public override float GetFloat(int ordinal) => GetFieldValue<float>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="Guid" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override Guid GetGuid(int ordinal)
-                  => _record.Current[ordinal].Value<Guid>();
+        public override Guid GetGuid(int ordinal) => GetFieldValue<Guid>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="short" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override short GetInt16(int ordinal)
-                => _record.Current[ordinal].Value<short>();
+        public override short GetInt16(int ordinal) => GetFieldValue<short>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="int" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override int GetInt32(int ordinal)
-                    => _record.Current[ordinal].Value<int>();
+        public override int GetInt32(int ordinal) => GetFieldValue<int>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="long" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override long GetInt64(int ordinal)
-                   => _record.Current[ordinal].Value<long>();
+        public override long GetInt64(int ordinal) => GetFieldValue<long>(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="string" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override string GetString(int ordinal)
-                    => _record.Current[ordinal].Value<string>();
+        public override string GetString(int ordinal)=>GetFieldValue<string>(ordinal);
 
         /// <summary>
         ///     Reads a stream of bytes from the specified column. Not supported.
@@ -382,7 +368,13 @@ namespace Maikebing.Data.Taos
         /// <returns>The value of the column.</returns>
         public override T GetFieldValue<T>(int ordinal)
         {
-            return _record.Current[ordinal].Value<T>();
+            T result = default(T);
+            var jt = _record.Current;
+            if (jt!=null)
+            {
+                result= _record.Current[ordinal].Value<T>();
+            }
+            return result;
         }
 
         /// <summary>
@@ -390,10 +382,8 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override object GetValue(int ordinal)
-        {
-            return _record.Current[ordinal].ToObject<object>();
-        }
+        public override object GetValue(int ordinal) => GetFieldValue<object>(ordinal);
+
 
         /// <summary>
         ///     Gets the column values of the current row.
