@@ -21,7 +21,7 @@ namespace Maikebing.Data.Taos
 
         private string _connectionString;
         private ConnectionState _state;
-        RestSharp.RestClient client;
+        internal RestSharp.RestClient client;
 
 
         /// <summary>
@@ -205,6 +205,8 @@ namespace Maikebing.Data.Taos
         /// </remarks>
         public new virtual TaosCommand CreateCommand()
             => new TaosCommand { Connection = this, CommandTimeout = DefaultTimeout, Transaction = Transaction };
+        public  virtual TaosCommand CreateCommand(string commandtext)
+          => new TaosCommand { Connection = this, CommandText=commandtext, CommandTimeout = DefaultTimeout, Transaction = Transaction };
 
         /// <summary>
         ///     Creates a new command associated with the connection.

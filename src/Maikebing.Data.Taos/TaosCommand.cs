@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -301,80 +302,39 @@ namespace Maikebing.Data.Taos
             var hasChanges = false;
             var changes = 0;
             int rc;
+            var client = Connection.client;
             //var stmts = new Queue<(Taos3_stmt, bool)>();
             var unprepared=false;// _preparedStatements.Count == 0;
             //var timer = Stopwatch.StartNew();
-
+            TaosDataReader dataReader = null;
+            var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
             try
             {
-                //    foreach (var stmt in unprepared
-                //        ? PrepareAndEnumerateStatements(timer)
-                //        : _preparedStatements)
-                //    {
-                //        var boundParams = 0;
 
-                //        if (_parameters.IsValueCreated)
-                //        {
-                //            boundParams = _parameters.Value.Bind(stmt);
-                //        }
-
-                //        var expectedParams = raw.Taos3_bind_parameter_count(stmt);
-                //        if (expectedParams != boundParams)
-                //        {
-                //            var unboundParams = new List<string>();
-                //            for (var i = 1; i <= expectedParams; i++)
-                //            {
-                //                var name = raw.Taos3_bind_parameter_name(stmt, i);
-
-                //                if (_parameters.IsValueCreated
-                //                    || !_parameters.Value.Cast<TaosParameter>().Any(p => p.ParameterName == name))
-                //                {
-                //                    unboundParams.Add(name);
-                //                }
-                //            }
-
-                //            throw new InvalidOperationException(Resources.MissingParameters(string.Join(", ", unboundParams)));
-                //        }
-
-                //        while (IsBusy(rc = raw.Taos3_step(stmt)))
-                //        {
-                //            if (timer.ElapsedMilliseconds >= CommandTimeout * 1000)
-                //            {
-                //                break;
-                //            }
-
-                //            raw.Taos3_reset(stmt);
-
-                //            // TODO: Consider having an async path that uses Task.Delay()
-                //            Thread.Sleep(150);
-                //        }
-
-                //        TaosException.ThrowExceptionForRC(rc, _connection.Handle);
-
-                //        if (rc == raw.Taos_ROW
-                //            // NB: This is only a heuristic to separate SELECT statements from INSERT/UPDATE/DELETE statements.
-                //            //     It will result in false positives, but it's the best we can do without re-parsing SQL
-                //            || raw.Taos3_stmt_readonly(stmt) != 0)
-                //        {
-                //            stmts.Enqueue((stmt, rc != raw.Taos_DONE));
-                //        }
-                //        else
-                //        {
-                //            raw.Taos3_reset(stmt);
-                //            hasChanges = true;
-                //            changes += raw.Taos3_changes(_connection.Handle);
-                //        }
-                //    }
+                var request = new RestRequest(Method.POST);
+                request.AddHeader("User-Agent", "Maikebing.Data.Taos/0.0.1");
+                request.AddHeader("Authorization", "Basic cm9vdDp0YW9zZGF0YQ==");
+                request.AddHeader("Content-Type", "text/plain");
+                request.AddParameter("undefined",  _commandText, "application/json", ParameterType.RequestBody);
+                IRestResponse response = client.Execute(request);
+                if (response.StatusCode== System.Net.HttpStatusCode.OK)
+                {
+                    var tr= Newtonsoft.Json.JsonConvert.DeserializeObject<TaosResult>(response.Content);
+                    dataReader = new TaosDataReader(this, tr, closeConnection);
+                   
+                }
+                else
+                {
+                     var tr = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosErrorResult>(response.Content);
+                    TaosException.ThrowExceptionForRC(_commandText,tr);
+                }
             }
             catch when (unprepared)
             {
-
                 throw;
             }
 
-            var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
-            //TODO: 这里要实现代码
-            return null;
+            return dataReader;
         }
 
         /// <summary>
@@ -465,11 +425,17 @@ namespace Maikebing.Data.Taos
             {
                 throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(ExecuteNonQuery)}");
             }
-
-            var reader = ExecuteReader();
-            reader.Dispose();
-
-            return reader.RecordsAffected;
+            using (var reader = ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    return reader.RecordsAffected;
+                }
+                else
+                {
+                    return -1;
+                }
+            }
         }
 
         /// <summary>

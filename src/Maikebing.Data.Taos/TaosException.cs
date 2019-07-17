@@ -11,26 +11,11 @@ namespace Maikebing.Data.Taos
     /// </summary>
     public class TaosException : DbException
     {
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="TaosException" /> class.
-        /// </summary>
-        /// <param name="message">The message to display for the exception. Can be null.</param>
-        /// <param name="errorCode">The Taos error code.</param>
-        public TaosException(string message, int errorCode)
-            : this(message, errorCode, errorCode)
-        { }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="TaosException" /> class.
-        /// </summary>
-        /// <param name="message">The message to display for the exception. Can be null.</param>
-        /// <param name="errorCode">The Taos error code.</param>
-        /// /// <param name="extendedErrorCode">The extended Taos error code.</param>
-        public TaosException(string message, int errorCode, int extendedErrorCode)
-            : base(message)
+        TaosErrorResult _taosError;
+        public TaosException(TaosErrorResult taosError)
+      
         {
-            TaosErrorCode = errorCode;
-            TaosExtendedErrorCode = extendedErrorCode;
+            _taosError = taosError;
         }
 
         /// <summary>
@@ -38,15 +23,12 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <value>The Taos error code.</value>
         /// <seealso href="http://Taos.org/rescode.html">Taos Result Codes</seealso>
-        public virtual int TaosErrorCode { get; }
+        public virtual int TaosErrorCode => _taosError.code;
 
-        /// <summary>
-        ///     Gets the extended Taos error code.
-        /// </summary>
-        /// <value>The Taos error code.</value>
-        /// <seealso href="https://Taos.org/rescode.html#extrc">Taos Result Codes</seealso>
-        public virtual int TaosExtendedErrorCode { get; }
+        public virtual string TaosStatus => _taosError.status;
 
+        public override string Message => _taosError.desc;
+        public override int ErrorCode => TaosErrorCode;
         /// <summary>
         ///     Throws an exception with a specific Taos error code value.
         /// </summary>
@@ -55,9 +37,11 @@ namespace Maikebing.Data.Taos
         /// <remarks>
         ///     No exception is thrown for non-error result codes.
         /// </remarks>
-        public static void ThrowExceptionForRC(int rc ,object db)
+        public static void ThrowExceptionForRC(string _commandText, TaosErrorResult taosError)
         {
-           
+            var te = new TaosException(taosError);
+            te.Data.Add("commandText", _commandText);
+            throw te;
         }
     }
 }
