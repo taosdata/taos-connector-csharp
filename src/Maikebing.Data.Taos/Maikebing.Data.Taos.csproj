@@ -17,7 +17,26 @@ Maikebing.Data.Taos.TaosParameter
 Maikebing.Data.Taos.TaosTransaction</Description>
     <TargetFramework>netstandard2.0</TargetFramework>
  
-    <PackageTags>Taos;Data;ADO.NET</PackageTags>
+    <PackageTags>Taos;Data;ADO.NET;Entity Framework,;EF; Core;Data O/RM,;entity-framework-core;TDengine</PackageTags>
+ 
+    <Authors>Maikebing</Authors>
+ 
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+ 
+    <PackageProjectUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</PackageProjectUrl>
+ 
+    <PackageIconUrl></PackageIconUrl>
+ 
+    <RepositoryUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</RepositoryUrl>
+ 
+    <PackageReleaseNotes>Maikebing.Data.Taos  是一个基于TDengine 的RESTful Connector构建的ADO.Net 提供器。 这将允许你通过.Net Core 访问TDengine数据库。
+Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于Maikebing.Data.Taos构建。 
+
+</PackageReleaseNotes>
+ 
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+ 
+    <Copyright>Copyright Maikebing</Copyright>
   </PropertyGroup>
  
 
@@ -40,6 +59,14 @@ Maikebing.Data.Taos.TaosTransaction</Description>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="RestSharp" Version="106.6.10" />
+  </ItemGroup>
+ 
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
  
 
