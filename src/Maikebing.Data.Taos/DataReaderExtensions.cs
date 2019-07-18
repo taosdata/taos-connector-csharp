@@ -91,5 +91,11 @@ namespace Maikebing.Data.Taos
             }
             return jArray;
         }
+        public static DataTable ToDataTable(this IDataReader reader)
+        {
+            var datatable = new DataTable();
+            datatable.Load(reader);
+            return datatable;
+        }
     }
 }

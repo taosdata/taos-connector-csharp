@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,9 +9,6 @@ using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
-using System.Text;
-using Newtonsoft.Json.Linq;
-using RestSharp;
 
 namespace Maikebing.Data.Taos
 {
@@ -25,22 +23,21 @@ namespace Maikebing.Data.Taos
         private bool _stepped;
         private bool _done;
         private readonly bool _closeConnection;
-        private readonly TaosResult _taosResult  ;
+        private readonly TaosResult _taosResult;
         private readonly JArray _array;
-        int _fieldCount;
+        private int _fieldCount;
         private IEnumerator<JToken> _record;
+
         internal TaosDataReader(TaosCommand taosCommand, TaosResult tr, bool closeConnection)
         {
             _command = taosCommand;
-         
-         
             _closeConnection = closeConnection;
             _taosResult = tr;
-            var ja= _taosResult.data as JArray;
+            var ja = _taosResult.data as JArray;
             _array = ja;
             _record = ja.AsEnumerable().GetEnumerator();
             _fieldCount = _taosResult.head.Count;
-            _hasRows = ja!=null && ja.Count > 0;
+            _hasRows = ja != null && ja.Count > 0;
             _closed = _closeConnection;
         }
 
@@ -48,19 +45,13 @@ namespace Maikebing.Data.Taos
         ///     Gets the depth of nesting for the current row. Always zero.
         /// </summary>
         /// <value>The depth of nesting for the current row.</value>
-        public override int Depth             => 0;
-
-
-  
+        public override int Depth => 0;
 
         /// <summary>
         ///     Gets the number of columns in the current row.
         /// </summary>
         /// <value>The number of columns in the current row.</value>
         public override int FieldCount => _fieldCount;
-
-
-     
 
         /// <summary>
         ///     Gets a value indicating whether the data reader contains any rows.
@@ -107,7 +98,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value.</returns>
         public override object this[int ordinal]
-            =>  _record.Current[ordinal];
+            => _record.Current[ordinal];
 
         /// <summary>
         ///     Gets an enumerator that can be used to iterate through the rows in the data reader.
@@ -136,7 +127,7 @@ namespace Maikebing.Data.Taos
                 _stepped = true;
                 return _hasRows;
             }
-          
+
             return !_done;
         }
 
@@ -146,8 +137,6 @@ namespace Maikebing.Data.Taos
         /// <returns>true if there are more result sets; otherwise, false.</returns>
         public override bool NextResult()
         {
-          
-
             return true;
         }
 
@@ -172,7 +161,6 @@ namespace Maikebing.Data.Taos
 
             _command.DataReader = null;
 
-        
             _closed = true;
 
             if (_closeConnection)
@@ -199,10 +187,9 @@ namespace Maikebing.Data.Taos
         public override int GetOrdinal(string name)
             => _taosResult.head.IndexOf(name);
 
- 
         public override string GetDataTypeName(int ordinal)
         {
-            return  _record.Current[ordinal].Type.ToString();
+            return GetFieldType(ordinal).Name;
         }
 
         /// <summary>
@@ -216,8 +203,69 @@ namespace Maikebing.Data.Taos
             {
                 throw new InvalidOperationException($"DataReaderClosed{nameof(GetFieldType)}");
             }
+            Type type = typeof(DBNull);
+            var jt = _record.Current;
+            if (jt != null)
+            {
+                switch (_record.Current[ordinal].Type)
+                {
 
-            return Type.GetType( _record.Current[ordinal].Type.ToString());
+                    case JTokenType.Integer:
+                        type = typeof(int);
+                        break;
+
+                    case JTokenType.Float:
+                        type = typeof(float);
+                        break;
+
+                    case JTokenType.String:
+                        type = typeof(string);
+                        break;
+
+                    case JTokenType.Boolean:
+                        type = typeof(bool);
+                        break;
+
+                    case JTokenType.Null:
+                        type = typeof(DBNull);
+                        break;
+
+                    case JTokenType.Date:
+                        type = typeof(DateTime);
+                        break;
+
+                    case JTokenType.Raw:
+                    case JTokenType.Bytes:
+                        type = typeof(byte[]);
+                        break;
+
+                    case JTokenType.Guid:
+
+                        type = typeof(Guid);
+                        break;
+
+                    case JTokenType.Uri:
+
+                        type = typeof(Uri);
+                        break;
+
+                    case JTokenType.TimeSpan:
+                        type = typeof(TimeSpan);
+                        break;
+
+                    case JTokenType.None:
+                    case JTokenType.Object:
+                    case JTokenType.Array:
+                    case JTokenType.Constructor:
+                    case JTokenType.Property:
+                    case JTokenType.Comment:
+                    case JTokenType.Undefined:
+                    default:
+                        type = typeof(object);
+                        break;
+                }
+            }
+            return type;
         }
 
         /// <summary>
@@ -226,7 +274,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>true if the specified column is <see cref="DBNull" />; otherwise, false.</returns>
         public override bool IsDBNull(int ordinal)
-                =>  _record.Current[ordinal].Type== JTokenType.Null;
+                => _record.Current[ordinal].Type == JTokenType.Null;
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="bool" />.
@@ -324,7 +372,7 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override string GetString(int ordinal)=>GetFieldValue<string>(ordinal);
+        public override string GetString(int ordinal) => GetFieldValue<string>(ordinal);
 
         /// <summary>
         ///     Reads a stream of bytes from the specified column. Not supported.
@@ -336,7 +384,7 @@ namespace Maikebing.Data.Taos
         /// <param name="length">The maximum number of bytes to read.</param>
         /// <returns>The actual number of bytes read.</returns>
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
-                      => throw new  NotSupportedException();
+                      => throw new NotSupportedException();
 
         /// <summary>
         ///     Reads a stream of characters from the specified column. Not supported.
@@ -370,9 +418,9 @@ namespace Maikebing.Data.Taos
         {
             T result = default(T);
             var jt = _record.Current;
-            if (jt!=null)
+            if (jt != null)
             {
-                result= _record.Current[ordinal].Value<T>();
+                result = _record.Current[ordinal].Value<T>();
             }
             return result;
         }
@@ -383,7 +431,6 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override object GetValue(int ordinal) => GetFieldValue<object>(ordinal);
-
 
         /// <summary>
         ///     Gets the column values of the current row.
@@ -399,124 +446,88 @@ namespace Maikebing.Data.Taos
         /// <returns>A System.Data.DataTable that describes the column metadata.</returns>
         public override DataTable GetSchemaTable()
         {
-            throw new NotSupportedException();
-            //var schemaTable = new DataTable("SchemaTable");
+            _record.Reset();
+            var schemaTable = new DataTable("SchemaTable");
+            bool ok = false;
+            if (_record.Current == null)
+            {
+                ok = Read();
+            }
+            if (ok)
+            {
+                var ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));
+                var ColumnOrdinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int));
+                var ColumnSize = new DataColumn(SchemaTableColumn.ColumnSize, typeof(int));
+                var NumericPrecision = new DataColumn(SchemaTableColumn.NumericPrecision, typeof(short));
+                var NumericScale = new DataColumn(SchemaTableColumn.NumericScale, typeof(short));
 
-            //var ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));
-            //var ColumnOrdinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int));
-            //var ColumnSize = new DataColumn(SchemaTableColumn.ColumnSize, typeof(int));
-            //var NumericPrecision = new DataColumn(SchemaTableColumn.NumericPrecision, typeof(short));
-            //var NumericScale = new DataColumn(SchemaTableColumn.NumericScale, typeof(short));
+                var DataType = new DataColumn(SchemaTableColumn.DataType, typeof(Type));
+                var DataTypeName = new DataColumn("DataTypeName", typeof(string));
 
-            //var DataType = new DataColumn(SchemaTableColumn.DataType, typeof(Type));
-            //var DataTypeName = new DataColumn("DataTypeName", typeof(string));
+                var IsLong = new DataColumn(SchemaTableColumn.IsLong, typeof(bool));
+                var AllowDBNull = new DataColumn(SchemaTableColumn.AllowDBNull, typeof(bool));
 
-            //var IsLong = new DataColumn(SchemaTableColumn.IsLong, typeof(bool));
-            //var AllowDBNull = new DataColumn(SchemaTableColumn.AllowDBNull, typeof(bool));
+                var IsUnique = new DataColumn(SchemaTableColumn.IsUnique, typeof(bool));
+                var IsKey = new DataColumn(SchemaTableColumn.IsKey, typeof(bool));
+                var IsAutoIncrement = new DataColumn(SchemaTableOptionalColumn.IsAutoIncrement, typeof(bool));
 
-            //var IsUnique = new DataColumn(SchemaTableColumn.IsUnique, typeof(bool));
-            //var IsKey = new DataColumn(SchemaTableColumn.IsKey, typeof(bool));
-            //var IsAutoIncrement = new DataColumn(SchemaTableOptionalColumn.IsAutoIncrement, typeof(bool));
+                var BaseCatalogName = new DataColumn(SchemaTableOptionalColumn.BaseCatalogName, typeof(string));
+                var BaseSchemaName = new DataColumn(SchemaTableColumn.BaseSchemaName, typeof(string));
+                var BaseTableName = new DataColumn(SchemaTableColumn.BaseTableName, typeof(string));
+                var BaseColumnName = new DataColumn(SchemaTableColumn.BaseColumnName, typeof(string));
 
-            //var BaseCatalogName = new DataColumn(SchemaTableOptionalColumn.BaseCatalogName, typeof(string));
-            //var BaseSchemaName = new DataColumn(SchemaTableColumn.BaseSchemaName, typeof(string));
-            //var BaseTableName = new DataColumn(SchemaTableColumn.BaseTableName, typeof(string));
-            //var BaseColumnName = new DataColumn(SchemaTableColumn.BaseColumnName, typeof(string));
+                var BaseServerName = new DataColumn(SchemaTableOptionalColumn.BaseServerName, typeof(string));
+                var IsAliased = new DataColumn(SchemaTableColumn.IsAliased, typeof(bool));
+                var IsExpression = new DataColumn(SchemaTableColumn.IsExpression, typeof(bool));
 
-            //var BaseServerName = new DataColumn(SchemaTableOptionalColumn.BaseServerName, typeof(string));
-            //var IsAliased = new DataColumn(SchemaTableColumn.IsAliased, typeof(bool));
-            //var IsExpression = new DataColumn(SchemaTableColumn.IsExpression, typeof(bool));
+                var columns = schemaTable.Columns;
 
-            //var columns = schemaTable.Columns;
+                columns.Add(ColumnName);
+                columns.Add(ColumnOrdinal);
+                columns.Add(ColumnSize);
+                columns.Add(NumericPrecision);
+                columns.Add(NumericScale);
+                columns.Add(IsUnique);
+                columns.Add(IsKey);
+                columns.Add(BaseServerName);
+                columns.Add(BaseCatalogName);
+                columns.Add(BaseColumnName);
+                columns.Add(BaseSchemaName);
+                columns.Add(BaseTableName);
+                columns.Add(DataType);
+                columns.Add(DataTypeName);
+                columns.Add(AllowDBNull);
+                columns.Add(IsAliased);
+                columns.Add(IsExpression);
+                columns.Add(IsAutoIncrement);
+                columns.Add(IsLong);
 
-            //columns.Add(ColumnName);
-            //columns.Add(ColumnOrdinal);
-            //columns.Add(ColumnSize);
-            //columns.Add(NumericPrecision);
-            //columns.Add(NumericScale);
-            //columns.Add(IsUnique);
-            //columns.Add(IsKey);
-            //columns.Add(BaseServerName);
-            //columns.Add(BaseCatalogName);
-            //columns.Add(BaseColumnName);
-            //columns.Add(BaseSchemaName);
-            //columns.Add(BaseTableName);
-            //columns.Add(DataType);
-            //columns.Add(DataTypeName);
-            //columns.Add(AllowDBNull);
-            //columns.Add(IsAliased);
-            //columns.Add(IsExpression);
-            //columns.Add(IsAutoIncrement);
-            //columns.Add(IsLong);
-
-            //for (var i = 0; i < FieldCount; i++)
-            //{
-            //    var schemaRow = schemaTable.NewRow();
-            //    schemaRow[ColumnName] = GetName(i);
-            //    schemaRow[ColumnOrdinal] = i;
-            //    schemaRow[ColumnSize] = DBNull.Value;
-            //    schemaRow[NumericPrecision] = DBNull.Value;
-            //    schemaRow[NumericScale] = DBNull.Value;
-            //    schemaRow[BaseServerName] = _command.Connection.DataSource;
-            //    var databaseName =_command.Connection.Database;
-            //    schemaRow[BaseCatalogName] = databaseName;
-            //    var columnName = GetName(i);
-            //    schemaRow[BaseColumnName] = columnName;
-            //    schemaRow[BaseSchemaName] = DBNull.Value;
-            //    var tableName = string.Empty;
-            //    schemaRow[BaseTableName] = tableName;
-            //    schemaRow[DataType] = GetFieldType(i);
-            //    schemaRow[DataTypeName] = GetDataTypeName(i);
-            //    schemaRow[IsAliased] = columnName != GetName(i);
-            //    schemaRow[IsExpression] = columnName == null;
-            //    schemaRow[IsLong] = DBNull.Value;
-
-            //    if (!string.IsNullOrEmpty(tableName)
-            //        && !string.IsNullOrEmpty(columnName))
-            //    {
-            //        using (var command = _command.Connection.CreateCommand())
-            //        {
-            //            command.CommandText = new StringBuilder()
-            //                .AppendLine("SELECT COUNT(*)")
-            //                .AppendLine("FROM pragma_index_list($table) i, pragma_index_info(i.name) c")
-            //                .AppendLine("WHERE \"unique\" = 1 AND c.name = $column AND")
-            //                .AppendLine("NOT EXISTS (SELECT * FROM pragma_index_info(i.name) c2 WHERE c2.name != c.name);").ToString();
-            //            command.Parameters.AddWithValue("$table", tableName);
-            //            command.Parameters.AddWithValue("$column", columnName);
-
-            //            var cnt = (long)command.ExecuteScalar();
-            //            schemaRow[IsUnique] = cnt != 0;
-
-            //            command.Parameters.Clear();
-            //            var columnType = "typeof(\"" + columnName.Replace("\"", "\"\"") + "\")";
-            //            command.CommandText = new StringBuilder()
-            //                .AppendLine($"SELECT {columnType}")
-            //                .AppendLine($"FROM \"{tableName}\"")
-            //                .AppendLine($"WHERE {columnType} != 'null'")
-            //                .AppendLine($"GROUP BY {columnType}")
-            //                .AppendLine("ORDER BY count() DESC")
-            //                .AppendLine("LIMIT 1;").ToString();
-
-            //            var type = (string)command.ExecuteScalar();
-            //            schemaRow[DataType] = TaosDataRecord.GetFieldType(type);
-            //        }
-
-            //        if (!string.IsNullOrEmpty(databaseName))
-            //        {
-            //            var rc = raw.Taos3_table_column_metadata(_command.Connection.Handle, databaseName, tableName, columnName, out var dataType, out var collSeq, out var notNull, out var primaryKey, out var autoInc);
-            //            TaosException.ThrowExceptionForRC(rc, _command.Connection.Handle);
-
-            //            schemaRow[IsKey] = primaryKey != 0;
-            //            schemaRow[AllowDBNull] = notNull == 0;
-            //            schemaRow[IsAutoIncrement] = autoInc != 0;
-            //        }
-            //    }
-
-            //    schemaTable.Rows.Add(schemaRow);
-            //}
-
-            //return schemaTable;
-
+                for (var i = 0; i < FieldCount; i++)
+                {
+                    var schemaRow = schemaTable.NewRow();
+                    schemaRow[ColumnName] = GetName(i);
+                    schemaRow[ColumnOrdinal] = i;
+                    schemaRow[ColumnSize] = DBNull.Value;
+                    schemaRow[NumericPrecision] = DBNull.Value;
+                    schemaRow[NumericScale] = DBNull.Value;
+                    schemaRow[BaseServerName] = _command.Connection.DataSource;
+                    var databaseName = _command.Connection.Database;
+                    schemaRow[BaseCatalogName] = databaseName;
+                    var columnName = GetName(i);
+                    schemaRow[BaseColumnName] = columnName;
+                    schemaRow[BaseSchemaName] = DBNull.Value;
+                    var tableName = string.Empty;
+                    schemaRow[BaseTableName] = tableName;
+                    schemaRow[DataType] = GetFieldType(i);
+                    schemaRow[DataTypeName] = GetDataTypeName(i);
+                    schemaRow[IsAliased] = columnName != GetName(i);
+                    schemaRow[IsExpression] = columnName == null;
+                    schemaRow[IsLong] = DBNull.Value;
+                    schemaTable.Rows.Add(schemaRow);
+                }
+            }
+            _record.Reset();
+            return schemaTable;
         }
     }
 }

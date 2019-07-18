@@ -1,8 +1,10 @@
-﻿using Maikebing.Data.Taos;
+﻿using ConsoleTableExt;
+using Maikebing.Data.Taos;
 using Microsoft.EntityFrameworkCore;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 namespace TaosADODemo
@@ -30,24 +32,13 @@ namespace TaosADODemo
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ('{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ms")}', 10);").ExecuteNonQuery());
 
                 Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ('{DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd HH:mm:ss.ms")}', 20);").ExecuteNonQuery());
-                 
+                Console.WriteLine("==================================================================");
                 var cmd_select = connection.CreateCommand();
                 cmd_select.CommandText = $"select * from {database}.t";
                 var reader = cmd_select.ExecuteReader();
-                List<Dictionary<string, object>> valuePairs = new List<Dictionary<string, object>>();
-                while (reader.Read())
-                {
-                    Dictionary<string, object> pairs = new Dictionary<string, object>();
-                    for (int i = 0; i < reader.FieldCount; i++)
-                    {
-                        pairs.Add(reader.GetName(i), reader.GetValue(i));
-                    }
-                    valuePairs.Add(pairs);
-                }
-                Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(valuePairs));
-
+                ConsoleTableBuilder.From(reader.ToDataTable()).ExportAndWriteLine();
+                Console.WriteLine("==================================================================");
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
-
                 Console.WriteLine("DROP DATABASE {0} {1}", database, connection.CreateCommand($"DROP DATABASE   {database}").ExecuteNonQuery());
                 connection.Close();
             }
@@ -65,8 +56,9 @@ namespace TaosADODemo
                 Console.WriteLine("SaveChanges.....");
                 context.SaveChanges();
                 Console.WriteLine("search  pm25>500");
-                var f = from s in context.sensor where s.pm25 > 500 select s;
+                var f = from s in context.sensor where s.pm25 > 0 select s;
                 var ary = f.ToArray();
+                ConsoleTableBuilder.From<sensor>(ary.ToList()).ExportAndWriteLine();
                 foreach (var x in ary)
                 {
                     Console.WriteLine($"{ x.ts } { x.degree }  {x.pm25}");
