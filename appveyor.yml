@@ -19,3 +19,5 @@ build_script:
 artifacts:
 - path: src\Maikebing.Data.Taos\bin\Release\Maikebing.Data.Taos.*.nupkg
   name: Maikebing.Data.Taos
+- path: src\EFCore.Taos.Core\bin\Release\Maikebing.EntityFrameworkCore.Taos.*.nupkg
+  name: Maikebing.EntityFrameworkCore.Taos
