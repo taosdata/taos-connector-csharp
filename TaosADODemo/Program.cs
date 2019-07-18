@@ -58,9 +58,16 @@ namespace TaosADODemo
             {
                 context.Database.EnsureCreated();
                 context.sensor.Add(new sensor() { ts = DateTime.Now, degree = 1.222, pm25 = 222 });
+                Console.ReadKey();
+                context.sensor.Add(new sensor() { ts = DateTime.Now, degree = 222, pm25 = 1 });
+                Console.ReadKey();
+                context.sensor.Add(new sensor() { ts = DateTime.Now, degree = 1.222, pm25 = 222 });
+                Console.ReadKey();
+                context.sensor.Add(new sensor() { ts = DateTime.Now, degree = 1.222, pm25 = 1 });
                 context.SaveChanges();
-                context.sensor.Load();
-                foreach (var x in    context.sensor.ToArray())
+                var f = from s in context.sensor where s.pm25 == 1 select s;
+                var ary = f.ToArray();
+                foreach (var x in   ary)
                 {
                     Console.WriteLine($"{ x.ts } { x.degree }  {x.pm25}");
                     Console.WriteLine();

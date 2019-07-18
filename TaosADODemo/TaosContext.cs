@@ -22,7 +22,7 @@ namespace TaosADODemo
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
+            string database = "db";
             var builder = new TaosConnectionStringBuilder()
             {
                 DataSource = "http://td.gitclub.cn/rest/sql",
