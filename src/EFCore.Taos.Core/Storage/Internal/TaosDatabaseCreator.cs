@@ -57,6 +57,7 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         /// </summary>
         public override bool Exists()
         {
+            bool _exists = false;
             using (var readOnlyConnection = _connection.CreateReadOnlyConnection())
             {
                 try
@@ -68,15 +69,14 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
                                  .ExecuteReader(Dependencies.Connection)
                                  .DbDataReader
                                  .ToObject<_SHOWDATABASES>();
-                    return _SHOWDATABASEs!=null &&  _SHOWDATABASEs.Any(m => m.name == _connection.DbConnection.Database);
+                    _exists= _SHOWDATABASEs!=null &&  _SHOWDATABASEs.Any(m => m.name == _connection.DbConnection.Database);
                 }
                 catch (TaosException ex) when (ex.TaosErrorCode == Taos_CANTOPEN)
                 {
-                    return false;
+                    //_exists = false;
                 }
             }
-
-            return true;
+            return _exists;
         }
 
         /// <summary>

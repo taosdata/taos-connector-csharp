@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 using Maikebing.Data.Taos;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Taos.Internal;
 using Microsoft.EntityFrameworkCore.Update;
 using Microsoft.EntityFrameworkCore.Utilities;
@@ -56,6 +58,86 @@ namespace Microsoft.EntityFrameworkCore.Taos.Update.Internal
             }
 
             return ResultSetMapping.NoResultSet;
+        }
+        protected override  void AppendInsertCommand(
+        [NotNull] StringBuilder commandStringBuilder,
+        [NotNull] string name,
+        [CanBeNull] string schema,
+        [NotNull] IReadOnlyList<ColumnModification> writeOperations)
+        {
+            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
+            Check.NotEmpty(name, nameof(name));
+            Check.NotNull(writeOperations, nameof(writeOperations));
+
+            AppendInsertCommandHeader(commandStringBuilder, name, schema, writeOperations);
+            AppendValuesHeader(commandStringBuilder, writeOperations);
+            AppendValues(commandStringBuilder, writeOperations);
+            commandStringBuilder.AppendLine(SqlGenerationHelper.StatementTerminator);
+        }
+
+        /// <summary>
+        ///     Appends a SQL fragment for a <c>VALUES</c>.
+        /// </summary>
+        /// <param name="commandStringBuilder"> The builder to which the SQL should be appended. </param>
+        /// <param name="operations"> The operations for which there are values. </param>
+        protected override  void AppendValuesHeader(
+            [NotNull] StringBuilder commandStringBuilder,
+            [NotNull] IReadOnlyList<ColumnModification> operations)
+        {
+            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
+            Check.NotNull(operations, nameof(operations));
+
+            commandStringBuilder.AppendLine();
+            commandStringBuilder.Append(operations.Count > 0 ? "VALUES " : "DEFAULT VALUES");
+        }
+
+        /// <summary>
+        ///     Appends values after a <see cref="AppendValuesHeader" /> call.
+        /// </summary>
+        /// <param name="commandStringBuilder"> The builder to which the SQL should be appended. </param>
+        /// <param name="operations"> The operations for which there are values. </param>
+        protected override  void AppendValues(
+            [NotNull] StringBuilder commandStringBuilder,
+            [NotNull] IReadOnlyList<ColumnModification> operations)
+        {
+            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
+            Check.NotNull(operations, nameof(operations));
+
+            if (operations.Count > 0)
+            {
+                commandStringBuilder
+                    .Append("(")
+                    .AppendJoin(
+                        operations,
+                        SqlGenerationHelper,
+                        (sb, o, helper) =>
+                        {
+                            if (o.IsWrite)
+                            {
+                                //if (!o.UseCurrentValueParameter)//not user DbParameter
+                                //{
+                                AppendSqlLiteral(sb, o.Value, o.Property);
+                                //}
+                                //else
+                                //{
+                                //    helper.GenerateParameterNamePlaceholder(sb, o.ParameterName);
+                                //}
+                            }
+                            else
+                            {
+                                sb.Append("DEFAULT");
+                            }
+                        })
+                    .Append(")");
+            }
+        }
+           private void AppendSqlLiteral(StringBuilder commandStringBuilder, object value, IProperty property)
+        {
+            var mapping = property != null
+                ? Dependencies.TypeMappingSource.FindMapping(property)
+                : null;
+            mapping = mapping ?? Dependencies.TypeMappingSource.GetMappingForValue(value);
+            commandStringBuilder.Append(mapping.GenerateProviderValueSqlLiteral(value));
         }
 
         /// <summary>
@@ -118,7 +200,62 @@ namespace Microsoft.EntityFrameworkCore.Taos.Update.Internal
             commandStringBuilder.Append(" = ")
                 .Append("last_insert_rowid()");
         }
+        protected override  void AppendWhereCondition(
+               [NotNull] StringBuilder commandStringBuilder,
+               [NotNull] ColumnModification columnModification,
+               bool useOriginalValue)
+        {
+            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
+            Check.NotNull(columnModification, nameof(columnModification));
 
+            SqlGenerationHelper.DelimitIdentifier(commandStringBuilder, columnModification.ColumnName);
+
+            var parameterValue = useOriginalValue
+                ? columnModification.OriginalValue
+                : columnModification.Value;
+
+            if (parameterValue == null)
+            {
+                commandStringBuilder.Append(" IS NULL");
+            }
+            else
+            {
+                commandStringBuilder.Append(" = ");
+                if (!columnModification.UseCurrentValueParameter
+                    && !columnModification.UseOriginalValueParameter)
+                {
+                    AppendSqlLiteral(commandStringBuilder, columnModification.Value, columnModification.Property);
+                }
+                else
+                {
+                    SqlGenerationHelper.GenerateParameterNamePlaceholder(
+                        commandStringBuilder, useOriginalValue
+                            ? columnModification.OriginalParameterName
+                            : columnModification.ParameterName);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Appends a <c>WHERE</c> clause.
+        /// </summary>
+        /// <param name="commandStringBuilder"> The builder to which the SQL should be appended. </param>
+        /// <param name="operations"> The operations from which to build the conditions. </param>
+        protected override  void AppendWhereClause(
+            [NotNull] StringBuilder commandStringBuilder,
+            [NotNull] IReadOnlyList<ColumnModification> operations)
+        {
+            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
+            Check.NotNull(operations, nameof(operations));
+
+            if (operations.Count > 0)
+            {
+                commandStringBuilder
+                    .AppendLine()
+                    .Append("WHERE ")
+                    .AppendJoin(operations, (sb, v) => AppendWhereCondition(sb, v, v.UseOriginalValueParameter), " AND ");
+            }
+        }
         /// <summary>
         ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.

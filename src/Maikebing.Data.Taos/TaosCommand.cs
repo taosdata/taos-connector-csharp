@@ -302,33 +302,35 @@ namespace Maikebing.Data.Taos
             {
                 throw new InvalidOperationException("TransactionCompleted");
             }
-
-            var hasChanges = false;
-            var changes = 0;
             int rc;
             var client = Connection.client;
-            //var stmts = new Queue<(Taos3_stmt, bool)>();
-            var unprepared=false;// _preparedStatements.Count == 0;
-            //var timer = Stopwatch.StartNew();
+            var unprepared=false; 
             TaosDataReader dataReader = null;
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
             try
             {
-
+#if DEBUG
+                Console.WriteLine($"_commandText:{_commandText}");
+#endif
                 var request = new RestRequest(Method.POST);
                 request.AddHeader("User-Agent", "Maikebing.Data.Taos/0.0.1");
                 request.AddHeader("Authorization", $"Basic {Connection.Token}");
                 request.AddHeader("Content-Type", "text/plain");
                 request.AddParameter("undefined",  _commandText, "application/json", ParameterType.RequestBody);
                 IRestResponse response = client.Execute(request);
+#if DEBUG
+                Console.WriteLine($"StatusCode   {response.StatusCode} response.Content:{response.Content}");
+#endif
                 if (response.StatusCode== System.Net.HttpStatusCode.OK)
                 {
-                    var tr= Newtonsoft.Json.JsonConvert.DeserializeObject<TaosResult>(response.Content);
+                    var tr = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosResult>(response.Content);
                     dataReader = new TaosDataReader(this, tr, closeConnection);
+                  
                 }
                 else
                 {
-                     var tr = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosErrorResult>(response.Content);
+
+                    var tr = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosErrorResult>(response.Content);
                     TaosException.ThrowExceptionForRC(_commandText,tr);
                 }
             }

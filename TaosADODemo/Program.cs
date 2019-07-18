@@ -49,29 +49,30 @@ namespace TaosADODemo
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
 
                 Console.WriteLine("DROP DATABASE {0} {1}", database, connection.CreateCommand($"DROP DATABASE   {database}").ExecuteNonQuery());
-
-              
                 connection.Close();
             }
 
-            using (var context = new TaosContext())
+            using (var context = new TaosContext(new DbContextOptionsBuilder()
+                                                    .UseTaos(builder.ConnectionString).Options))
             {
+                Console.WriteLine("EnsureCreated");
                 context.Database.EnsureCreated();
-                context.sensor.Add(new sensor() { ts = DateTime.Now, degree = 1.222, pm25 = 222 });
-                Console.ReadKey();
-                context.sensor.Add(new sensor() { ts = DateTime.Now, degree = 222, pm25 = 1 });
-                Console.ReadKey();
-                context.sensor.Add(new sensor() { ts = DateTime.Now, degree = 1.222, pm25 = 222 });
-                Console.ReadKey();
-                context.sensor.Add(new sensor() { ts = DateTime.Now, degree = 1.222, pm25 = 1 });
+                for (int i = 0; i < 10; i++)
+                {
+                    var rd = new Random();
+                    context.sensor.Add(new sensor() { ts = DateTime.Now.AddMilliseconds(i), degree = rd.NextDouble(), pm25 = rd.Next(0, 1000) });
+                }
+                Console.WriteLine("SaveChanges.....");
                 context.SaveChanges();
-                var f = from s in context.sensor where s.pm25 == 1 select s;
+                Console.WriteLine("search  pm25>500");
+                var f = from s in context.sensor where s.pm25 > 500 select s;
                 var ary = f.ToArray();
-                foreach (var x in   ary)
+                foreach (var x in ary)
                 {
                     Console.WriteLine($"{ x.ts } { x.degree }  {x.pm25}");
                     Console.WriteLine();
                 }
+                context.Database.EnsureDeleted();
             }
             Console.ReadKey();
         }

@@ -1,17 +1,16 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 using JetBrains.Annotations;
 using Maikebing.Data.Taos;
 using Microsoft.EntityFrameworkCore.Query.Expressions;
-using Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal;
 using Microsoft.EntityFrameworkCore.Query.Sql;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Remotion.Linq.Clauses;
+using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace Microsoft.EntityFrameworkCore.Taos.Query.Sql.Internal
 {
@@ -90,11 +89,10 @@ namespace Microsoft.EntityFrameworkCore.Taos.Query.Sql.Internal
                 }
             }
         }
-  
 
-        
-        IRelationalCommandBuilder _rcbsql => Sql ;
-        public override  Expression VisitSelect(SelectExpression selectExpression)
+        private IRelationalCommandBuilder _rcbsql => Sql;
+
+        public override Expression VisitSelect(SelectExpression selectExpression)
         {
             Check.NotNull(selectExpression, nameof(selectExpression));
 
@@ -108,9 +106,6 @@ namespace Microsoft.EntityFrameworkCore.Taos.Query.Sql.Internal
             }
 
             _rcbsql.Append("SELECT ");
-
-
-
 
             var projectionAdded = false;
 
@@ -131,11 +126,11 @@ namespace Microsoft.EntityFrameworkCore.Taos.Query.Sql.Internal
                 {
                     var col = (ColumnExpression)selectExpression.Projection[i];
                     _rcbsql.Append($"{col.Name} ");
-                    if (i < selectExpression.Projection.Count-1)
+                    if (i < selectExpression.Projection.Count - 1)
                     {
                         _rcbsql.Append(", ");
                     }
-                }  
+                }
                 projectionAdded = true;
             }
 
@@ -149,12 +144,12 @@ namespace Microsoft.EntityFrameworkCore.Taos.Query.Sql.Internal
                 _rcbsql.AppendLine()
                     .Append("FROM ");
 
-                GenerateList(selectExpression.Tables,tx=>
-                {
-                    var te = ((TableExpression)tx);
-                    var schema = string.IsNullOrEmpty(te.Schema) ? __taosConnectionStringBuilder.DataBase : te.Schema;
-                    _rcbsql.Append( $"{schema}.{te.Table}");
-                }, null);
+                GenerateList(selectExpression.Tables, tx =>
+                 {
+                     var te = ((TableExpression)tx);
+                     var schema = string.IsNullOrEmpty(te.Schema) ? __taosConnectionStringBuilder.DataBase : te.Schema;
+                     _rcbsql.Append($"{schema}.{te.Table}");
+                 }, null);
             }
             else
             {
@@ -186,7 +181,7 @@ namespace Microsoft.EntityFrameworkCore.Taos.Query.Sql.Internal
                 // Filter out constant and parameter expressions (SELECT 1) if there is no skip or take #10410
                 if (selectExpression.Limit == null && selectExpression.Offset == null)
                 {
-                //   orderByList.RemoveAll(o => IsOrderByExpressionConstant(ApplyOptimizations(o.Expression, searchCondition: false)));
+                    //   orderByList.RemoveAll(o => IsOrderByExpressionConstant(ApplyOptimizations(o.Expression, searchCondition: false)));
                 }
 
                 if (orderByList.Count > 0)
@@ -213,8 +208,14 @@ namespace Microsoft.EntityFrameworkCore.Taos.Query.Sql.Internal
                         .Append(SqlGenerator.DelimitIdentifier(selectExpression.Alias));
                 }
             }
- 
+
             return selectExpression;
+        }
+
+        public override Expression VisitColumn(ColumnExpression columnExpression)
+        {
+            _rcbsql.Append(columnExpression.Name + " ");
+            return columnExpression;
         }
     }
 }
