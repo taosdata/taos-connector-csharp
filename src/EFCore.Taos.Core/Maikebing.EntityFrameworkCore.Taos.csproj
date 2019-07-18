@@ -1,27 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
- 
+
     <Description>TaosData database provider for Entity Framework Core.</Description>
     <TargetFramework>netstandard2.0</TargetFramework>
- 
-
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Maikebing</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</PackageProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/maikebing/Maikebing.EntityFrameworkCore.Taos/master/docs/48876650.jfif</PackageIconUrl>
+    <RepositoryUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</RepositoryUrl>
+    <PackageReleaseNotes>
+      Maikebing.Data.Taos  是一个基于TDengine 的RESTful Connector构建的ADO.Net 提供器。 这将允许你通过.Net Core 访问TDengine数据库。
+      Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于Maikebing.Data.Taos构建。
+    </PackageReleaseNotes>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Copyright>Copyright © 2019 Maikebing. All rights reserved.</Copyright>
+    <Version>1.0.1</Version>
+    <PackageTags>Taos;Data;ADO.NET;Entity Framework;EF; Core;Data O/RM;entity-framework-core;TDengine</PackageTags>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.2.6" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="2.1.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Maikebing.Data.Taos\Maikebing.Data.Taos.csproj" />
   </ItemGroup>
-
- 
- 
- 
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 </Project>

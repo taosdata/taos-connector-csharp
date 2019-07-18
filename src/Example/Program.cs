@@ -30,10 +30,10 @@ namespace TaosADODemo
                 Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table {database}.t (ts timestamp, cdata int);").ExecuteNonQuery());
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ('{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ms")}', 10);").ExecuteNonQuery());
                 Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ('{DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd HH:mm:ss.ms")}', 20);").ExecuteNonQuery());
-                Console.WriteLine("==================================================================");
                 var cmd_select = connection.CreateCommand();
                 cmd_select.CommandText = $"select * from {database}.t";
                 var reader = cmd_select.ExecuteReader();
+                Console.WriteLine("==================================================================");
                 ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
                 Console.WriteLine("==================================================================");
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
@@ -53,10 +53,10 @@ namespace TaosADODemo
                 }
                 Console.WriteLine("SaveChanges.....");
                 context.SaveChanges();
-                Console.WriteLine("==================================================================");
                 Console.WriteLine("Search   pm25>0");
                 var f = from s in context.sensor where s.pm25 > 0 select s;
                 var ary = f.ToArray();
+                Console.WriteLine("==================================================================");
                 ConsoleTableBuilder.From(ary.ToList()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
                 Console.WriteLine("==================================================================");
                 context.Database.EnsureDeleted();
