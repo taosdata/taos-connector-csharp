@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\EFCore.Taos.Core\Maikebing.EntityFrameworkCore.Taos.csproj" />
-    <ProjectReference Include="..\src\Maikebing.Data.Taos\Maikebing.Data.Taos.csproj" />
+    <ProjectReference Include="..\EFCore.Taos.Core\Maikebing.EntityFrameworkCore.Taos.csproj" />
+    <ProjectReference Include="..\Maikebing.Data.Taos\Maikebing.Data.Taos.csproj" />
   </ItemGroup>
 
 </Project>

@@ -90,7 +90,7 @@ namespace Maikebing.Data.Taos
         /// <param name="name">The name of the column. The value is case-sensitive.</param>
         /// <returns>The value.</returns>
         public override object this[string name]
-            => _record.Current[name];
+            => this[GetOrdinal(name)];
 
         /// <summary>
         ///     Gets the value of the specified column.
@@ -98,7 +98,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value.</returns>
         public override object this[int ordinal]
-            => _record.Current[ordinal];
+            => GetValue(ordinal);
 
         /// <summary>
         ///     Gets an enumerator that can be used to iterate through the rows in the data reader.
@@ -203,66 +203,76 @@ namespace Maikebing.Data.Taos
             {
                 throw new InvalidOperationException($"DataReaderClosed{nameof(GetFieldType)}");
             }
+
             Type type = typeof(DBNull);
-            var jt = _record.Current;
-            if (jt != null)
+            if (ordinal == 0)
             {
-                switch (_record.Current[ordinal].Type)
+                type = typeof(DateTime);
+            }
+            else
+            {
+
+
+                var jt = _record.Current;
+                if (jt != null)
                 {
+                    switch (_record.Current[ordinal].Type)
+                    {
 
-                    case JTokenType.Integer:
-                        type = typeof(int);
-                        break;
+                        case JTokenType.Integer:
+                            type = typeof(int);
+                            break;
 
-                    case JTokenType.Float:
-                        type = typeof(float);
-                        break;
+                        case JTokenType.Float:
+                            type = typeof(float);
+                            break;
 
-                    case JTokenType.String:
-                        type = typeof(string);
-                        break;
+                        case JTokenType.String:
+                            type = typeof(string);
+                            break;
 
-                    case JTokenType.Boolean:
-                        type = typeof(bool);
-                        break;
+                        case JTokenType.Boolean:
+                            type = typeof(bool);
+                            break;
 
-                    case JTokenType.Null:
-                        type = typeof(DBNull);
-                        break;
+                        case JTokenType.Null:
+                            type = typeof(DBNull);
+                            break;
 
-                    case JTokenType.Date:
-                        type = typeof(DateTime);
-                        break;
+                        case JTokenType.Date:
+                            type = typeof(DateTime);
+                            break;
 
-                    case JTokenType.Raw:
-                    case JTokenType.Bytes:
-                        type = typeof(byte[]);
-                        break;
+                        case JTokenType.Raw:
+                        case JTokenType.Bytes:
+                            type = typeof(byte[]);
+                            break;
 
-                    case JTokenType.Guid:
+                        case JTokenType.Guid:
 
-                        type = typeof(Guid);
-                        break;
+                            type = typeof(Guid);
+                            break;
 
-                    case JTokenType.Uri:
+                        case JTokenType.Uri:
 
-                        type = typeof(Uri);
-                        break;
+                            type = typeof(Uri);
+                            break;
 
-                    case JTokenType.TimeSpan:
-                        type = typeof(TimeSpan);
-                        break;
+                        case JTokenType.TimeSpan:
+                            type = typeof(TimeSpan);
+                            break;
 
-                    case JTokenType.None:
-                    case JTokenType.Object:
-                    case JTokenType.Array:
-                    case JTokenType.Constructor:
-                    case JTokenType.Property:
-                    case JTokenType.Comment:
-                    case JTokenType.Undefined:
-                    default:
-                        type = typeof(object);
-                        break;
+                        case JTokenType.None:
+                        case JTokenType.Object:
+                        case JTokenType.Array:
+                        case JTokenType.Constructor:
+                        case JTokenType.Property:
+                        case JTokenType.Comment:
+                        case JTokenType.Undefined:
+                        default:
+                            type = typeof(object);
+                            break;
+                    }
                 }
             }
             return type;
@@ -430,7 +440,16 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override object GetValue(int ordinal) => GetFieldValue<object>(ordinal);
+        public override object GetValue(int ordinal)
+        {
+            object result =  null;
+            var obj = _record.Current;
+            if (obj != null)
+            {
+                result=obj[ordinal].ToObject(GetFieldType(ordinal));
+            }
+            return result;
+        }
 
         /// <summary>
         ///     Gets the column values of the current row.
@@ -438,7 +457,20 @@ namespace Maikebing.Data.Taos
         /// <param name="values">An array into which the values are copied.</param>
         /// <returns>The number of values copied into the array.</returns>
         public override int GetValues(object[] values)
-            => _record.Current.Children().Count();
+        {
+            int count = 0;
+            for (int i = 0; i < _fieldCount; i++)
+            {
+                var obj = GetValue(i);
+                if (obj != null)
+                {
+                    values[i] = obj;
+                    count++;
+                }
+            }
+            return count;
+        }
+        
 
         /// <summary>
         ///     Returns a System.Data.DataTable that describes the column metadata of the System.Data.Common.DbDataReader.
@@ -505,6 +537,7 @@ namespace Maikebing.Data.Taos
                 for (var i = 0; i < FieldCount; i++)
                 {
                     var schemaRow = schemaTable.NewRow();
+                   
                     schemaRow[ColumnName] = GetName(i);
                     schemaRow[ColumnOrdinal] = i;
                     schemaRow[ColumnSize] = DBNull.Value;
@@ -523,8 +556,15 @@ namespace Maikebing.Data.Taos
                     schemaRow[IsAliased] = columnName != GetName(i);
                     schemaRow[IsExpression] = columnName == null;
                     schemaRow[IsLong] = DBNull.Value;
+                    if (i == 0)
+                    {
+                        schemaRow[IsKey] = true;
+                        schemaRow[DataType] = GetFieldType(i);
+                        schemaRow[DataTypeName] = GetDataTypeName(i);
+                    }
                     schemaTable.Rows.Add(schemaRow);
                 }
+             
             }
             _record.Reset();
             return schemaTable;

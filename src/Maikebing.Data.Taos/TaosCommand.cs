@@ -318,19 +318,24 @@ namespace Maikebing.Data.Taos
                 request.AddHeader("Content-Type", "text/plain");
                 request.AddParameter("undefined",  _commandText, "application/json", ParameterType.RequestBody);
                 IRestResponse response = client.Execute(request);
-#if DEBUG
-                Console.WriteLine($"StatusCode   {response.StatusCode} response.Content:{response.Content}");
-#endif
                 if (response.StatusCode== System.Net.HttpStatusCode.OK)
                 {
                     var tr = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosResult>(response.Content);
+#if DEBUG
+                    Console.WriteLine($"Exec {tr.status},rows:{tr.rows},cols:{tr.head?.Count}");
+#endif
                     dataReader = new TaosDataReader(this, tr, closeConnection);
-                  
+                }
+                else if (string.IsNullOrEmpty(response.Content))
+                {
+                    TaosException.ThrowExceptionForRC(_commandText,  new TaosErrorResult() {  status= response.StatusCode.ToString(),code=-9999, desc= "Server is not available" });
                 }
                 else
                 {
-
                     var tr = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosErrorResult>(response.Content);
+#if DEBUG
+                    Console.WriteLine($"Exec {tr.status},code:{tr.code},message:{tr.desc}");
+#endif
                     TaosException.ThrowExceptionForRC(_commandText,tr);
                 }
             }
