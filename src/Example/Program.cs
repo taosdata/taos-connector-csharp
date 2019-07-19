@@ -33,11 +33,12 @@ namespace TaosADODemo
                 var cmd_select = connection.CreateCommand();
                 cmd_select.CommandText = $"select * from {database}.t";
                 var reader = cmd_select.ExecuteReader();
-                Console.WriteLine("==================================================================");
+                Console.WriteLine(cmd_select.CommandText);
+                Console.WriteLine("");
                 ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
-                Console.WriteLine("==================================================================");
+                Console.WriteLine("");
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
-                Console.WriteLine("DROP DATABASE {0} {1}", database, connection.CreateCommand($"DROP DATABASE   {database}").ExecuteNonQuery());
+                Console.WriteLine("DROP DATABASE {0} {1}", database, connection.CreateCommand($"DROP DATABASE   {database};").ExecuteNonQuery());
                 connection.Close();
             }
             //Example for  Entity Framework Core  
@@ -51,16 +52,18 @@ namespace TaosADODemo
                     var rd = new Random();
                     context.sensor.Add(new sensor() { ts = DateTime.Now.AddMilliseconds(i), degree = rd.NextDouble(), pm25 = rd.Next(0, 1000) });
                 }
-                Console.WriteLine("SaveChanges.....");
+                Console.WriteLine("Saveing");
                 context.SaveChanges();
-                Console.WriteLine("Search   pm25>0");
+                Console.WriteLine("");
+                Console.WriteLine("from s in context.sensor where s.pm25 > 0 select s ");
+                Console.WriteLine("");
                 var f = from s in context.sensor where s.pm25 > 0 select s;
                 var ary = f.ToArray();
-                Console.WriteLine("==================================================================");
                 ConsoleTableBuilder.From(ary.ToList()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
-                Console.WriteLine("==================================================================");
                 context.Database.EnsureDeleted();
             }
+            Console.WriteLine("");
+            Console.WriteLine("Pass any key to exit....");
             Console.ReadKey();
         }
     }
