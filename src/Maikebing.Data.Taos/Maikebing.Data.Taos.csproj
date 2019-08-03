@@ -40,6 +40,10 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
  
     <Version>1.0.1</Version>
   </PropertyGroup>
+
+ 
+
+  
  
 
   <ItemGroup>
