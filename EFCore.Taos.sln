@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example", "src\Example\Example.csproj", "{D7F52FA5-1CAA-4D9F-80D8-F141D104AE64}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{B24685BC-E919-46BE-ADE8-52AC8697A1F1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +44,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{EFD6587E-F538-4656-95E3-514EEA16E494} = {CE6B50B2-34AE-44C9-940A-4E48C3E1B3BC}
 		{9D7B7248-3ADD-4DC3-A800-18CE10FEA752} = {CE6B50B2-34AE-44C9-940A-4E48C3E1B3BC}
+		{D7F52FA5-1CAA-4D9F-80D8-F141D104AE64} = {B24685BC-E919-46BE-ADE8-52AC8697A1F1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {285A5EB4-BCF4-40EB-B9E1-DF6DBCB5E705}

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,6 +8,8 @@ using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using TDengineDriver;
 
 namespace Maikebing.Data.Taos
 {
@@ -23,22 +24,21 @@ namespace Maikebing.Data.Taos
         private bool _stepped;
         private bool _done;
         private readonly bool _closeConnection;
-        private readonly TaosResult _taosResult;
-        private readonly JArray _array;
+        private readonly long _taosResult;
         private int _fieldCount;
-        private IEnumerator<JToken> _record;
-
-        internal TaosDataReader(TaosCommand taosCommand, TaosResult tr, bool closeConnection)
+        private long _taos = 0;
+        IntPtr rowdata;
+        List<TDengineMeta> _metas = null;
+        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas,  bool closeConnection)
         {
+           _taos = taosCommand.Connection._taos;
             _command = taosCommand;
             _closeConnection = closeConnection;
-            _taosResult = tr;
-            var ja = _taosResult.data as JArray;
-            _array = ja;
-            _record = ja.AsEnumerable().GetEnumerator();
-            _fieldCount = _taosResult.head.Count;
-            _hasRows = ja != null && ja.Count > 0;
+            _fieldCount = TDengine.FieldCount(_taos);
+            _hasRows = TDengine.AffectRows(_taos) > 0;
             _closed = _closeConnection;
+            _taosResult = TDengine.UseResult(_taos);
+            _metas = metas;
         }
 
         /// <summary>
@@ -75,12 +75,8 @@ namespace Maikebing.Data.Taos
         {
             get
             {
-                int result = 0;
-                if (_taosResult.head.Contains("affected_rows"))
-                {
-                    result = GetInt32(GetOrdinal("affected_rows"));
-                }
-                return result;
+                
+                return TDengine.AffectRows(_taos);
             }
         }
 
@@ -107,6 +103,7 @@ namespace Maikebing.Data.Taos
         public override IEnumerator GetEnumerator()
             => new DbEnumerator(this, closeReader: false);
 
+     
         /// <summary>
         ///     Advances to the next row in the result set.
         /// </summary>
@@ -117,18 +114,10 @@ namespace Maikebing.Data.Taos
             {
                 throw new InvalidOperationException($"DataReaderClosed{nameof(Read)}");
             }
-            _done = _record.Current == _array.Last;
-            if (!_done)
-            {
-                _stepped = _record.MoveNext();
-            }
-            if (!_stepped)
-            {
-                _stepped = true;
-                return _hasRows;
-            }
-
-            return !_done;
+       
+            rowdata = TDengine.FetchRows(_taosResult);
+            return rowdata != IntPtr.Zero;
+ 
         }
 
         /// <summary>
@@ -137,7 +126,7 @@ namespace Maikebing.Data.Taos
         /// <returns>true if there are more result sets; otherwise, false.</returns>
         public override bool NextResult()
         {
-            return true;
+            return Read();
         }
 
         /// <summary>
@@ -176,7 +165,7 @@ namespace Maikebing.Data.Taos
         /// <returns>The name of the column.</returns>
         public override string GetName(int ordinal)
         {
-            return _taosResult.head[ordinal];//_recordordinal);
+            return _metas[ordinal].name;
         }
 
         /// <summary>
@@ -185,7 +174,7 @@ namespace Maikebing.Data.Taos
         /// <param name="name">The name of the column.</param>
         /// <returns>The zero-based column ordinal.</returns>
         public override int GetOrdinal(string name)
-            => _taosResult.head.IndexOf(name);
+            => _metas.IndexOf(_metas.FirstOrDefault(m => m.name == name));
 
         public override string GetDataTypeName(int ordinal)
         {
@@ -199,82 +188,46 @@ namespace Maikebing.Data.Taos
         /// <returns>The data type of the column.</returns>
         public override Type GetFieldType(int ordinal)
         {
-            if (_closed)
+            if (_metas==null ||ordinal>= _metas.Count)
             {
                 throw new InvalidOperationException($"DataReaderClosed{nameof(GetFieldType)}");
             }
-
+            TDengineMeta meta = _metas[ordinal];
             Type type = typeof(DBNull);
-            if (ordinal == 0)
+            switch ((TDengineDataType)meta.type)
             {
-                type = typeof(DateTime);
+                case TDengineDataType.TSDB_DATA_TYPE_BOOL:
+                    type = typeof(bool);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
+                    type = typeof(byte);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
+                    type = typeof(short);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_INT:
+                    type = typeof(int);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
+                    type = typeof(long);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
+                    type = typeof(float);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
+                    type = typeof(double);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_BINARY:
+                    type = typeof(string);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
+                    type = typeof(long);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
+                    type = typeof(string);
+                    break;
             }
-            else
-            {
 
-
-                var jt = _record.Current;
-                if (jt != null)
-                {
-                    switch (_record.Current[ordinal].Type)
-                    {
-
-                        case JTokenType.Integer:
-                            type = typeof(int);
-                            break;
-
-                        case JTokenType.Float:
-                            type = typeof(float);
-                            break;
-
-                        case JTokenType.String:
-                            type = typeof(string);
-                            break;
-
-                        case JTokenType.Boolean:
-                            type = typeof(bool);
-                            break;
-
-                        case JTokenType.Null:
-                            type = typeof(DBNull);
-                            break;
-
-                        case JTokenType.Date:
-                            type = typeof(DateTime);
-                            break;
-
-                        case JTokenType.Raw:
-                        case JTokenType.Bytes:
-                            type = typeof(byte[]);
-                            break;
-
-                        case JTokenType.Guid:
-
-                            type = typeof(Guid);
-                            break;
-
-                        case JTokenType.Uri:
-
-                            type = typeof(Uri);
-                            break;
-
-                        case JTokenType.TimeSpan:
-                            type = typeof(TimeSpan);
-                            break;
-
-                        case JTokenType.None:
-                        case JTokenType.Object:
-                        case JTokenType.Array:
-                        case JTokenType.Constructor:
-                        case JTokenType.Property:
-                        case JTokenType.Comment:
-                        case JTokenType.Undefined:
-                        default:
-                            type = typeof(object);
-                            break;
-                    }
-                }
-            }
             return type;
         }
 
@@ -284,21 +237,21 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>true if the specified column is <see cref="DBNull" />; otherwise, false.</returns>
         public override bool IsDBNull(int ordinal)
-                => _record.Current[ordinal].Type == JTokenType.Null;
+                =>  GetValue(ordinal)==DBNull.Value;
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="bool" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override bool GetBoolean(int ordinal) => GetFieldValue<bool>(ordinal);
+        public override bool GetBoolean(int ordinal) => Marshal.ReadByte(GetValuePtr(ordinal)) == 0 ? false : true;
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="byte" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override byte GetByte(int ordinal) => GetFieldValue<byte>(ordinal);
+        public override byte GetByte(int ordinal) => Marshal.ReadByte(GetValuePtr(ordinal));
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="char" />.
@@ -312,42 +265,51 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override DateTime GetDateTime(int ordinal) => GetFieldValue<DateTime>(ordinal);
+        public override DateTime GetDateTime(int ordinal)
+        {
+            return new DateTime(1970, 1, 1, 0, 0, 0, 0).AddMilliseconds(Marshal.ReadInt64(GetValuePtr(ordinal)));
+        }
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="DateTimeOffset" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public virtual DateTimeOffset GetDateTimeOffset(int ordinal) => GetFieldValue<DateTimeOffset>(ordinal);
+        public virtual DateTimeOffset GetDateTimeOffset(int ordinal)
+        {
+            return new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(Marshal.ReadInt64(GetValuePtr(ordinal)));
+        }
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="TimeSpan" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public virtual TimeSpan GetTimeSpan(int ordinal) => GetFieldValue<TimeSpan>(ordinal);
+        public virtual TimeSpan GetTimeSpan(int ordinal)
+        {
+            return TimeSpan.FromMilliseconds(Marshal.ReadInt64(GetValuePtr(ordinal)));
+        }
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="decimal" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override decimal GetDecimal(int ordinal) => GetFieldValue<decimal>(ordinal);
+        public override decimal GetDecimal(int ordinal) => (decimal)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(decimal));
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="double" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override double GetDouble(int ordinal) => GetFieldValue<double>(ordinal);
+        public override double GetDouble(int ordinal) => (double)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(double));
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="float" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override float GetFloat(int ordinal) => GetFieldValue<float>(ordinal);
+        public override float GetFloat(int ordinal) => (float)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(float));
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="Guid" />.
@@ -361,28 +323,28 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override short GetInt16(int ordinal) => GetFieldValue<short>(ordinal);
+        public override short GetInt16(int ordinal) => (short)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(short));
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="int" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override int GetInt32(int ordinal) => GetFieldValue<int>(ordinal);
+        public override int GetInt32(int ordinal) => (int)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(int));
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="long" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override long GetInt64(int ordinal) => GetFieldValue<long>(ordinal);
+        public override long GetInt64(int ordinal) => (long)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(long));
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="string" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override string GetString(int ordinal) => GetFieldValue<string>(ordinal);
+        public override string GetString(int ordinal) => Marshal.PtrToStringAnsi(GetValuePtr(ordinal)); 
 
         /// <summary>
         ///     Reads a stream of bytes from the specified column. Not supported.
@@ -394,7 +356,12 @@ namespace Maikebing.Data.Taos
         /// <param name="length">The maximum number of bytes to read.</param>
         /// <returns>The actual number of bytes read.</returns>
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
-                      => throw new NotSupportedException();
+        {
+            byte[] buffer1 = new byte[length + bufferOffset];
+            Marshal.Copy(GetValuePtr(ordinal), buffer1, (int)dataOffset, length + bufferOffset);
+            Array.Copy(buffer1, bufferOffset, buffer, 0, length);
+            return length;
+        }
 
         /// <summary>
         ///     Reads a stream of characters from the specified column. Not supported.
@@ -424,17 +391,16 @@ namespace Maikebing.Data.Taos
         /// <typeparam name="T">The type of the value.</typeparam>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override T GetFieldValue<T>(int ordinal)
-        {
-            T result = default(T);
-            var jt = _record.Current;
-            if (jt != null)
-            {
-                result = _record.Current[ordinal].Value<T>();
-            }
-            return result;
-        }
+        public override T GetFieldValue<T>(int ordinal) => (T)Convert.ChangeType(GetValue(ordinal), typeof(T));
 
+      
+        public   IntPtr GetValuePtr(int ordinal)
+        {
+            object result = DBNull.Value;
+            TDengineMeta meta = _metas[ordinal];
+            int offset = 8 * ordinal;
+           return  Marshal.ReadIntPtr(rowdata, offset);
+        }
         /// <summary>
         ///     Gets the value of the specified column.
         /// </summary>
@@ -442,11 +408,60 @@ namespace Maikebing.Data.Taos
         /// <returns>The value of the column.</returns>
         public override object GetValue(int ordinal)
         {
-            object result =  null;
-            var obj = _record.Current;
-            if (obj != null)
+            object result = DBNull.Value;
+            TDengineMeta meta = _metas[ordinal];
+            int offset = 8 * ordinal;
+            IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
+            if (data != IntPtr.Zero)
             {
-                result=obj[ordinal].ToObject(GetFieldType(ordinal));
+                switch ((TDengineDataType)meta.type)
+                {
+                    case TDengineDataType.TSDB_DATA_TYPE_BOOL:
+                        bool v1 = Marshal.ReadByte(data) == 0 ? false : true;
+                        result = v1;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
+                        byte v2 = Marshal.ReadByte(data);
+                        result = v2;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
+                        short v3 = Marshal.ReadInt16(data);
+                        result = v3;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_INT:
+                        int v4 = Marshal.ReadInt32(data);
+                        result = v4;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
+                        long v5 = Marshal.ReadInt64(data);
+                        result = v5;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
+                        float v6 = (float)Marshal.PtrToStructure(data, typeof(float));
+                        result = v6;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
+                        double v7 = (double)Marshal.PtrToStructure(data, typeof(double));
+                        result = v7;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_BINARY:
+                        string v8 = Marshal.PtrToStringAnsi(data);
+                        result = v8;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
+                        long v9 = Marshal.ReadInt64(data);
+                        result = v9;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
+                        string v10 = Marshal.PtrToStringAnsi(data);
+                        result = v10;
+                        break;
+                }
+
+            }
+            else
+            {
+                result = DBNull.Value;
             }
             return result;
         }
@@ -478,14 +493,10 @@ namespace Maikebing.Data.Taos
         /// <returns>A System.Data.DataTable that describes the column metadata.</returns>
         public override DataTable GetSchemaTable()
         {
-            _record.Reset();
             var schemaTable = new DataTable("SchemaTable");
             bool ok = false;
-            if (_record.Current == null)
-            {
-                ok = Read();
-            }
-            if (ok)
+          
+            if ( _metas!=null && _metas.Count>0)
             {
                 var ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));
                 var ColumnOrdinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int));
@@ -534,13 +545,13 @@ namespace Maikebing.Data.Taos
                 columns.Add(IsAutoIncrement);
                 columns.Add(IsLong);
 
-                for (var i = 0; i < FieldCount; i++)
+                for (var i = 0; i < _metas.Count; i++)
                 {
                     var schemaRow = schemaTable.NewRow();
                    
                     schemaRow[ColumnName] = GetName(i);
                     schemaRow[ColumnOrdinal] = i;
-                    schemaRow[ColumnSize] = DBNull.Value;
+                    schemaRow[ColumnSize] = _metas[i].size;
                     schemaRow[NumericPrecision] = DBNull.Value;
                     schemaRow[NumericScale] = DBNull.Value;
                     schemaRow[BaseServerName] = _command.Connection.DataSource;
@@ -566,7 +577,7 @@ namespace Maikebing.Data.Taos
                 }
              
             }
-            _record.Reset();
+          
             return schemaTable;
         }
     }

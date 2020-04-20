@@ -1,7 +1,6 @@
 ﻿using ConsoleTableExt;
 using Maikebing.Data.Taos;
 using Microsoft.EntityFrameworkCore;
-using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,19 +16,20 @@ namespace TaosADODemo
             string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             var builder = new TaosConnectionStringBuilder()
             {
-                DataSource = "http://td.gitclub.cn/rest/sql",
+                DataSource = "114.116.231.247",
                 DataBase = database,
-                Username = "root",
-                Password = "taosdata"
+                Username = "kangyunqiang",
+                Password = "kangyunqiang"
             };
             //Example for ADO.Net 
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
                 connection.Open();
+             
                 Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
                 Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table {database}.t (ts timestamp, cdata int);").ExecuteNonQuery());
-                Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ('{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ms")}', 10);").ExecuteNonQuery());
-                Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ('{DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd HH:mm:ss.ms")}', 20);").ExecuteNonQuery());
+                Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
+                //Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.AddMonths(1).Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 20);").ExecuteNonQuery());
                 var cmd_select = connection.CreateCommand();
                 cmd_select.CommandText = $"select * from {database}.t";
                 var reader = cmd_select.ExecuteReader();
