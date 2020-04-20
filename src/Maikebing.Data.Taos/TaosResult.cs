@@ -19,23 +19,4 @@ namespace Maikebing.Data.Taos
         /// </summary>
         public string desc { get; set; }
     }
-    public class TaosResult
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        public string status { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<string> head { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public  object data { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int rows { get; set; }
-    }
 }

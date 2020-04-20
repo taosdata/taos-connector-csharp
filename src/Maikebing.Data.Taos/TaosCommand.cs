@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -10,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TDengineDriver;
 
 namespace Maikebing.Data.Taos
 {
@@ -23,7 +23,7 @@ namespace Maikebing.Data.Taos
 
         private TaosConnection _connection;
         private string _commandText;
-
+        private long _taos =>_connection._taos;
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosCommand" /> class.
         /// </summary>
@@ -302,8 +302,7 @@ namespace Maikebing.Data.Taos
             {
                 throw new InvalidOperationException("TransactionCompleted");
             }
-            int rc;
-            var client = Connection.client;
+            
             var unprepared=false; 
             TaosDataReader dataReader = null;
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
@@ -312,38 +311,28 @@ namespace Maikebing.Data.Taos
 #if DEBUG
                 Console.WriteLine($"_commandText:{_commandText}");
 #endif
-                var request = new RestRequest(Method.POST);
-                request.AddHeader("User-Agent", "Maikebing.Data.Taos/0.0.1");
-                request.AddHeader("Authorization", $"Basic {Connection.Token}");
-                request.AddHeader("Content-Type", "text/plain");
-                request.AddParameter("undefined",  _commandText, "application/json", ParameterType.RequestBody);
-                IRestResponse response = client.Execute(request);
-                if (response.StatusCode== System.Net.HttpStatusCode.OK)
+                var code = TDengine.Query(_taos, _commandText);
+
+                if (code == TDengine.TSDB_CODE_SUCCESS)
                 {
-                    var tr = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosResult>(response.Content);
-#if DEBUG
-                    Console.WriteLine($"Exec {tr.status},rows:{tr.rows},cols:{tr.head?.Count}");
-#endif
-                    dataReader = new TaosDataReader(this, tr, closeConnection);
-                }
-                else if (string.IsNullOrEmpty(response.Content))
-                {
-                    TaosException.ThrowExceptionForRC(_commandText,  new TaosErrorResult() {  status= response.StatusCode.ToString(),code=-9999, desc= "Server is not available" });
+                        List<TDengineMeta> metas = TDengine.FetchFields(_taos);
+                        for (int j = 0; j < metas.Count; j++)
+                        {
+                            TDengineMeta meta = (TDengineMeta)metas[j];
+                            //Console.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName() + ", name:" + meta.name + ", size:" + meta.size);
+                        }
+                   
+                    dataReader = new TaosDataReader(this, metas, closeConnection);
                 }
                 else
                 {
-                    var tr = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosErrorResult>(response.Content);
-#if DEBUG
-                    Console.WriteLine($"Exec {tr.status},code:{tr.code},message:{tr.desc}");
-#endif
-                    TaosException.ThrowExceptionForRC(_commandText,tr);
+                    TaosException.ThrowExceptionForRC(_commandText,  new TaosErrorResult() { code= TDengine.ErrorNo(_taos), desc=TDengine.Error(_taos), status=code.ToString()  });
                 }
             }
             catch when (unprepared)
             {
                 throw;
             }
-
             return dataReader;
         }
 
@@ -437,14 +426,7 @@ namespace Maikebing.Data.Taos
             }
             using (var reader = ExecuteReader())
             {
-                if (reader.Read())
-                {
-                    return reader.RecordsAffected;
-                }
-                else
-                {
-                    return -1;
-                }
+                return reader.RecordsAffected;
             }
         }
 

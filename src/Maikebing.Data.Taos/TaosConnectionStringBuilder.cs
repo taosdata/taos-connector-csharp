@@ -133,6 +133,7 @@ namespace Maikebing.Data.Taos
             get => _dataBase;
             set => base[DataBaseKeyword] = _dataBase = value;
         }
+        public int Port { get; internal set; }
 
 
         /// <summary>

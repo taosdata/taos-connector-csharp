@@ -7,7 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
- 
+using TDengineDriver;
 
 namespace Maikebing.Data.Taos
 {
@@ -16,12 +16,18 @@ namespace Maikebing.Data.Taos
     /// </summary>
     public partial class TaosConnection : DbConnection
     {
+        private string host;
+        private string configDir = "C:/TDengine/cfg";
+        private string user;
+        private string password;
+        private int port = 6060;
 
         private readonly IList<WeakReference<TaosCommand>> _commands = new List<WeakReference<TaosCommand>>();
 
         private string _connectionString;
         private ConnectionState _state;
-        internal RestSharp.RestClient client;
+        internal long _taos;
+
 
 
         /// <summary>
@@ -29,7 +35,9 @@ namespace Maikebing.Data.Taos
         /// </summary>
         public TaosConnection()
         {
-         
+            TDengine.Options((int)TDengineInitOption.TDDB_OPTION_CONFIGDIR, this.configDir);
+            TDengine.Options((int)TDengineInitOption.TDDB_OPTION_SHELL_ACTIVITY_TIMER, "60");
+            TDengine.Init();
         }
 
         /// <summary>
@@ -37,10 +45,10 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="connectionString">The string used to open the connection.</param>
         /// <seealso cref="TaosConnectionStringBuilder" />
-        public TaosConnection(string connectionString)
+        public TaosConnection(string connectionString) : this()
             => ConnectionString = connectionString;
 
-       
+
 
         /// <summary>
         ///     Gets or sets a string used to open the connection.
@@ -54,12 +62,12 @@ namespace Maikebing.Data.Taos
             {
                 _connectionString = value;
                 ConnectionStringBuilder = new TaosConnectionStringBuilder(value);
-                
+
             }
         }
 
         internal TaosConnectionStringBuilder ConnectionStringBuilder { get; set; }
- 
+
 
         /// <summary>
         ///     Gets the path to the database file. Will be absolute for open connections.
@@ -74,15 +82,7 @@ namespace Maikebing.Data.Taos
                 return dataSource ?? ConnectionStringBuilder.DataSource;
             }
         }
-        public  string Token
-        {
-            get
-            {
-                string token = null;
 
-                return token ?? ConnectionStringBuilder.Token;
-            }
-        }
         /// <summary>
         ///     Gets or sets the default <see cref="TaosCommand.CommandTimeout"/> value for commands created using
         ///     this connection. This is also used for internal commands in methods like
@@ -96,7 +96,7 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <value>The version of Taos used by the connection.</value>
         public override string ServerVersion => "0.0";
-    
+
 
         /// <summary>
         ///     Gets the current state of the connection.
@@ -121,6 +121,8 @@ namespace Maikebing.Data.Taos
         public override string Database => ConnectionStringBuilder.DataBase;
 
 
+
+
         private void SetState(ConnectionState value)
         {
             var originalState = _state;
@@ -130,7 +132,7 @@ namespace Maikebing.Data.Taos
                 OnStateChange(new StateChangeEventArgs(originalState, value));
             }
         }
-  
+
         /// <summary>
         ///     Opens a connection to the database using the value of <see cref="ConnectionString" />. If
         ///     <c>Mode=ReadWriteCreate</c> is used (the default) the file is created, if it doesn't already exist.
@@ -147,12 +149,16 @@ namespace Maikebing.Data.Taos
                 throw new InvalidOperationException("Open Requires Set ConnectionString");
             }
 
-            client = new RestSharp.RestClient(new Uri(DataSource));
-            SetState(ConnectionState.Open);
-
- 
-        
-    
+            this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password, "", ConnectionStringBuilder.Port);
+            if (this._taos == 0)
+            {
+                throw new Exception($"Connect to TDengine failed ErrorNo:{TDengine.ErrorNo(_taos)} Error:{TDengine.Error(_taos)} ");
+            }
+            else
+            {
+                SetState(ConnectionState.Open);
+              
+            }
         }
 
         /// <summary>
@@ -160,12 +166,8 @@ namespace Maikebing.Data.Taos
         /// </summary>
         public override void Close()
         {
-            //if (_db == null
-            //    || _db.ptr == IntPtr.Zero)
-            //{
-            //    return;
-            //}
 
+            TDengine.Close(_taos);
             Transaction?.Dispose();
 
             foreach (var reference in _commands)
@@ -178,7 +180,7 @@ namespace Maikebing.Data.Taos
 
             _commands.Clear();
 
-          
+
             SetState(ConnectionState.Closed);
         }
 
@@ -194,7 +196,6 @@ namespace Maikebing.Data.Taos
             {
                 Close();
             }
-
             base.Dispose(disposing);
         }
 
@@ -208,8 +209,8 @@ namespace Maikebing.Data.Taos
         /// </remarks>
         public new virtual TaosCommand CreateCommand()
             => new TaosCommand { Connection = this, CommandTimeout = DefaultTimeout, Transaction = Transaction };
-        public  virtual TaosCommand CreateCommand(string commandtext)
-          => new TaosCommand { Connection = this, CommandText=commandtext, CommandTimeout = DefaultTimeout, Transaction = Transaction };
+        public virtual TaosCommand CreateCommand(string commandtext)
+          => new TaosCommand { Connection = this, CommandText = commandtext, CommandTimeout = DefaultTimeout, Transaction = Transaction };
 
         /// <summary>
         ///     Creates a new command associated with the connection.
@@ -260,7 +261,7 @@ namespace Maikebing.Data.Taos
                 throw new InvalidOperationException($"CallRequiresOpenConnection{nameof(CreateCollation)}");
             }
 
-         
+
         }
 
         /// <summary>
@@ -298,17 +299,13 @@ namespace Maikebing.Data.Taos
         }
 
         /// <summary>
-        ///     Changes the current database. Not supported.
+        ///     Changes the current database.  
         /// </summary>
         /// <param name="databaseName">The name of the database to use.</param>
-        /// <exception cref="NotSupportedException">Always.</exception>
         public override void ChangeDatabase(string databaseName)
-            => throw new NotSupportedException();
- 
- 
-
-      
- 
+        {
+            this.CreateCommand($" use {databaseName};").ExecuteNonQuery();
+        }
 
         private class AggregateContext<T>
         {
