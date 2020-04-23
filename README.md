@@ -1,21 +1,16 @@
 # Maikebing.EntityFrameworkCore.Taos
 
-## ÏîÄ¿¼ò½é
+## é¡¹ç›®ç®€ä»‹
  
 
 Entity, Framework, EF, Core, Data, O/RM, entity-framework-core,TDengine
 --
 
-Maikebing.Data.Taos  ÊÇÒ»¸ö»ùÓÚTDengine µÄRESTful Connector¹¹½¨µÄADO.Net Ìá¹©Æ÷¡£ Õâ½«ÔÊĞíÄãÍ¨¹ı.Net Core ·ÃÎÊTDengineÊı¾İ¿â¡£
+Maikebing.Data.Taos  æ˜¯ä¸€ä¸ªåŸºäºTDengine çš„åŸç”ŸåŠ¨æ€åº“æ„å»ºçš„ADO.Net æä¾›å™¨ã€‚ è¿™å°†å…è®¸ä½ é€šè¿‡.Net Core è®¿é—®TDengineæ•°æ®åº“ã€‚
 
 ---
 
-Maikebing.EntityFrameworkCore.Taos ÊÇÒ»¸öEntity Framework Core µÄÌá¹©Æ÷£¬ »ùÓÚMaikebing.Data.Taos¹¹½¨¡£ 
-
-## ¹ØÓÚRESTful Connector
-
-ÓÉÓÚ¹Ù·½Ã»ÓĞÌá¹©ÈÎºÎÒÑ±àÒë¿É¹©Linux¡¢Windows¡¢MacOSµÄC++ Connector,ÒªÊµÏÖ.Net Core ºá¿çÈıÆ½Ì¨ĞèÒªÑĞ¶ÁC++ Connector´úÂë²¢ÔÚÈı¸öÆ½Ì¨ÏÂ½øĞĞ²âÊÔ¡£
-Óë´ËÍ¬Ê±ÓÖĞèÒªÔÄ¶ÁADO.Net ºÍEFCore ¿ò¼ÜµÄ´úÂë£¬ Ñ¹Á¦¾Ş´ó£¬Òò´ËÎÒÏÈÊ¹ÓÃ RESTful Connector µÈ¹Ù·½·¢²¼ÈıÆ½Ì¨ÏÂ¾­¹ı²âÊÔµÄ¶¯Ì¬¿âºóÔÙÖØĞ´ADO.Net¡£ 
+Maikebing.EntityFrameworkCore.Taos æ˜¯ä¸€ä¸ªEntity Framework Core çš„æä¾›å™¨ï¼Œ åŸºäºMaikebing.Data.Taosæ„å»ºã€‚ 
 
 
 ---
@@ -39,13 +34,15 @@ Maikebing.EntityFrameworkCore.Taos ÊÇÒ»¸öEntity Framework Core µÄÌá¹©Æ÷£¬ »ùÓÚMa
 ```C#
     ///Specify the name of the database
     string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
-    var builder = new TaosConnectionStringBuilder()
-    {
-        DataSource = "http://td.gitclub.cn/rest/sql",
-        DataBase = database,
-        Username = "root",
-        Password = "taosdata"
-    };
+      string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
+      var builder = new TaosConnectionStringBuilder()
+      {
+            DataSource = "127.0.0.1",
+            DataBase = database,
+            Username = "root",
+            Password = "kissme",
+            Port=6060
+            };
     //Example for ADO.Net 
     using (var connection = new TaosConnection(builder.ConnectionString))
     {
