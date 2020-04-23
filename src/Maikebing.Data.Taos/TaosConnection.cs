@@ -1,12 +1,15 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using NativeLibraryManager;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using TDengineDriver;
 
 namespace Maikebing.Data.Taos
@@ -28,16 +31,49 @@ namespace Maikebing.Data.Taos
         private ConnectionState _state;
         internal long _taos;
 
-
+        private static bool  _dll_isloaded=false;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosConnection" /> class.
         /// </summary>
         public TaosConnection()
         {
-            TDengine.Options((int)TDengineInitOption.TDDB_OPTION_CONFIGDIR, this.configDir);
-            TDengine.Options((int)TDengineInitOption.TDDB_OPTION_SHELL_ACTIVITY_TIMER, "60");
-            TDengine.Init();
+            if (_dll_isloaded == false)
+            {
+                var accessor = new ResourceAccessor(Assembly.GetExecutingAssembly());
+                var libManager = new LibraryManager(
+                    Assembly.GetExecutingAssembly(),
+                    new LibraryItem(Platform.Windows, Bitness.x64,
+                        new LibraryFile("taos.dll", accessor.Binary("libs.taos.dll"))),
+                    new LibraryItem(Platform.Linux, Bitness.x64,
+                        new LibraryFile("libtaos.so", accessor.Binary("libs.libtaos.so.1.6.6.2"))));
+                libManager.LoadNativeLibrary(false);
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    configDir = "/etc/taos";
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    configDir = "C:/TDengine/cfg";
+                }
+                var cfg = new System.IO.FileInfo(System.IO.Path.Combine(configDir, "taos.cfg"));
+                if (!cfg.Directory.Exists) cfg.Directory.Create();
+                if (!cfg.Exists)
+                {
+                     System.IO.File.WriteAllBytes(cfg.FullName,  accessor.Binary("cfg.taos.cfg"));
+                }
+                if ((RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && RuntimeInformation.OSArchitecture == Architecture.X64)
+                    || (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64))
+                {
+                    TDengine.Options((int)TDengineInitOption.TDDB_OPTION_CONFIGDIR, this.configDir);
+                    TDengine.Options((int)TDengineInitOption.TDDB_OPTION_SHELL_ACTIVITY_TIMER, "60");
+                    TDengine.Init();
+                }
+                else
+                {
+                    throw new PlatformNotSupportedException("Only Support Linux X64 And Linux X64");
+                }
+            }
         }
 
         /// <summary>

@@ -4,58 +4,61 @@
     <AssemblyName>Maikebing.Data.Taos</AssemblyName>
     <RootNamespace>$(AssemblyName)</RootNamespace>
     <PackageId>Maikebing.Data.Taos</PackageId>
-    <Description>Taos implementation of the System.Data.Common provider model.
+    <Description>
+      Taos implementation of the System.Data.Common provider model.
 
-Commonly Used Types:
-Maikebing.Data.Taos.TaosCommand
-Maikebing.Data.Taos.TaosConnection
-Maikebing.Data.Taos.TaosConnectionStringBuilder
-Maikebing.Data.Taos.TaosDataReader
-Maikebing.Data.Taos.TaosException
-Maikebing.Data.Taos.TaosFactory
-Maikebing.Data.Taos.TaosParameter
-Maikebing.Data.Taos.TaosTransaction</Description>
+      Commonly Used Types:
+      Maikebing.Data.Taos.TaosCommand
+      Maikebing.Data.Taos.TaosConnection
+      Maikebing.Data.Taos.TaosConnectionStringBuilder
+      Maikebing.Data.Taos.TaosDataReader
+      Maikebing.Data.Taos.TaosException
+      Maikebing.Data.Taos.TaosFactory
+      Maikebing.Data.Taos.TaosParameter
+      Maikebing.Data.Taos.TaosTransaction
+    </Description>
     <TargetFramework>netstandard2.0</TargetFramework>
- 
-    <PackageTags>Taos;Data;ADO.NET;Entity Framework,;EF; Core;Data O/RM,;entity-framework-core;TDengine</PackageTags>
- 
-    <Authors>Maikebing</Authors>
- 
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
- 
-    <PackageProjectUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</PackageProjectUrl>
- 
-    <PackageIconUrl>https://raw.githubusercontent.com/maikebing/Maikebing.EntityFrameworkCore.Taos/master/docs/48876650.jfif</PackageIconUrl>
- 
-    <RepositoryUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</RepositoryUrl>
- 
-    <PackageReleaseNotes>Maikebing.Data.Taos  是一个基于TDengine 的RESTful Connector构建的ADO.Net 提供器。 这将允许你通过.Net Core 访问TDengine数据库。
-Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于Maikebing.Data.Taos构建。 
 
-</PackageReleaseNotes>
- 
+    <PackageTags>Taos;Data;ADO.NET;Entity Framework,;EF; Core;Data O/RM,;entity-framework-core;TDengine</PackageTags>
+
+    <Authors>Maikebing</Authors>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+    <PackageProjectUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</PackageProjectUrl>
+
+    <PackageIconUrl>https://raw.githubusercontent.com/maikebing/Maikebing.EntityFrameworkCore.Taos/master/docs/48876650.jfif</PackageIconUrl>
+
+    <RepositoryUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</RepositoryUrl>
+
+    <PackageReleaseNotes>
+      Maikebing.Data.Taos  是一个基于TDengine 的RESTful Connector构建的ADO.Net 提供器。 这将允许你通过.Net Core 访问TDengine数据库。
+      Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于Maikebing.Data.Taos构建。
+
+    </PackageReleaseNotes>
+
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
- 
+
     <Copyright>Copyright © 2019 Maikebing. All rights reserved.</Copyright>
- 
+
     <Version>1.0.1</Version>
   </PropertyGroup>
 
- 
-
   
  
+
+
 
   <ItemGroup>
     <Compile Update="TaosCommand.cs">
       <SubType>Component</SubType>
     </Compile>
-  
+
     <Compile Update="TaosConnection.cs">
       <SubType>Component</SubType>
     </Compile>
   </ItemGroup>
- 
+
 
   <ItemGroup>
     <None Include="..\..\LICENSE">
@@ -63,11 +66,16 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
       <PackagePath></PackagePath>
     </None>
   </ItemGroup>
- 
+
 
   <ItemGroup>
+    <PackageReference Include="NativeLibraryManager" Version="1.0.18" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
- 
 
+  <ItemGroup>
+    <EmbeddedResource Include="libs\libtaos.so.1.6.6.2" />
+    <EmbeddedResource Include="libs\taos.dll" />
+    <EmbeddedResource Include="cfg\taos.cfg" />
+  </ItemGroup>
 </Project>
