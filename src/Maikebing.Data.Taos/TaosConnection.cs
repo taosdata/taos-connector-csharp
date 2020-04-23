@@ -68,6 +68,7 @@ namespace Maikebing.Data.Taos
                     TDengine.Options((int)TDengineInitOption.TDDB_OPTION_CONFIGDIR, this.configDir);
                     TDengine.Options((int)TDengineInitOption.TDDB_OPTION_SHELL_ACTIVITY_TIMER, "60");
                     TDengine.Init();
+                    _dll_isloaded = true;
                 }
                 else
                 {

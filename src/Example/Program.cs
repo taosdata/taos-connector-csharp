@@ -12,6 +12,7 @@ namespace TaosADODemo
     {
         static void Main(string[] args)
         {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             ///Specify the name of the database
             string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             var builder = new TaosConnectionStringBuilder()
@@ -63,8 +64,6 @@ namespace TaosADODemo
                 context.Database.EnsureDeleted();
             }
             Console.WriteLine("");
-            Console.WriteLine("Pass any key to exit....");
-            Console.ReadKey();
         }
     }
 }
