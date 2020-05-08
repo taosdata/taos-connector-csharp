@@ -54,7 +54,7 @@ namespace Maikebing.Data.Taos
                 {
                     configDir = "/etc/taos";
                 }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     configDir = "C:/TDengine/cfg";
                 }
@@ -192,12 +192,11 @@ namespace Maikebing.Data.Taos
             this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password, "", ConnectionStringBuilder.Port);
             if (this._taos == 0)
             {
-                throw new Exception($"Connect to TDengine failed ErrorNo:{TDengine.ErrorNo(_taos)} Error:{TDengine.Error(_taos)} ");
+                TaosException.ThrowExceptionForRC(_taos);
             }
             else
             {
                 SetState(ConnectionState.Open);
-              
             }
         }
 

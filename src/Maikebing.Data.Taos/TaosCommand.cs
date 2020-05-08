@@ -326,7 +326,7 @@ namespace Maikebing.Data.Taos
                 }
                 else
                 {
-                    TaosException.ThrowExceptionForRC(_commandText,  new TaosErrorResult() { code= TDengine.ErrorNo(_taos), desc=TDengine.Error(_taos), status=code.ToString()  });
+                    TaosException.ThrowExceptionForRC(_commandText,  new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error =TDengine.Error(_taos)   });
                 }
             }
             catch when (unprepared)

@@ -19,8 +19,8 @@ namespace TaosADODemo
             {
                 DataSource = "114.116.231.247",
                 DataBase = database,
-                Username = "kangyunqiang",
-                Password = "kangyunqiang",
+                Username = "maikebing",
+                Password = "maikebing",
                 Port=6060
 
             };

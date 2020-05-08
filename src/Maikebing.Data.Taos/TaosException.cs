@@ -3,6 +3,7 @@
 
 using System;
 using System.Data.Common;
+using TDengineDriver;
 
 namespace Maikebing.Data.Taos
 {
@@ -13,7 +14,6 @@ namespace Maikebing.Data.Taos
     {
         TaosErrorResult _taosError;
         public TaosException(TaosErrorResult taosError)
-      
         {
             _taosError = taosError;
         }
@@ -23,11 +23,9 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <value>The Taos error code.</value>
         /// <seealso href="http://Taos.org/rescode.html">Taos Result Codes</seealso>
-        public virtual int TaosErrorCode => _taosError.code;
+        public virtual int TaosErrorCode => _taosError.Code;
 
-        public virtual string TaosStatus => _taosError.status;
-
-        public override string Message => _taosError.desc;
+        public override string Message => _taosError.Error;
         public override int ErrorCode => TaosErrorCode;
         /// <summary>
         ///     Throws an exception with a specific Taos error code value.
@@ -41,6 +39,11 @@ namespace Maikebing.Data.Taos
         {
             var te = new TaosException(taosError);
             te.Data.Add("commandText", _commandText);
+            throw te;
+        }
+        public static void ThrowExceptionForRC(long _taos)
+        {
+            var te = new TaosException(new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = TDengine.Error(_taos) });
             throw te;
         }
     }

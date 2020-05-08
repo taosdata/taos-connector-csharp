@@ -6,17 +6,11 @@ namespace Maikebing.Data.Taos
 {
     public class TaosErrorResult
     {
+ 
+        public int Code  { get; set; }
         /// <summary>
         /// 
         /// </summary>
-        public string status { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int code { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string desc { get; set; }
+        public string Error  { get; set; }
     }
 }
