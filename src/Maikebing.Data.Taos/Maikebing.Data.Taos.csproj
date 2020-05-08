@@ -75,7 +75,8 @@
 
   <ItemGroup>
     <EmbeddedResource Include="libs\libtaos.so.1.6.6.2" />
-    <EmbeddedResource Include="libs\taos.dll" />
+    <EmbeddedResource Include="libs\taos_x64.dll" />
+        <EmbeddedResource Include="libs\taos_x32.dll" />
     <EmbeddedResource Include="cfg\taos.cfg" />
   </ItemGroup>
 </Project>

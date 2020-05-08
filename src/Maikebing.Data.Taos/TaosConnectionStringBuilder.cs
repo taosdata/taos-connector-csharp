@@ -23,13 +23,16 @@ namespace Maikebing.Data.Taos
         private const string PasswordKeyword = "Password";
         private const string DataSourceNoSpaceKeyword = "DataSource";
         private const string DataBaseKeyword = "DataBase";
+        private const string PortKeyword = "Port";
 
         private enum Keywords
         {
             DataSource,
             DataBase,
             Username,
-            Password
+            Password,
+            Port
+
         }
 
         private static readonly IReadOnlyList<string> _validKeywords;
@@ -39,22 +42,25 @@ namespace Maikebing.Data.Taos
         private string _dataBase=string.Empty;
         private string _userName = string.Empty;
         private string _password = string.Empty;
+        private int  _port =6060;
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[4];
+            var validKeywords = new string[5];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
             validKeywords[(int)Keywords.Password] = PasswordKeyword;
+            validKeywords[(int)Keywords.Port] = PortKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(5, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(6, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
                 [UserNameKeyword] = Keywords.Username,
                 [PasswordKeyword] = Keywords.Password,
                 [DataBaseKeyword] = Keywords.DataBase,
-                [DataSourceNoSpaceKeyword] = Keywords.DataSource
+                [DataSourceNoSpaceKeyword] = Keywords.DataSource,
+                [PortKeyword] = Keywords.Port
             };
         }
 
@@ -93,7 +99,12 @@ namespace Maikebing.Data.Taos
             get => _password;
             set => base[PasswordKeyword] = _password = value;
         }
-       
+        public virtual int  Port
+        {
+            get => _port;
+            set => base[PortKeyword] = _port = value;
+        }
+
 
 
         /// <summary>
@@ -121,19 +132,13 @@ namespace Maikebing.Data.Taos
             }
         }
 
-     
-
-        public virtual string Token
-    {
-            get => Convert.ToBase64String( System.Text.Encoding.UTF8.GetBytes( $"{Username}:{Password}"));
       
-        }
         public virtual string DataBase
         {
             get => _dataBase;
             set => base[DataBaseKeyword] = _dataBase = value;
         }
-        public int Port { get; internal set; }
+ 
 
 
         /// <summary>
@@ -166,6 +171,9 @@ namespace Maikebing.Data.Taos
                         return;
                     case Keywords.DataBase:
                         DataBase = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.Port:
+                        Port = Convert.ToInt32(value, CultureInfo.InvariantCulture);
                         return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
@@ -285,6 +293,8 @@ namespace Maikebing.Data.Taos
                     return Username;
                 case Keywords.DataBase:
                     return DataBase;
+                case Keywords.Port:
+                    return Port;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -311,6 +321,9 @@ namespace Maikebing.Data.Taos
                     return;
                 case Keywords.DataBase:
                     _dataBase = string.Empty;
+                    return;
+                case Keywords.Port:
+                    _port=6060;
                     return;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);

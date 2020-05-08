@@ -20,7 +20,9 @@ namespace TaosADODemo
                 DataSource = "114.116.231.247",
                 DataBase = database,
                 Username = "kangyunqiang",
-                Password = "kangyunqiang"
+                Password = "kangyunqiang",
+                Port=6060
+
             };
             //Example for ADO.Net 
             using (var connection = new TaosConnection(builder.ConnectionString))

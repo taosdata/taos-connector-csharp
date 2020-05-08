@@ -44,7 +44,9 @@ namespace Maikebing.Data.Taos
                 var libManager = new LibraryManager(
                     Assembly.GetExecutingAssembly(),
                     new LibraryItem(Platform.Windows, Bitness.x64,
-                        new LibraryFile("taos.dll", accessor.Binary("libs.taos.dll"))),
+                        new LibraryFile("taos.dll", accessor.Binary("libs.taos_x64.dll"))),
+                     new LibraryItem(Platform.Windows, Bitness.x32,
+                        new LibraryFile("taos.dll", accessor.Binary("libs.taos_x32.dll"))),
                     new LibraryItem(Platform.Linux, Bitness.x64,
                         new LibraryFile("libtaos.so", accessor.Binary("libs.libtaos.so.1.6.6.2"))));
                 libManager.LoadNativeLibrary(false);
@@ -63,7 +65,8 @@ namespace Maikebing.Data.Taos
                      System.IO.File.WriteAllBytes(cfg.FullName,  accessor.Binary("cfg.taos.cfg"));
                 }
                 if ((RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && RuntimeInformation.OSArchitecture == Architecture.X64)
-                    || (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64))
+                    || (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64)
+                    || (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X86))
                 {
                     TDengine.Options((int)TDengineInitOption.TDDB_OPTION_CONFIGDIR, this.configDir);
                     TDengine.Options((int)TDengineInitOption.TDDB_OPTION_SHELL_ACTIVITY_TIMER, "60");
@@ -72,7 +75,7 @@ namespace Maikebing.Data.Taos
                 }
                 else
                 {
-                    throw new PlatformNotSupportedException("Only Support Linux X64 And Linux X64");
+                    throw new PlatformNotSupportedException("Only Support Linux X64 And Windows X64/X86");
                 }
             }
         }
