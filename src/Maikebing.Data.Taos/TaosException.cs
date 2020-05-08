@@ -13,7 +13,7 @@ namespace Maikebing.Data.Taos
     public class TaosException : DbException
     {
         TaosErrorResult _taosError;
-        public TaosException(TaosErrorResult taosError)
+        public TaosException(TaosErrorResult taosError):base(taosError.Error)
         {
             _taosError = taosError;
         }

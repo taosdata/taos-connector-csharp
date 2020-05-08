@@ -48,8 +48,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
-  
- 
+
+
 
 
 
@@ -78,9 +78,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="libs\libtaos.so.1.6.6.2" />
     <EmbeddedResource Include="libs\taos_x64.dll" />
-        <EmbeddedResource Include="libs\taos_x32.dll" />
+    <EmbeddedResource Include="libs\taos_x32.dll" />
     <EmbeddedResource Include="cfg\taos.cfg" />
+    <EmbeddedResource Include="libs\libtaos_x64.so" />
+
   </ItemGroup>
 </Project>

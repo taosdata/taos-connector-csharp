@@ -48,7 +48,7 @@ namespace Maikebing.Data.Taos
                      new LibraryItem(Platform.Windows, Bitness.x32,
                         new LibraryFile("taos.dll", accessor.Binary("libs.taos_x32.dll"))),
                     new LibraryItem(Platform.Linux, Bitness.x64,
-                        new LibraryFile("libtaos.so", accessor.Binary("libs.libtaos.so.1.6.6.2"))));
+                        new LibraryFile("libtaos.so", accessor.Binary("libs.libtaos_x64.so"))));
                 libManager.LoadNativeLibrary(false);
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
