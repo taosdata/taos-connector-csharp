@@ -26,7 +26,7 @@ namespace Maikebing.Data.Taos
         private readonly bool _closeConnection;
         private readonly long _taosResult;
         private int _fieldCount;
-        private long _taos = 0;
+        private IntPtr _taos = IntPtr.Zero;
         IntPtr rowdata;
         List<TDengineMeta> _metas = null;
         internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas,  bool closeConnection)
@@ -218,7 +218,7 @@ namespace Maikebing.Data.Taos
                     type = typeof(double);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_BINARY:
-                    type = typeof(string);
+                    type = typeof(byte[]);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
                     type = typeof(long);
@@ -398,7 +398,7 @@ namespace Maikebing.Data.Taos
         {
             object result = DBNull.Value;
             TDengineMeta meta = _metas[ordinal];
-            int offset = 8 * ordinal;
+            int offset =  (Environment.Is64BitProcess?8:4) * ordinal;
            return  Marshal.ReadIntPtr(rowdata, offset);
         }
         /// <summary>
@@ -410,7 +410,7 @@ namespace Maikebing.Data.Taos
         {
             object result = DBNull.Value;
             TDengineMeta meta = _metas[ordinal];
-            int offset = 8 * ordinal;
+            int offset =(Environment.Is64BitProcess? 8:4) * ordinal;
             IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
             if (data != IntPtr.Zero)
             {
@@ -445,8 +445,11 @@ namespace Maikebing.Data.Taos
                         result = v7;
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_BINARY:
-                        string v8 = Marshal.PtrToStringAnsi(data);
-                        result = v8;
+                        {
+                            byte[] buffer = new byte[meta.size];
+                            Marshal.Copy(data, buffer, 0, meta.size);
+                            result = buffer;
+                        }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
                         long v9 = Marshal.ReadInt64(data);

@@ -29,7 +29,7 @@ namespace Maikebing.Data.Taos
 
         private string _connectionString;
         private ConnectionState _state;
-        internal long _taos;
+        internal IntPtr _taos;
 
         private static bool  _dll_isloaded=false;
 
@@ -190,7 +190,7 @@ namespace Maikebing.Data.Taos
             }
 
             this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password, "", ConnectionStringBuilder.Port);
-            if (this._taos == 0)
+            if (this._taos == IntPtr.Zero)
             {
                 TaosException.ThrowExceptionForRC(_taos);
             }

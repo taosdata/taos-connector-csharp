@@ -18,6 +18,7 @@
     <Copyright>Copyright © 2019 Maikebing. All rights reserved.</Copyright>
     <Version>1.0.1</Version>
     <PackageTags>Taos;Data;ADO.NET;Entity Framework;EF; Core;Data O/RM;entity-framework-core;TDengine</PackageTags>
+    <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" />

@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using TDengineDriver;
@@ -23,7 +24,7 @@ namespace Maikebing.Data.Taos
 
         private TaosConnection _connection;
         private string _commandText;
-        private long _taos =>_connection._taos;
+        private IntPtr _taos =>_connection._taos;
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosCommand" /> class.
         /// </summary>
@@ -311,7 +312,7 @@ namespace Maikebing.Data.Taos
 #if DEBUG
                 Console.WriteLine($"_commandText:{_commandText}");
 #endif
-                var code = TDengine.Query(_taos, _commandText);
+                var code = TDengine.Query( _taos, _commandText);
 
                 if (code == TDengine.TSDB_CODE_SUCCESS)
                 {
