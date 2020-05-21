@@ -27,7 +27,7 @@
 
     <PackageProjectUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</PackageProjectUrl>
 
-    <PackageIconUrl>https://raw.githubusercontent.com/maikebing/Maikebing.EntityFrameworkCore.Taos/master/docs/48876650.jfif</PackageIconUrl>
+    <PackageIconUrl></PackageIconUrl>
 
     <RepositoryUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</RepositoryUrl>
 
@@ -39,11 +39,13 @@
 
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
-    <Copyright>Copyright © 2019 Maikebing. All rights reserved.</Copyright>
+    <Copyright>Copyright © 2019-2020 Maikebing  All rights reserved.</Copyright>
 
     <Version>1.0.1</Version>
 
     <Platforms>AnyCPU;x64;x86</Platforms>
+
+    <PackageIcon>48876650.jpg</PackageIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -75,6 +77,10 @@
 
 
   <ItemGroup>
+    <None Include="..\..\docs\48876650.jpg">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
     <None Include="..\..\LICENSE">
       <Pack>True</Pack>
       <PackagePath></PackagePath>

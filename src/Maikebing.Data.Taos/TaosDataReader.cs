@@ -21,8 +21,6 @@ namespace Maikebing.Data.Taos
         private readonly TaosCommand _command;
         private bool _hasRows;
         private bool _closed;
-        private bool _stepped;
-        private bool _done;
         private readonly bool _closeConnection;
         private readonly long _taosResult;
         private int _fieldCount;
@@ -497,8 +495,6 @@ namespace Maikebing.Data.Taos
         public override DataTable GetSchemaTable()
         {
             var schemaTable = new DataTable("SchemaTable");
-            bool ok = false;
-          
             if ( _metas!=null && _metas.Count>0)
             {
                 var ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));

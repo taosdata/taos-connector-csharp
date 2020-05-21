@@ -7,6 +7,7 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
     <Platforms>AnyCPU;x64;x86</Platforms>
+    <PackageIcon>48876650.jpg</PackageIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -31,6 +32,13 @@
   <ItemGroup>
     <ProjectReference Include="..\EFCore.Taos.Core\Maikebing.EntityFrameworkCore.Taos.csproj" />
     <ProjectReference Include="..\Maikebing.Data.Taos\Maikebing.Data.Taos.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\docs\48876650.jpg">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

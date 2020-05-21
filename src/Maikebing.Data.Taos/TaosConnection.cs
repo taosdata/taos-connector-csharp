@@ -19,11 +19,7 @@ namespace Maikebing.Data.Taos
     /// </summary>
     public partial class TaosConnection : DbConnection
     {
-        private string host;
         private string configDir = "C:/TDengine/cfg";
-        private string user;
-        private string password;
-        private int port = 6060;
 
         private readonly IList<WeakReference<TaosCommand>> _commands = new List<WeakReference<TaosCommand>>();
 
