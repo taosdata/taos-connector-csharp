@@ -6,11 +6,11 @@
 Entity, Framework, EF, Core, Data, O/RM, entity-framework-core,TDengine
 --
 
-Maikebing.Data.Taos  是一个基于TDengine 的原生动态库构建的ADO.Net 提供器。 这将允许你通过.Net Core 访问TDengine数据库。目前已经支持Linux X64 以及 Windows X86/X64   (32位目前正在测试中) .
+Maikebing.Data.Taos  是一个采用TDengine的原生动态库构建的ADO.Net提供程序。 它将允许你通过.Net Core 访问TDengine 数据库。目前已经支持Linux  64位、Windows 64位、Windows 32位系统 .
 
 ---
 
-Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于Maikebing.Data.Taos构建。 
+Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于Maikebing.Data.Taos实现。 
 
 
 ---
@@ -20,14 +20,16 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 ![Nuget](https://img.shields.io/nuget/v/Maikebing.Data.Taos.svg)
 
 ---
-
-
-##  How to install?
+## 目前支持的版本
+    
+    1.6.5.9
+  
+## 如何安装？
  ` Install-Package Maikebing.Data.Taos`
 
-## How to use?
+##  如何使用？
 
- Example:
+ 例子:
 
 ![Example](docs/Example.png)
 
