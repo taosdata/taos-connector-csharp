@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TDengineDriver;
 
@@ -28,7 +29,14 @@ namespace Maikebing.Data.Taos
         internal IntPtr _taos;
 
         private static bool  _dll_isloaded=false;
-
+        public   byte[] Binary( Assembly _assembly, string name)
+        {
+            using (MemoryStream memoryStream = new MemoryStream())
+            {
+                (_assembly.GetManifestResourceStream(name) ?? throw new InvalidOperationException($"Resource {name} not available.")).CopyTo(memoryStream);
+                return memoryStream.ToArray();
+            }
+        }
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosConnection" /> class.
         /// </summary>
@@ -36,15 +44,15 @@ namespace Maikebing.Data.Taos
         {
             if (_dll_isloaded == false)
             {
-                var accessor = new ResourceAccessor(Assembly.GetExecutingAssembly());
                 var libManager = new LibraryManager(
-                    Assembly.GetExecutingAssembly(),
+                    typeof(TaosConnection).Assembly,
+
                     new LibraryItem(Platform.Windows, Bitness.x64,
-                        new LibraryFile("taos.dll", accessor.Binary("libs.taos_x64.dll"))),
+                        new LibraryFile("taos.dll", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.taos_x64.dll"))),
                      new LibraryItem(Platform.Windows, Bitness.x32,
-                        new LibraryFile("taos.dll", accessor.Binary("libs.taos_x32.dll"))),
+                        new LibraryFile("taos.dll", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.taos_x32.dll"))),
                     new LibraryItem(Platform.Linux, Bitness.x64,
-                        new LibraryFile("libtaos.so", accessor.Binary("libs.libtaos_x64.so"))));
+                        new LibraryFile("libtaos.so", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.libtaos_x64.so"))));
                 libManager.LoadNativeLibrary(false);
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
@@ -58,7 +66,7 @@ namespace Maikebing.Data.Taos
                 if (!cfg.Directory.Exists) cfg.Directory.Create();
                 if (!cfg.Exists)
                 {
-                     System.IO.File.WriteAllBytes(cfg.FullName,  accessor.Binary("cfg.taos.cfg"));
+                     System.IO.File.WriteAllBytes(cfg.FullName,  Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.cfg.taos.cfg"));
                 }
                 if ((RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && RuntimeInformation.OSArchitecture == Architecture.X64)
                     || (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64)
