@@ -127,11 +127,23 @@ namespace Maikebing.Data.Taos
         /// <value>The default <see cref="TaosCommand.CommandTimeout"/> value</value>
         public virtual int DefaultTimeout { get; set; } = 30;
 
+
+        string _version = string.Empty;
         /// <summary>
         ///     Gets the version of Taos used by the connection.
         /// </summary>
         /// <value>The version of Taos used by the connection.</value>
-        public override string ServerVersion => "0.0";
+        public override string ServerVersion
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_version))
+                {
+                    _version = this.CreateCommand("  SELECT server_version()").ExecuteScalar() as string;
+                }
+                return _version;
+            }
+        }
 
 
         /// <summary>
