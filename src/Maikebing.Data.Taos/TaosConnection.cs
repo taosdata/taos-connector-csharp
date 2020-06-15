@@ -57,10 +57,15 @@ namespace Maikebing.Data.Taos
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
                     configDir = "/etc/taos";
+                 
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     configDir = "C:/TDengine/cfg";
+                }
+                if (!System.IO.Directory.Exists(configDir))
+                {
+                    configDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "taos.studio");
                 }
                 var cfg = new System.IO.FileInfo(System.IO.Path.Combine(configDir, "taos.cfg"));
                 if (!cfg.Directory.Exists) cfg.Directory.Create();
