@@ -1,5 +1,5 @@
-// Copyright (c)  maikebing All rights reserved.
-//// Licensed under the MIT License, See License.txt in the project root for license information.
+// Copyright (c)  Maikebing. All rights reserved.
+// Licensed under the MIT License, See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Generic;
@@ -7,22 +7,34 @@ using System.Linq;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.EntityFrameworkCore.Taos.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Taos.Storage.Internal;
+using Maikebing.EntityFrameworkCore.Taos.Metadata.Internal;
+using Maikebing.EntityFrameworkCore.Taos.Storage.Internal;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
-namespace Microsoft.EntityFrameworkCore.Taos.Migrations.Internal
+namespace Maikebing.EntityFrameworkCore.Taos.Migrations.Internal
 {
     /// <summary>
-    ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
+    ///     <para>
+    ///         This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///         the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///         any release. You should only use it directly in your code with extreme caution and knowing that
+    ///         doing so can result in application failures when updating to a new Entity Framework Core release.
+    ///     </para>
+    ///     <para>
+    ///         The service lifetime is <see cref="ServiceLifetime.Singleton" />. This means a single instance
+    ///         is used by many <see cref="DbContext" /> instances. The implementation must be thread-safe.
+    ///         This service cannot depend on services registered as <see cref="ServiceLifetime.Scoped" />.
+    ///     </para>
     /// </summary>
     public class TaosMigrationsAnnotationProvider : MigrationsAnnotationProvider
     {
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
         public TaosMigrationsAnnotationProvider([NotNull] MigrationsAnnotationProviderDependencies dependencies)
             : base(dependencies)
@@ -30,21 +42,25 @@ namespace Microsoft.EntityFrameworkCore.Taos.Migrations.Internal
         }
 
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
         public override IEnumerable<IAnnotation> For(IModel model)
         {
             if (model.GetEntityTypes().SelectMany(t => t.GetProperties()).Any(
-                p => TaosTypeMappingSource.IsSpatialiteType(p.Relational().ColumnType)))
+                p => TaosTypeMappingSource.IsSpatialiteType(p.GetColumnType())))
             {
                 yield return new Annotation(TaosAnnotationNames.InitSpatialMetaData, true);
             }
         }
 
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
         public override IEnumerable<IAnnotation> For(IProperty property)
         {
@@ -55,13 +71,13 @@ namespace Microsoft.EntityFrameworkCore.Taos.Migrations.Internal
                 yield return new Annotation(TaosAnnotationNames.Autoincrement, true);
             }
 
-            var srid = property.Taos().Srid;
+            var srid = property.GetSrid();
             if (srid != null)
             {
                 yield return new Annotation(TaosAnnotationNames.Srid, srid);
             }
 
-            var dimension = property.Taos().Dimension;
+            var dimension = property.GetGeometricDimension();
             if (dimension != null)
             {
                 yield return new Annotation(TaosAnnotationNames.Dimension, dimension);
@@ -69,7 +85,6 @@ namespace Microsoft.EntityFrameworkCore.Taos.Migrations.Internal
         }
 
         private static bool HasConverter(IProperty property)
-            => (property.FindMapping()?.Converter
-                ?? property.GetValueConverter()) != null;
+            => property.FindTypeMapping()?.Converter != null;
     }
 }

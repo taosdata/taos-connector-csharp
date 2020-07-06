@@ -1,8 +1,8 @@
-// Copyright (c)  maikebing All rights reserved.
-//// Licensed under the MIT License, See License.txt in the project root for license information.
+// Copyright (c)  Maikebing. All rights reserved.
+// Licensed under the MIT License, See License.txt in the project root for license information.
 
 using JetBrains.Annotations;
-using Microsoft.EntityFrameworkCore.Taos.Infrastructure.Internal;
+using Maikebing.EntityFrameworkCore.Taos.Infrastructure.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Infrastructure
 {
@@ -27,12 +27,5 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
             : base(optionsBuilder)
         {
         }
-
-        /// <summary>
-        ///     Suppresses enforcement of foreign keys in the database.
-        /// </summary>
-        /// <returns> The same builder instance so that multiple calls can be chained. </returns>
-        public virtual TaosDbContextOptionsBuilder SuppressForeignKeyEnforcement(bool suppressForeignKeyEnforcement = true)
-            => WithOption(e => e.WithEnforceForeignKeys(!suppressForeignKeyEnforcement));
     }
 }

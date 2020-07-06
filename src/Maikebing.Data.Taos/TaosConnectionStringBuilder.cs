@@ -138,7 +138,8 @@ namespace Maikebing.Data.Taos
             get => _dataBase;
             set => base[DataBaseKeyword] = _dataBase = value;
         }
- 
+        internal bool ForceDatabaseName { get; set; } = false;
+
 
 
         /// <summary>

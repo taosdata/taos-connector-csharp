@@ -1,5 +1,5 @@
-﻿// Copyright (c)  maikebing All rights reserved.
-//// Licensed under the MIT License, See License.txt in the project root for license information.
+// Copyright (c)  Maikebing. All rights reserved.
+// Licensed under the MIT License, See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Generic;
@@ -13,27 +13,32 @@ using JetBrains.Annotations;
 using Maikebing.Data.Taos;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
+using Maikebing.EntityFrameworkCore.Taos.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
+using Microsoft.EntityFrameworkCore;
 
-namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
+namespace Maikebing.EntityFrameworkCore.Taos.Scaffolding.Internal
 {
     /// <summary>
-    ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public class TaosDatabaseModelFactory : IDatabaseModelFactory
+    public class TaosDatabaseModelFactory : DatabaseModelFactory
     {
         private readonly IDiagnosticsLogger<DbLoggerCategory.Scaffolding> _logger;
         private readonly IRelationalTypeMappingSource _typeMappingSource;
 
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
         public TaosDatabaseModelFactory(
             [NotNull] IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger,
@@ -47,32 +52,34 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
         }
 
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
-        public virtual DatabaseModel Create(string connectionString, IEnumerable<string> tables, IEnumerable<string> schemas)
+        public override DatabaseModel Create(string connectionString, DatabaseModelFactoryOptions options)
         {
             Check.NotNull(connectionString, nameof(connectionString));
-            Check.NotNull(tables, nameof(tables));
-            Check.NotNull(schemas, nameof(schemas));
+            Check.NotNull(options, nameof(options));
 
             using (var connection = new TaosConnection(connectionString))
             {
-                return Create(connection, tables, schemas);
+                return Create(connection, options);
             }
         }
 
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
-        public virtual DatabaseModel Create(DbConnection connection, IEnumerable<string> tables, IEnumerable<string> schemas)
+        public override DatabaseModel Create(DbConnection connection, DatabaseModelFactoryOptions options)
         {
             Check.NotNull(connection, nameof(connection));
-            Check.NotNull(tables, nameof(tables));
-            Check.NotNull(schemas, nameof(schemas));
+            Check.NotNull(options, nameof(options));
 
-            if (schemas.Any())
+            if (options.Schemas.Any())
             {
                 _logger.SchemasNotSupportedWarning();
             }
@@ -84,14 +91,14 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
             {
                 connection.Open();
 
-                SpatialiteLoader.TryLoad(connection);
+              //  SpatialiteLoader.TryLoad(connection);
             }
 
             try
             {
                 databaseModel.DatabaseName = GetDatabaseName(connection);
 
-                foreach (var table in GetTables(connection, tables))
+                foreach (var table in GetTables(connection, options.Tables))
                 {
                     table.Database = databaseModel;
                     databaseModel.Tables.Add(table);
@@ -147,9 +154,9 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = new StringBuilder()
-                    .AppendLine("SELECT \"name\"")
+                    .AppendLine("SELECT \"name\", \"type\"")
                     .AppendLine("FROM \"Taos_master\"")
-                    .Append("WHERE \"type\" = 'table' AND instr(\"name\", 'Taos_') <> 1 AND \"name\" NOT IN ('")
+                    .Append("WHERE \"type\" IN ('table', 'view') AND instr(\"name\", 'Taos_') <> 1 AND \"name\" NOT IN ('")
                     .Append(HistoryRepository.DefaultTableName)
                     .Append("', 'ElementaryGeometries', 'geometry_columns', 'geometry_columns_auth', ")
                     .Append("'geometry_columns_field_infos', 'geometry_columns_statistics', 'geometry_columns_time', ")
@@ -157,6 +164,7 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
                     .Append("'sql_statements_log', 'views_geometry_columns', 'views_geometry_columns_auth', ")
                     .Append("'views_geometry_columns_field_infos', 'views_geometry_columns_statistics', ")
                     .Append("'virts_geometry_columns', 'virts_geometry_columns_auth', ")
+                    .Append("'geom_cols_ref_sys', 'spatial_ref_sys_all', ")
                     .AppendLine("'virts_geometry_columns_field_infos', 'virts_geometry_columns_statistics');")
                     .ToString();
 
@@ -172,10 +180,12 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
 
                         _logger.TableFound(name);
 
-                        var table = new DatabaseTable
-                        {
-                            Name = name
-                        };
+                        var type = reader.GetString(1);
+                        var table = type == "table"
+                            ? new DatabaseTable()
+                            : new DatabaseView();
+
+                        table.Name = name;
 
                         foreach (var column in GetColumns(connection, name))
                         {
@@ -335,7 +345,7 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
                     {
                         var columnName = reader.GetString(0);
                         var column = columns.FirstOrDefault(c => c.Name == columnName)
-                                     ?? columns.FirstOrDefault(c => c.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase));
+                            ?? columns.FirstOrDefault(c => c.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase));
                         Debug.Assert(column != null, "column is null.");
 
                         primaryKey.Columns.Add(column);
@@ -373,18 +383,12 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
 
                     var columnName = reader.GetString(0);
                     var column = columns.FirstOrDefault(c => c.Name == columnName)
-                                 ?? columns.FirstOrDefault(c => c.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase));
+                        ?? columns.FirstOrDefault(c => c.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase));
                     Debug.Assert(column != null, "column is null.");
 
                     Debug.Assert(!reader.Read(), "Unexpected composite primary key.");
 
-                    return new DatabasePrimaryKey
-                    {
-                        Columns =
-                        {
-                            column
-                        }
-                    };
+                    return new DatabasePrimaryKey { Columns = { column } };
                 }
             }
         }
@@ -440,7 +444,8 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
                                 {
                                     var columnName = reader2.GetString(0);
                                     var column = columns.FirstOrDefault(c => c.Name == columnName)
-                                                 ?? columns.FirstOrDefault(c => c.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase));
+                                        ?? columns.FirstOrDefault(
+                                            c => c.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase));
                                     Debug.Assert(column != null, "column is null.");
 
                                     uniqueConstraint.Columns.Add(column);
@@ -477,11 +482,7 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
                 {
                     while (reader1.Read())
                     {
-                        var index = new DatabaseIndex
-                        {
-                            Name = reader1.GetString(0),
-                            IsUnique = reader1.GetBoolean(1)
-                        };
+                        var index = new DatabaseIndex { Name = reader1.GetString(0), IsUnique = reader1.GetBoolean(1) };
 
                         _logger.IndexFound(index.Name, table, index.IsUnique);
 
@@ -504,7 +505,7 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
                                 {
                                     var name = reader2.GetString(0);
                                     var column = columns.FirstOrDefault(c => c.Name == name)
-                                                 ?? columns.FirstOrDefault(c => c.Name.Equals(name, StringComparison.Ordinal));
+                                        ?? columns.FirstOrDefault(c => c.Name.Equals(name, StringComparison.Ordinal));
                                     Debug.Assert(column != null, "column is null.");
 
                                     index.Columns.Add(column);
@@ -543,7 +544,8 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
                         var foreignKey = new DatabaseForeignKey
                         {
                             PrincipalTable = tables.FirstOrDefault(t => t.Name == principalTableName)
-                                             ?? tables.FirstOrDefault(t => t.Name.Equals(principalTableName, StringComparison.OrdinalIgnoreCase)),
+                                ?? tables.FirstOrDefault(
+                                    t => t.Name.Equals(principalTableName, StringComparison.OrdinalIgnoreCase)),
                             OnDelete = ConvertToReferentialAction(onDelete)
                         };
 
@@ -582,12 +584,15 @@ namespace Microsoft.EntityFrameworkCore.Taos.Scaffolding.Internal
                                 {
                                     var columnName = reader2.GetString(0);
                                     var column = table.Columns.FirstOrDefault(c => c.Name == columnName)
-                                                 ?? table.Columns.FirstOrDefault(c => c.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase));
+                                        ?? table.Columns.FirstOrDefault(
+                                            c => c.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase));
                                     Debug.Assert(column != null, "column is null.");
 
                                     var principalColumnName = reader2.GetString(1);
-                                    var principalColumn = foreignKey.PrincipalTable.Columns.FirstOrDefault(c => c.Name == principalColumnName)
-                                                          ?? foreignKey.PrincipalTable.Columns.FirstOrDefault(c => c.Name.Equals(principalColumnName, StringComparison.OrdinalIgnoreCase));
+                                    var principalColumn =
+                                        foreignKey.PrincipalTable.Columns.FirstOrDefault(c => c.Name == principalColumnName)
+                                        ?? foreignKey.PrincipalTable.Columns.FirstOrDefault(
+                                            c => c.Name.Equals(principalColumnName, StringComparison.OrdinalIgnoreCase));
                                     if (principalColumn == null)
                                     {
                                         invalid = true;

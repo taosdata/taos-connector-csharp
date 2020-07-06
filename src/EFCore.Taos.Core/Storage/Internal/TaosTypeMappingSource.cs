@@ -1,17 +1,27 @@
-// Copyright (c)  maikebing All rights reserved.
-//// Licensed under the MIT License, See License.txt in the project root for license information.
+// Copyright (c)  Maikebing. All rights reserved.
+// Licensed under the MIT License, See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
+namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
-    ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
+    ///     <para>
+    ///         This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///         the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///         any release. You should only use it directly in your code with extreme caution and knowing that
+    ///         doing so can result in application failures when updating to a new Entity Framework Core release.
+    ///     </para>
+    ///     <para>
+    ///         The service lifetime is <see cref="ServiceLifetime.Singleton" />. This means a single instance
+    ///         is used by many <see cref="DbContext" /> instances. The implementation must be thread-safe.
+    ///         This service cannot depend on services registered as <see cref="ServiceLifetime.Scoped" />.
+    ///     </para>
     /// </summary>
     public class TaosTypeMappingSource : RelationalTypeMappingSource
     {
@@ -28,22 +38,14 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
                 "POLYGON"
             };
 
-        private const string IntegerTypeName = "INT";
-        private const string BIGINTTypeName = "BIGINT";
-        
-        private const string DOUBLETypeName = "DOUBLE";
-        private const string BINARYTypeName = "BINARY";
-        private const string TextTypeName = "NCHAR";
-        private const string SMALLINTTypeName = "SMALLINT";
-        
-        private const string TIMESTAMPTypeName = "TIMESTAMP";
-        private const string FLOATTypeName = "FLOAT";
-        private const string TINYINTTypeName = "TINYINT";
-        private const string BOOLTypeName = "BOOL";
+        private const string IntegerTypeName = "INTEGER";
+        private const string RealTypeName = "REAL";
+        private const string BlobTypeName = "BLOB";
+        private const string TextTypeName = "TEXT";
 
-        private static readonly LongTypeMapping _integer = new LongTypeMapping(BIGINTTypeName);
-        private static readonly DoubleTypeMapping _real = new DoubleTypeMapping(DOUBLETypeName);
-        private static readonly ByteArrayTypeMapping _blob = new ByteArrayTypeMapping(BINARYTypeName);
+        private static readonly LongTypeMapping _integer = new LongTypeMapping(IntegerTypeName);
+        private static readonly DoubleTypeMapping _real = new DoubleTypeMapping(RealTypeName);
+        private static readonly ByteArrayTypeMapping _blob = new ByteArrayTypeMapping(BlobTypeName);
         private static readonly StringTypeMapping _text = new StringTypeMapping(TextTypeName);
 
         private readonly Dictionary<Type, RelationalTypeMapping> _clrTypeMappings
@@ -51,37 +53,39 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
             {
                 { typeof(string), _text },
                 { typeof(byte[]), _blob },
-                { typeof(bool), new BoolTypeMapping(BOOLTypeName) },
-                { typeof(byte), new ByteTypeMapping(TINYINTTypeName) },
-                { typeof(char), new TaosCharTypeMapping(IntegerTypeName) },
+                { typeof(bool), new BoolTypeMapping(IntegerTypeName) },
+                { typeof(byte), new ByteTypeMapping(IntegerTypeName) },
+                { typeof(char), new CharTypeMapping(TextTypeName) },
                 { typeof(int), new IntTypeMapping(IntegerTypeName) },
                 { typeof(long), _integer },
                 { typeof(sbyte), new SByteTypeMapping(IntegerTypeName) },
-                { typeof(short), new ShortTypeMapping(SMALLINTTypeName) },
+                { typeof(short), new ShortTypeMapping(IntegerTypeName) },
                 { typeof(uint), new UIntTypeMapping(IntegerTypeName) },
-                { typeof(ulong), new TaosULongTypeMapping(BIGINTTypeName) },
-                { typeof(ushort), new UShortTypeMapping(SMALLINTTypeName) },
-                { typeof(DateTime), new TaosDateTimeTypeMapping(TIMESTAMPTypeName) },
-                { typeof(DateTimeOffset), new TaosDateTimeOffsetTypeMapping(TIMESTAMPTypeName) },
-                { typeof(TimeSpan), new TimeSpanTypeMapping(TIMESTAMPTypeName) },
-                { typeof(decimal), new TaosDecimalTypeMapping(BIGINTTypeName) },
+                { typeof(ulong), new TaosULongTypeMapping(IntegerTypeName) },
+                { typeof(ushort), new UShortTypeMapping(IntegerTypeName) },
+                { typeof(DateTime), new TaosDateTimeTypeMapping(TextTypeName) },
+                { typeof(DateTimeOffset), new TaosDateTimeOffsetTypeMapping(TextTypeName) },
+                { typeof(TimeSpan), new TimeSpanTypeMapping(TextTypeName) },
+                { typeof(decimal), new TaosDecimalTypeMapping(TextTypeName) },
                 { typeof(double), _real },
-                { typeof(float), new FloatTypeMapping(FLOATTypeName) },
-                { typeof(Guid), new TaosGuidTypeMapping(BINARYTypeName) }
+                { typeof(float), new FloatTypeMapping(RealTypeName) },
+                { typeof(Guid), new TaosGuidTypeMapping(TextTypeName) }
             };
 
         private readonly Dictionary<string, RelationalTypeMapping> _storeTypeMappings
             = new Dictionary<string, RelationalTypeMapping>(StringComparer.OrdinalIgnoreCase)
             {
                 { IntegerTypeName, _integer },
-                { DOUBLETypeName, _real },
-                { BINARYTypeName, _blob },
-                { TextTypeName, _text },
+                { RealTypeName, _real },
+                { BlobTypeName, _blob },
+                { TextTypeName, _text }
             };
 
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
         public TaosTypeMappingSource(
             [NotNull] TypeMappingSourceDependencies dependencies,
@@ -91,15 +95,19 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
         }
 
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
         public static bool IsSpatialiteType(string columnType)
             => _spatialiteTypes.Contains(columnType);
 
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+        ///     any release. You should only use it directly in your code with extreme caution and knowing that
+        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
         protected override RelationalTypeMapping FindMapping(in RelationalTypeMappingInfo mappingInfo)
         {
@@ -119,29 +127,45 @@ namespace Microsoft.EntityFrameworkCore.Taos.Storage.Internal
 
             mapping = base.FindMapping(mappingInfo);
 
-            return mapping != null
-                ? mapping
-                : storeTypeName != null
-                    ? storeTypeName.Length != 0
-                        ? _typeRules.Select(r => r(storeTypeName)).FirstOrDefault(r => r != null) ?? _text
-                        : _text // This may seem odd, but it's okay because we are matching Taos's loose typing.
-                    : null;
+            if (mapping == null
+                && storeTypeName != null)
+            {
+                var affinityTypeMapping = _typeRules.Select(r => r(storeTypeName)).FirstOrDefault(r => r != null);
+
+                if (affinityTypeMapping == null)
+                {
+                    return _blob;
+                }
+
+                if (clrType == null
+                    || affinityTypeMapping.ClrType.UnwrapNullableType() == clrType)
+                {
+                    return affinityTypeMapping;
+                }
+            }
+
+            return mapping;
         }
 
         private readonly Func<string, RelationalTypeMapping>[] _typeRules =
         {
-            name => Contains(name, "INT") ? _integer : null,
-            name => Contains(name, "CHAR")
-                    || Contains(name, "CLOB")
-                    || Contains(name, "TEXT")
-                ? _text
+            name => Contains(name, "INT")
+                ? _integer
                 : null,
-            name => Contains(name, "BLOB") ? _blob : null,
+            name => Contains(name, "CHAR")
+                || Contains(name, "CLOB")
+                || Contains(name, "TEXT")
+                    ? _text
+                    : null,
+            name => Contains(name, "BLOB")
+                || Contains(name, "BIN")
+                    ? _blob
+                    : null,
             name => Contains(name, "REAL")
-                    || Contains(name, "FLOA")
-                    || Contains(name, "DOUB")
-                ? _real
-                : null
+                || Contains(name, "FLOA")
+                || Contains(name, "DOUB")
+                    ? _real
+                    : null
         };
 
         private static bool Contains(string haystack, string needle)

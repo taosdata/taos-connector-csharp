@@ -1,5 +1,5 @@
-﻿// Copyright (c)  maikebing All rights reserved.
-//// Licensed under the MIT License, See License.txt in the project root for license information.
+// Copyright (c)  Maikebing. All rights reserved.
+// Licensed under the MIT License, See License.txt in the project root for license information.
 
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
@@ -88,7 +88,8 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
         ///     A foreign key references a missing table.
         ///     This event is in the <see cref="DbLoggerCategory.Scaffolding" /> category.
         /// </summary>
-        public static readonly EventId ForeignKeyReferencesMissingTableWarning = MakeScaffoldingId(Id.ForeignKeyReferencesMissingTableWarning);
+        public static readonly EventId ForeignKeyReferencesMissingTableWarning =
+            MakeScaffoldingId(Id.ForeignKeyReferencesMissingTableWarning);
 
         /// <summary>
         ///     A table was found.
@@ -106,7 +107,8 @@ namespace Microsoft.EntityFrameworkCore.Diagnostics
         ///     A column referenced by a foreign key constraint was not found.
         ///     This event is in the <see cref="DbLoggerCategory.Scaffolding" /> category.
         /// </summary>
-        public static readonly EventId ForeignKeyPrincipalColumnMissingWarning = MakeScaffoldingId(Id.ForeignKeyPrincipalColumnMissingWarning);
+        public static readonly EventId ForeignKeyPrincipalColumnMissingWarning =
+            MakeScaffoldingId(Id.ForeignKeyPrincipalColumnMissingWarning);
 
         /// <summary>
         ///     An index was found.
