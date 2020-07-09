@@ -2,9 +2,13 @@
 // Licensed under the MIT License, See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 using JetBrains.Annotations;
+using Maikebing.Data.Taos;
 using Maikebing.EntityFrameworkCore.Taos.Internal;
+using Maikebing.EntityFrameworkCore.Taos.Storage.Internal;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Update;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,17 +30,28 @@ namespace Maikebing.EntityFrameworkCore.Taos.Update.Internal
     /// </summary>
     public class TaosUpdateSqlGenerator : UpdateSqlGenerator
     {
+
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
         ///     any release. You should only use it directly in your code with extreme caution and knowing that
         ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
-        public TaosUpdateSqlGenerator([NotNull] UpdateSqlGeneratorDependencies dependencies)
+        public TaosUpdateSqlGenerator([NotNull] UpdateSqlGeneratorDependencies dependencies  )
             : base(dependencies)
         {
         }
-
+      
+     
+   
+        protected override void AppendDeleteCommand(StringBuilder commandStringBuilder, string name, string schema, IReadOnlyList<ColumnModification> conditionOperations)
+        {
+            base.AppendDeleteCommand(commandStringBuilder, name, schema , conditionOperations);
+        }
+        protected override void AppendDeleteCommandHeader(StringBuilder commandStringBuilder, string name, string schema)
+        {
+            base.AppendDeleteCommandHeader(commandStringBuilder, name, schema);
+        }
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in

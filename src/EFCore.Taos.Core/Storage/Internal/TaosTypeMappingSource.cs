@@ -38,14 +38,22 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
                 "POLYGON"
             };
 
-        private const string IntegerTypeName = "INTEGER";
-        private const string RealTypeName = "REAL";
-        private const string BlobTypeName = "BLOB";
-        private const string TextTypeName = "TEXT";
+        private const string IntegerTypeName = "INT";
+        private const string BIGINTTypeName = "BIGINT";
+        
+        private const string DOUBLETypeName = "DOUBLE";
+        private const string BINARYTypeName = "BINARY";
+        private const string TextTypeName = "NCHAR";
+        private const string SMALLINTTypeName = "SMALLINT";
+        
+        private const string TIMESTAMPTypeName = "TIMESTAMP";
+        private const string FLOATTypeName = "FLOAT";
+        private const string TINYINTTypeName = "TINYINT";
+        private const string BOOLTypeName = "BOOL";
 
-        private static readonly LongTypeMapping _integer = new LongTypeMapping(IntegerTypeName);
-        private static readonly DoubleTypeMapping _real = new DoubleTypeMapping(RealTypeName);
-        private static readonly ByteArrayTypeMapping _blob = new ByteArrayTypeMapping(BlobTypeName);
+        private static readonly LongTypeMapping _integer = new LongTypeMapping(BIGINTTypeName);
+        private static readonly DoubleTypeMapping _real = new DoubleTypeMapping(DOUBLETypeName);
+        private static readonly ByteArrayTypeMapping _blob = new ByteArrayTypeMapping(BINARYTypeName);
         private static readonly StringTypeMapping _text = new StringTypeMapping(TextTypeName);
 
         private readonly Dictionary<Type, RelationalTypeMapping> _clrTypeMappings
@@ -53,31 +61,30 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
             {
                 { typeof(string), _text },
                 { typeof(byte[]), _blob },
-                { typeof(bool), new BoolTypeMapping(IntegerTypeName) },
-                { typeof(byte), new ByteTypeMapping(IntegerTypeName) },
-                { typeof(char), new CharTypeMapping(TextTypeName) },
+                { typeof(bool), new BoolTypeMapping(BOOLTypeName) },
+                { typeof(byte), new ByteTypeMapping(TINYINTTypeName) },
                 { typeof(int), new IntTypeMapping(IntegerTypeName) },
                 { typeof(long), _integer },
                 { typeof(sbyte), new SByteTypeMapping(IntegerTypeName) },
-                { typeof(short), new ShortTypeMapping(IntegerTypeName) },
+                { typeof(short), new ShortTypeMapping(SMALLINTTypeName) },
                 { typeof(uint), new UIntTypeMapping(IntegerTypeName) },
-                { typeof(ulong), new TaosULongTypeMapping(IntegerTypeName) },
-                { typeof(ushort), new UShortTypeMapping(IntegerTypeName) },
-                { typeof(DateTime), new TaosDateTimeTypeMapping(TextTypeName) },
-                { typeof(DateTimeOffset), new TaosDateTimeOffsetTypeMapping(TextTypeName) },
-                { typeof(TimeSpan), new TimeSpanTypeMapping(TextTypeName) },
-                { typeof(decimal), new TaosDecimalTypeMapping(TextTypeName) },
+                { typeof(ulong), new TaosULongTypeMapping(BIGINTTypeName) },
+                { typeof(ushort), new UShortTypeMapping(SMALLINTTypeName) },
+                { typeof(DateTime), new TaosDateTimeTypeMapping(TIMESTAMPTypeName) },
+                { typeof(DateTimeOffset), new TaosDateTimeOffsetTypeMapping(TIMESTAMPTypeName) },
+                { typeof(TimeSpan), new TimeSpanTypeMapping(TIMESTAMPTypeName) },
+                { typeof(decimal), new TaosDecimalTypeMapping(BIGINTTypeName) },
                 { typeof(double), _real },
-                { typeof(float), new FloatTypeMapping(RealTypeName) },
-                { typeof(Guid), new TaosGuidTypeMapping(TextTypeName) }
+                { typeof(float), new FloatTypeMapping(FLOATTypeName) },
+                { typeof(Guid), new TaosGuidTypeMapping(BINARYTypeName) }
             };
 
         private readonly Dictionary<string, RelationalTypeMapping> _storeTypeMappings
             = new Dictionary<string, RelationalTypeMapping>(StringComparer.OrdinalIgnoreCase)
             {
                 { IntegerTypeName, _integer },
-                { RealTypeName, _real },
-                { BlobTypeName, _blob },
+                { DOUBLETypeName, _real },
+                { BINARYTypeName, _blob },
                 { TextTypeName, _text }
             };
 
@@ -146,7 +153,9 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
 
             return mapping;
         }
-
+        /// <summary>
+        /// TODO:这里可能需要修改
+        /// </summary>
         private readonly Func<string, RelationalTypeMapping>[] _typeRules =
         {
             name => Contains(name, "INT")

@@ -34,7 +34,9 @@ namespace TaosADODemo
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
                 //Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.AddMonths(1).Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 20);").ExecuteNonQuery());
                 var cmd_select = connection.CreateCommand();
+#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
                 cmd_select.CommandText = $"select * from {database}.t";
+#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
                 var reader = cmd_select.ExecuteReader();
                 Console.WriteLine(cmd_select.CommandText);
                 Console.WriteLine("");

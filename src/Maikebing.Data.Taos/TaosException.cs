@@ -13,19 +13,26 @@ namespace Maikebing.Data.Taos
     public class TaosException : DbException
     {
         TaosErrorResult _taosError;
-        public TaosException(TaosErrorResult taosError):base(taosError.Error)
+
+        public TaosException(TaosErrorResult taosError) : base(taosError.Error, null)
         {
             _taosError = taosError;
         }
+
+        public TaosException(TaosErrorResult taosError, Exception ex) : base(taosError.Error, ex)
+        {
+            _taosError = taosError;
+        }
+
 
         /// <summary>
         ///     Gets the Taos error code.
         /// </summary>
         /// <value>The Taos error code.</value>
         /// <seealso href="http://Taos.org/rescode.html">Taos Result Codes</seealso>
-        public virtual int TaosErrorCode => _taosError.Code;
+        public virtual int TaosErrorCode => _taosError?.Code ?? 0;
 
-        public override string Message => _taosError.Error;
+        public override string Message => _taosError?.Error;
         public override int ErrorCode => TaosErrorCode;
         /// <summary>
         ///     Throws an exception with a specific Taos error code value.
@@ -44,6 +51,11 @@ namespace Maikebing.Data.Taos
         public static void ThrowExceptionForRC(IntPtr _taos)
         {
             var te = new TaosException(new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = TDengine.Error(_taos) });
+            throw te;
+        }
+        public static void ThrowExceptionForRC(int code, string message, Exception ex)
+        {
+            var te = new TaosException(new TaosErrorResult() { Code = code, Error = message }, ex);
             throw te;
         }
     }

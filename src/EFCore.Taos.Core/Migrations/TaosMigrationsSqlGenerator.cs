@@ -15,6 +15,8 @@ using Maikebing.EntityFrameworkCore.Taos.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
+using Maikebing.Data.Taos;
+using System.Text;
 
 namespace Microsoft.EntityFrameworkCore.Migrations
 {
@@ -32,7 +34,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
     public class TaosMigrationsSqlGenerator : MigrationsSqlGenerator
     {
         private readonly IMigrationsAnnotationProvider _migrationsAnnotations;
-
+        private readonly TaosConnectionStringBuilder _taosConnectionStringBuilder;
         /// <summary>
         ///     Creates a new <see cref="TaosMigrationsSqlGenerator" /> instance.
         /// </summary>
@@ -40,10 +42,13 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="migrationsAnnotations"> Provider-specific Migrations annotations to use. </param>
         public TaosMigrationsSqlGenerator(
             [NotNull] MigrationsSqlGeneratorDependencies dependencies,
-            [NotNull] IMigrationsAnnotationProvider migrationsAnnotations)
+            [NotNull] IMigrationsAnnotationProvider migrationsAnnotations, IRelationalConnection connection)
             : base(dependencies)
-            => _migrationsAnnotations = migrationsAnnotations;
-
+        {
+            _migrationsAnnotations = migrationsAnnotations;
+            _taosConnectionStringBuilder = new TaosConnectionStringBuilder(connection.ConnectionString);
+        }
+      
         /// <summary>
         ///     Generates commands from a list of operations.
         /// </summary>
@@ -52,7 +57,6 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <returns> The list of commands to be executed or scripted. </returns>
         public override IReadOnlyList<MigrationCommand> Generate(IReadOnlyList<MigrationOperation> operations, IModel model = null)
             => base.Generate(RewriteOperations(operations, model), model);
-
         private bool IsSpatialiteColumn(AddColumnOperation operation, IModel model)
             => TaosTypeMappingSource.IsSpatialiteType(
                 operation.ColumnType
@@ -62,6 +66,32 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                     operation.Name,
                     operation,
                     model));
+
+        /// <summary>
+        /// Builds commands for the given <see cref="InsertDataOperation" /> by making calls on the given
+        /// <see cref="MigrationCommandListBuilder" />, and then terminates the final command.
+        /// </summary>
+        /// <param name="operation"> The operation. </param>
+        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
+        /// <param name="builder"> The command builder to use to build the commands. </param>
+        /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
+        protected override void Generate(
+            InsertDataOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder,
+            bool terminate = true)
+        {
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
+
+            var sqlBuilder = new StringBuilder();
+        
+
+            builder.Append(sqlBuilder.ToString());
+
+            if (terminate)
+                builder.EndCommand();
+        }
 
         private IReadOnlyList<MigrationOperation> RewriteOperations(
             IReadOnlyList<MigrationOperation> migrationOperations,
@@ -75,7 +105,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                     var table = migrationOperations
                         .OfType<CreateTableOperation>()
                         .FirstOrDefault(o => o.Name == foreignKeyOperation.Table);
-
+                    table.Schema= _taosConnectionStringBuilder.DataBase;
                     if (table != null)
                     {
                         table.ForeignKeys.Add(foreignKeyOperation);
@@ -88,6 +118,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 else if (operation is CreateTableOperation createTableOperation)
                 {
                     var spatialiteColumns = new Stack<AddColumnOperation>();
+                 createTableOperation.Schema = _taosConnectionStringBuilder.DataBase;
                     for (var i = createTableOperation.Columns.Count - 1; i >= 0; i--)
                     {
                         var addColumnOperation = createTableOperation.Columns[i];
@@ -131,7 +162,12 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
             EndStatement(builder);
         }
-
+        
+        protected override void Generate(SqlOperation operation, IModel model, MigrationCommandListBuilder builder)
+        {
+            base.Generate(operation, model, builder);
+        }
+       
         /// <summary>
         ///     Builds commands for the given <see cref="AddColumnOperation" /> by making calls on the given
         ///     <see cref="MigrationCommandListBuilder" />.
@@ -190,6 +226,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 Debug.Fail("I have a bad feeling about this. Geometry columns don't compose well.");
             }
         }
+
 
         /// <summary>
         ///     Builds commands for the given <see cref="DropIndexOperation" />
@@ -327,55 +364,35 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         {
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
+            operation.Schema = _taosConnectionStringBuilder.DataBase;
+            builder
+                .Append("CREATE TABLE ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+                .AppendLine(" (");
 
-            // Lifts a primary key definition into the typename.
-            // This handles the quirks of creating integer primary keys using autoincrement, not default rowid behavior.
-            if (operation.PrimaryKey?.Columns.Length == 1)
+            using (builder.Indent())
             {
-                var columnOp = operation.Columns.FirstOrDefault(o => o.Name == operation.PrimaryKey.Columns[0]);
-                if (columnOp != null)
-                {
-                    columnOp.AddAnnotation(TaosAnnotationNames.InlinePrimaryKey, true);
-                    if (!string.IsNullOrEmpty(operation.PrimaryKey.Name))
-                    {
-                        columnOp.AddAnnotation(TaosAnnotationNames.InlinePrimaryKeyName, operation.PrimaryKey.Name);
-                    }
-
-                    operation.PrimaryKey = null;
-                }
+                CreateTableColumns(operation, model, builder);
+                builder.AppendLine();
             }
 
-            if (string.IsNullOrEmpty(operation.Comment))
+            builder.Append(")");
+
+            if (terminate)
             {
-                base.Generate(operation, model, builder, terminate);
-            }
-            else
-            {
-                builder
-                    .Append("CREATE TABLE ")
-                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
-                    .AppendLine(" (");
-
-                using (builder.Indent())
-                {
-                    builder
-                        .AppendLines(Dependencies.SqlGenerationHelper.GenerateComment(operation.Comment))
-                        .AppendLine();
-                    CreateTableColumns(operation, model, builder);
-                    CreateTableConstraints(operation, model, builder);
-                    builder.AppendLine();
-                }
-
-                builder.Append(")");
-
-                if (terminate)
-                {
-                    builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-                    EndStatement(builder);
-                }
+                builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+                EndStatement(builder);
             }
         }
-
+     
+        protected override void ColumnDefinition(AddColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
+        {
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name)).Append(" ").Append(operation.ColumnType ?? GetColumnType(operation.Schema, operation.Table, operation.Name, operation, model));
+        }
+        //protected override string GetColumnType(string schema, string table, string name, ColumnOperation operation, IModel model)
+        //{
+        //    return base.GetColumnType(schema, table, name, operation, model);
+        //}
         /// <summary>
         ///     Generates a SQL fragment for the column definitions in an <see cref="CreateTableOperation" />.
         /// </summary>
@@ -435,27 +452,27 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         {
             base.ColumnDefinition(schema, table, name, operation, model, builder);
 
-            var inlinePk = operation[TaosAnnotationNames.InlinePrimaryKey] as bool?;
-            if (inlinePk == true)
-            {
-                var inlinePkName = operation[
-                    TaosAnnotationNames.InlinePrimaryKeyName] as string;
-                if (!string.IsNullOrEmpty(inlinePkName))
-                {
-                    builder
-                        .Append(" CONSTRAINT ")
-                        .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(inlinePkName));
-                }
+            //var inlinePk = operation[TaosAnnotationNames.InlinePrimaryKey] as bool?;
+            //if (inlinePk == true)
+            //{
+            //    var inlinePkName = operation[
+            //        TaosAnnotationNames.InlinePrimaryKeyName] as string;
+            //    if (!string.IsNullOrEmpty(inlinePkName))
+            //    {
+            //        builder
+            //            .Append(" CONSTRAINT ")
+            //            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(inlinePkName));
+            //    }
 
-                builder.Append(" PRIMARY KEY");
-                var autoincrement = operation[TaosAnnotationNames.Autoincrement] as bool?
-                    // NB: Migrations scaffolded with version 1.0.0 don't have the prefix. See #6461
-                    ?? operation[TaosAnnotationNames.LegacyAutoincrement] as bool?;
-                if (autoincrement == true)
-                {
-                    builder.Append(" AUTOINCREMENT");
-                }
-            }
+            //    builder.Append(" PRIMARY KEY");
+            //    var autoincrement = operation[TaosAnnotationNames.Autoincrement] as bool?
+            //        // NB: Migrations scaffolded with version 1.0.0 don't have the prefix. See #6461
+            //        ?? operation[TaosAnnotationNames.LegacyAutoincrement] as bool?;
+            //    if (autoincrement == true)
+            //    {
+            //        builder.Append(" AUTOINCREMENT");
+            //    }
+            //}
         }
 
         #region Invalid migration operations
