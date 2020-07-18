@@ -21,8 +21,8 @@ namespace Maikebing.Data.Taos
         private readonly TaosCommand _command;
         private bool _hasRows;
         private bool _closed;
-        private readonly bool _closeConnection;
-        private readonly long _taosResult;
+        private   bool _closeConnection;
+        private   IntPtr _taosResult;
         private int _fieldCount;
         private IntPtr _taos = IntPtr.Zero;
         IntPtr rowdata;

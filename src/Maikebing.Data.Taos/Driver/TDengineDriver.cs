@@ -109,21 +109,21 @@ namespace TDengineDriver
     static extern public int AffectRows(IntPtr taos);
 
     [DllImport("taos", EntryPoint = "taos_use_result", CallingConvention = CallingConvention.Cdecl)]
-    static extern public long UseResult(IntPtr taos);
+    static extern public IntPtr UseResult(IntPtr taos);
 
     [DllImport("taos", EntryPoint = "taos_field_count", CallingConvention = CallingConvention.Cdecl)]
     static extern public int FieldCount(IntPtr taos);
 
     [DllImport("taos", EntryPoint = "taos_fetch_fields", CallingConvention = CallingConvention.Cdecl)]
    
-    static extern private IntPtr taos_fetch_fields(long res);
+    static extern private IntPtr taos_fetch_fields(IntPtr res);
     static public List<TDengineMeta> FetchFields(IntPtr taos)
     {
       const int fieldSize = 68;
 
       List<TDengineMeta> metas = new List<TDengineMeta>();
-      long result = TDengine.UseResult(taos);
-      if (result == 0)
+      IntPtr result = TDengine.UseResult(taos);
+      if (result ==IntPtr.Zero)
       {
         return metas;
       }
@@ -146,10 +146,10 @@ namespace TDengineDriver
     }
 
     [DllImport("taos", EntryPoint = "taos_fetch_row", CallingConvention = CallingConvention.Cdecl)]
-    static extern public IntPtr FetchRows(long res);
+    static extern public IntPtr FetchRows(IntPtr res);
 
     [DllImport("taos", EntryPoint = "taos_free_result", CallingConvention = CallingConvention.Cdecl)]
-    static extern public IntPtr FreeResult(long res);
+    static extern public IntPtr FreeResult(IntPtr res);
 
     [DllImport("taos", EntryPoint = "taos_close", CallingConvention = CallingConvention.Cdecl)]
     static extern public int Close(IntPtr taos);
