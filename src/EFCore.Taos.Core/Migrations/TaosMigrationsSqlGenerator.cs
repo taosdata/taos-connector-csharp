@@ -1,5 +1,5 @@
-// Copyright (c)  maikebing All rights reserved.
-//// Licensed under the MIT License, See License.txt in the project root for license information.
+// Copyright (c)  Maikebing. All rights reserved.
+// Licensed under the MIT License, See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Generic;
@@ -7,42 +7,48 @@ using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
-using Microsoft.EntityFrameworkCore.Taos.Internal;
-using Microsoft.EntityFrameworkCore.Taos.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Taos.Storage.Internal;
+using Maikebing.EntityFrameworkCore.Taos.Internal;
+using Maikebing.EntityFrameworkCore.Taos.Metadata.Internal;
+using Maikebing.EntityFrameworkCore.Taos.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
+using Microsoft.Extensions.DependencyInjection;
 using Maikebing.Data.Taos;
+using System.Text;
 
 namespace Microsoft.EntityFrameworkCore.Migrations
 {
     /// <summary>
-    ///     Taos-specific implementation of <see cref="MigrationsSqlGenerator" />.
+    ///     <para>
+    ///         Taos-specific implementation of <see cref="MigrationsSqlGenerator" />.
+    ///     </para>
+    ///     <para>
+    ///         The service lifetime is <see cref="ServiceLifetime.Scoped" />. This means that each
+    ///         <see cref="DbContext" /> instance will use its own instance of this service.
+    ///         The implementation may depend on other services registered with any lifetime.
+    ///         The implementation does not need to be thread-safe.
+    ///     </para>
     /// </summary>
     public class TaosMigrationsSqlGenerator : MigrationsSqlGenerator
     {
         private readonly IMigrationsAnnotationProvider _migrationsAnnotations;
         private readonly TaosConnectionStringBuilder _taosConnectionStringBuilder;
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     Creates a new <see cref="TaosMigrationsSqlGenerator" /> instance.
         /// </summary>
         /// <param name="dependencies"> Parameter object containing dependencies for this service. </param>
         /// <param name="migrationsAnnotations"> Provider-specific Migrations annotations to use. </param>
         public TaosMigrationsSqlGenerator(
             [NotNull] MigrationsSqlGeneratorDependencies dependencies,
-            TaosConnectionStringBuilder taosConnectionStringBuilder,
-            [NotNull] IMigrationsAnnotationProvider migrationsAnnotations)
+            [NotNull] IMigrationsAnnotationProvider migrationsAnnotations, IRelationalConnection connection)
             : base(dependencies)
         {
-            _taosConnectionStringBuilder = taosConnectionStringBuilder;
             _migrationsAnnotations = migrationsAnnotations;
+            _taosConnectionStringBuilder = new TaosConnectionStringBuilder(connection.ConnectionString);
         }
-
+      
         /// <summary>
         ///     Generates commands from a list of operations.
         /// </summary>
@@ -51,28 +57,47 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <returns> The list of commands to be executed or scripted. </returns>
         public override IReadOnlyList<MigrationCommand> Generate(IReadOnlyList<MigrationOperation> operations, IModel model = null)
             => base.Generate(RewriteOperations(operations, model), model);
-
         private bool IsSpatialiteColumn(AddColumnOperation operation, IModel model)
             => TaosTypeMappingSource.IsSpatialiteType(
                 operation.ColumnType
-                    ?? GetColumnType(
-                        operation.Schema,
-                        operation.Table,
-                        operation.Name,
-                        operation.ClrType,
-                        operation.IsUnicode,
-                        operation.MaxLength,
-                        operation.IsFixedLength,
-                        operation.IsRowVersion,
-                        model));
+                ?? GetColumnType(
+                    operation.Schema,
+                    operation.Table,
+                    operation.Name,
+                    operation,
+                    model));
+
+        /// <summary>
+        /// Builds commands for the given <see cref="InsertDataOperation" /> by making calls on the given
+        /// <see cref="MigrationCommandListBuilder" />, and then terminates the final command.
+        /// </summary>
+        /// <param name="operation"> The operation. </param>
+        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
+        /// <param name="builder"> The command builder to use to build the commands. </param>
+        /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
+        protected override void Generate(
+            InsertDataOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder,
+            bool terminate = true)
+        {
+            Check.NotNull(operation, nameof(operation));
+            Check.NotNull(builder, nameof(builder));
+
+            var sqlBuilder = new StringBuilder();
+        
+
+            builder.Append(sqlBuilder.ToString());
+
+            if (terminate)
+                builder.EndCommand();
+        }
 
         private IReadOnlyList<MigrationOperation> RewriteOperations(
             IReadOnlyList<MigrationOperation> migrationOperations,
             IModel model)
         {
             var operations = new List<MigrationOperation>();
-
-            
             foreach (var operation in migrationOperations)
             {
                 if (operation is AddForeignKeyOperation foreignKeyOperation)
@@ -80,7 +105,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                     var table = migrationOperations
                         .OfType<CreateTableOperation>()
                         .FirstOrDefault(o => o.Name == foreignKeyOperation.Table);
-                    table.Schema = _taosConnectionStringBuilder.DataBase;
+                    table.Schema= _taosConnectionStringBuilder.DataBase;
                     if (table != null)
                     {
                         table.ForeignKeys.Add(foreignKeyOperation);
@@ -93,7 +118,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 else if (operation is CreateTableOperation createTableOperation)
                 {
                     var spatialiteColumns = new Stack<AddColumnOperation>();
-                    createTableOperation.Schema = _taosConnectionStringBuilder.DataBase;
+                 createTableOperation.Schema = _taosConnectionStringBuilder.DataBase;
                     for (var i = createTableOperation.Columns.Count - 1; i >= 0; i--)
                     {
                         var addColumnOperation = createTableOperation.Columns[i];
@@ -137,16 +162,12 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
             EndStatement(builder);
         }
-        protected override void Generate([NotNull] InsertDataOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder)
+        
+        protected override void Generate(SqlOperation operation, IModel model, MigrationCommandListBuilder builder)
         {
-            operation.Schema = _taosConnectionStringBuilder.DataBase;
             base.Generate(operation, model, builder);
         }
-        protected override void Generate([NotNull] InsertDataOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder, bool terminate)
-        {
-            operation.Schema = _taosConnectionStringBuilder.DataBase;
-            base.Generate(operation, model, builder, terminate);
-        }
+       
         /// <summary>
         ///     Builds commands for the given <see cref="AddColumnOperation" /> by making calls on the given
         ///     <see cref="MigrationCommandListBuilder" />.
@@ -175,11 +196,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                     operation.Schema,
                     operation.Table,
                     operation.Name,
-                    operation.ClrType,
-                    operation.IsUnicode,
-                    operation.MaxLength,
-                    operation.IsFixedLength,
-                    operation.IsRowVersion,
+                    operation,
                     model);
             if (!string.IsNullOrEmpty(dimension))
             {
@@ -210,6 +227,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             }
         }
 
+
         /// <summary>
         ///     Builds commands for the given <see cref="DropIndexOperation" />
         ///     by making calls on the given <see cref="MigrationCommandListBuilder" />.
@@ -218,10 +236,12 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
         /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
-        protected override void Generate([NotNull] DropIndexOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder)
+        protected override void Generate(
+            DropIndexOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder,
+            bool terminate)
         {
-     
-     
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
 
@@ -229,9 +249,12 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 .Append("DROP INDEX ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
 
+            if (terminate)
+            {
                 builder
                     .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
                     .EndCommand();
+            }
         }
 
         /// <summary>
@@ -244,7 +267,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         protected override void Generate(RenameIndexOperation operation, IModel model, MigrationCommandListBuilder builder)
         {
             var index = FindEntityTypes(model, operation.Schema, operation.Table)
-                ?.SelectMany(t => t.GetDeclaredIndexes()).Where(i => i.Relational().Name == operation.NewName)
+                ?.SelectMany(t => t.GetDeclaredIndexes()).Where(i => i.GetName() == operation.NewName)
                 .FirstOrDefault();
             if (index == null)
             {
@@ -266,12 +289,12 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 Name = operation.NewName,
                 Schema = operation.Schema,
                 Table = operation.Table,
-                Columns = index.Properties.Select(p => p.Relational().ColumnName).ToArray(),
-                Filter = index.Relational().Filter
+                Columns = index.Properties.Select(p => p.GetColumnName()).ToArray(),
+                Filter = index.GetFilter()
             };
             createOperation.AddAnnotations(_migrationsAnnotations.For(index));
 
-         //   Generate(dropOperation, model, builder, terminate: false);
+            Generate(dropOperation, model, builder, terminate: false);
             builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
 
             Generate(createOperation, model, builder);
@@ -326,38 +349,6 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         }
 
         /// <summary>
-        ///     Builds commands for the given <see cref="CreateTableOperation" />
-        ///     by making calls on the given <see cref="MigrationCommandListBuilder" />.
-        /// </summary>
-        /// <param name="operation"> The operation. </param>
-        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
-        /// <param name="builder"> The command builder to use to build the commands. </param>
-        protected override void Generate(CreateTableOperation operation, IModel model, MigrationCommandListBuilder builder)
-        {
-            Check.NotNull(operation, nameof(operation));
-            Check.NotNull(builder, nameof(builder));
-          
-            // Lifts a primary key definition into the typename.
-            // This handles the quirks of creating integer primary keys using autoincrement, not default rowid behavior.
-            if (operation.PrimaryKey?.Columns.Length == 1)
-            {
-                var columnOp = operation.Columns.FirstOrDefault(o => o.Name == operation.PrimaryKey.Columns[0]);
-                if (columnOp != null)
-                {
-                    columnOp.AddAnnotation(TaosAnnotationNames.InlinePrimaryKey, true);
-                    if (!string.IsNullOrEmpty(operation.PrimaryKey.Name))
-                    {
-                        columnOp.AddAnnotation(TaosAnnotationNames.InlinePrimaryKeyName, operation.PrimaryKey.Name);
-                    }
-
-                    operation.PrimaryKey = null;
-                }
-            }
-            Generate(operation, model, builder, true);
-        }
-        
-
-        /// <summary>
         ///     Builds commands for the given <see cref="CreateTableOperation" /> by making calls on the given
         ///     <see cref="MigrationCommandListBuilder" />.
         /// </summary>
@@ -365,15 +356,15 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
         /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
-        protected  override void Generate(
-            [NotNull] CreateTableOperation operation,
-            [CanBeNull] IModel model,
-            [NotNull] MigrationCommandListBuilder builder,
-            bool terminate)
+        protected override void Generate(
+            CreateTableOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder,
+            bool terminate = true)
         {
             Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
-
+            operation.Schema = _taosConnectionStringBuilder.DataBase;
             builder
                 .Append("CREATE TABLE ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
@@ -381,35 +372,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
 
             using (builder.Indent())
             {
-                for (var i = 0; i < operation.Columns.Count; i++)
-                {
-                    var column = operation.Columns[i];
-                    ColumnDefinition(column, model, builder);
-
-                    if (i != operation.Columns.Count - 1)
-                    {
-                        builder.AppendLine(",");
-                    }
-                }
-
-                if (operation.PrimaryKey != null)
-                {
-                    builder.AppendLine(",");
-                    PrimaryKeyConstraint(operation.PrimaryKey, model, builder);
-                }
-
-                foreach (var uniqueConstraint in operation.UniqueConstraints)
-                {
-                    builder.AppendLine(",");
-                    UniqueConstraint(uniqueConstraint, model, builder);
-                }
-
-                foreach (var foreignKey in operation.ForeignKeys)
-                {
-                    builder.AppendLine(",");
-                    ForeignKeyConstraint(foreignKey, model, builder);
-                }
-
+                CreateTableColumns(operation, model, builder);
                 builder.AppendLine();
             }
 
@@ -421,66 +384,96 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                 EndStatement(builder);
             }
         }
-        protected override void Generate([NotNull] SqlOperation operation, [CanBeNull] IModel model, [NotNull] MigrationCommandListBuilder builder)
+     
+        protected override void ColumnDefinition(AddColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
         {
-            base.Generate(operation, model, builder);
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name)).Append(" ").Append(operation.ColumnType ?? GetColumnType(operation.Schema, operation.Table, operation.Name, operation, model));
         }
+        //protected override string GetColumnType(string schema, string table, string name, ColumnOperation operation, IModel model)
+        //{
+        //    return base.GetColumnType(schema, table, name, operation, model);
+        //}
         /// <summary>
-        ///     Generates a SQL fragment for a column definition in an <see cref="AddColumnOperation" />.
+        ///     Generates a SQL fragment for the column definitions in an <see cref="CreateTableOperation" />.
         /// </summary>
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to add the SQL fragment. </param>
-        protected override void ColumnDefinition(AddColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
-            => ColumnDefinition(
-                operation.Schema,
-                operation.Table,
-                operation.Name,
-                operation.ClrType,
-                operation.ColumnType,
-                operation.IsUnicode,
-                operation.MaxLength,
-                operation.IsFixedLength,
-                operation.IsRowVersion,
-                operation.IsNullable,
-                operation.DefaultValue,
-                operation.DefaultValueSql,
-                operation.ComputedColumnSql,
-                operation,
-                model,
-                builder);
-        protected override  void ColumnDefinition(
-         [CanBeNull] string schema,
-         [NotNull] string table,
-         [NotNull] string name,
-         [NotNull] Type clrType,
-         [CanBeNull] string type,
-         bool? unicode,
-         int? maxLength,
-         bool? fixedLength,
-         bool rowVersion,
-         bool nullable,
-         [CanBeNull] object defaultValue,
-         [CanBeNull] string defaultValueSql,
-         [CanBeNull] string computedColumnSql,
-         [NotNull] IAnnotatable annotatable,
-         [CanBeNull] IModel model,
-         [NotNull] MigrationCommandListBuilder builder)
+        protected override void CreateTableColumns(
+            CreateTableOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder)
         {
-            Check.NotEmpty(name, nameof(name));
-            Check.NotNull(clrType, nameof(clrType));
-            Check.NotNull(annotatable, nameof(annotatable));
+            Check.NotNull(operation, nameof(operation));
             Check.NotNull(builder, nameof(builder));
 
-            builder
-                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
-                .Append(" ")
-                .Append(type ?? GetColumnType(schema, table, name, clrType, unicode, maxLength, fixedLength, rowVersion, model));
-
-
-            DefaultValue(defaultValue, defaultValueSql, builder);
+            CreateTableColumnsWithComments(operation, model, builder);
         }
-       
+
+        private void CreateTableColumnsWithComments(
+            CreateTableOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder)
+        {
+            for (var i = 0; i < operation.Columns.Count; i++)
+            {
+                var column = operation.Columns[i];
+
+                if (i > 0)
+                {
+                    builder.AppendLine();
+                }
+                
+                this.ColumnDefinition(column, model, builder);
+
+                if (i != operation.Columns.Count - 1)
+                {
+                    builder.AppendLine(",");
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Generates a SQL fragment for a column definition for the given column metadata.
+        /// </summary>
+        /// <param name="schema"> The schema that contains the table, or <c>null</c> to use the default schema. </param>
+        /// <param name="table"> The table that contains the column. </param>
+        /// <param name="name"> The column name. </param>
+        /// <param name="operation"> The column metadata. </param>
+        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
+        /// <param name="builder"> The command builder to use to add the SQL fragment. </param>
+        protected override void ColumnDefinition(
+            string schema,
+            string table,
+            string name,
+            ColumnOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder)
+        {
+            base.ColumnDefinition(schema, table, name, operation, model, builder);
+
+            //var inlinePk = operation[TaosAnnotationNames.InlinePrimaryKey] as bool?;
+            //if (inlinePk == true)
+            //{
+            //    var inlinePkName = operation[
+            //        TaosAnnotationNames.InlinePrimaryKeyName] as string;
+            //    if (!string.IsNullOrEmpty(inlinePkName))
+            //    {
+            //        builder
+            //            .Append(" CONSTRAINT ")
+            //            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(inlinePkName));
+            //    }
+
+            //    builder.Append(" PRIMARY KEY");
+            //    var autoincrement = operation[TaosAnnotationNames.Autoincrement] as bool?
+            //        // NB: Migrations scaffolded with version 1.0.0 don't have the prefix. See #6461
+            //        ?? operation[TaosAnnotationNames.LegacyAutoincrement] as bool?;
+            //    if (autoincrement == true)
+            //    {
+            //        builder.Append(" AUTOINCREMENT");
+            //    }
+            //}
+        }
 
         #region Invalid migration operations
 
@@ -491,7 +484,9 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
-        protected override void Generate(AddForeignKeyOperation operation, IModel model, MigrationCommandListBuilder builder)
+        /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
+        protected override void Generate(
+            AddForeignKeyOperation operation, IModel model, MigrationCommandListBuilder builder, bool terminate = true)
             => throw new NotSupportedException(
                 TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
@@ -502,7 +497,9 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
-        protected override void Generate(AddPrimaryKeyOperation operation, IModel model, MigrationCommandListBuilder builder)
+        /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
+        protected override void Generate(
+            AddPrimaryKeyOperation operation, IModel model, MigrationCommandListBuilder builder, bool terminate = true)
             => throw new NotSupportedException(
                 TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
@@ -524,7 +521,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
-        protected override void Generate(DropColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
+        protected override void Generate(CreateCheckConstraintOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
                 TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
@@ -535,7 +532,9 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
-        protected override void Generate(DropForeignKeyOperation operation, IModel model, MigrationCommandListBuilder builder)
+        /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
+        protected override void Generate(
+            DropColumnOperation operation, IModel model, MigrationCommandListBuilder builder, bool terminate = true)
             => throw new NotSupportedException(
                 TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
@@ -546,7 +545,22 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
-        protected override void Generate(DropPrimaryKeyOperation operation, IModel model, MigrationCommandListBuilder builder)
+        /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
+        protected override void Generate(
+            DropForeignKeyOperation operation, IModel model, MigrationCommandListBuilder builder, bool terminate = true)
+            => throw new NotSupportedException(
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+
+        /// <summary>
+        ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
+        ///     are not yet supported.
+        /// </summary>
+        /// <param name="operation"> The operation. </param>
+        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
+        /// <param name="builder"> The command builder to use to build the commands. </param>
+        /// <param name="terminate"> Indicates whether or not to terminate the command after generating SQL for the operation. </param>
+        protected override void Generate(
+            DropPrimaryKeyOperation operation, IModel model, MigrationCommandListBuilder builder, bool terminate = true)
             => throw new NotSupportedException(
                 TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
@@ -568,9 +582,38 @@ namespace Microsoft.EntityFrameworkCore.Migrations
         /// <param name="operation"> The operation. </param>
         /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
         /// <param name="builder"> The command builder to use to build the commands. </param>
+        protected override void Generate(DropCheckConstraintOperation operation, IModel model, MigrationCommandListBuilder builder)
+            => throw new NotSupportedException(
+                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+
+        /// <summary>
+        ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
+        ///     are not yet supported.
+        /// </summary>
+        /// <param name="operation"> The operation. </param>
+        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
+        /// <param name="builder"> The command builder to use to build the commands. </param>
         protected override void Generate(AlterColumnOperation operation, IModel model, MigrationCommandListBuilder builder)
             => throw new NotSupportedException(
                 TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+
+        /// <summary>
+        ///     Generates a SQL fragment for a computed column definition for the given column metadata.
+        /// </summary>
+        /// <param name="schema"> The schema that contains the table, or <c>null</c> to use the default schema. </param>
+        /// <param name="table"> The table that contains the column. </param>
+        /// <param name="name"> The column name. </param>
+        /// <param name="operation"> The column metadata. </param>
+        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
+        /// <param name="builder"> The command builder to use to add the SQL fragment. </param>
+        protected override void ComputedColumnDefinition(
+            string schema,
+            string table,
+            string name,
+            ColumnOperation operation,
+            IModel model,
+            MigrationCommandListBuilder builder)
+            => throw new NotSupportedException(TaosStrings.ComputedColumnsNotSupported);
 
         #endregion
 

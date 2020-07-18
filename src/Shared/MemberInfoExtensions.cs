@@ -67,7 +67,9 @@ namespace System.Reflection
             }
 
             var map = targetMethod.DeclaringType.GetInterfaceMap(interfaceType);
+#pragma warning disable EF1001 // Internal EF Core API usage.
             var index = map.TargetMethods.IndexOf(targetMethod, MemberInfoComparer.Instance);
+#pragma warning restore EF1001 // Internal EF Core API usage.
 
             return index != -1
                 ? map.InterfaceMethods[index]

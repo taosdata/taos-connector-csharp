@@ -95,7 +95,10 @@ namespace Maikebing.Data.Taos
         /// <param name="connectionString">The string used to open the connection.</param>
         /// <seealso cref="TaosConnectionStringBuilder" />
         public TaosConnection(string connectionString) : this()
-            => ConnectionString = connectionString;
+        {
+            ConnectionStringBuilder = new TaosConnectionStringBuilder(connectionString);
+            ConnectionString = connectionString;
+        }
 
 
 
@@ -201,6 +204,7 @@ namespace Maikebing.Data.Taos
         /// <exception cref="TaosException">A Taos error occurs while opening the connection.</exception>
         public override void Open()
         {
+       
             if (State == ConnectionState.Open)
             {
                 return;
@@ -210,7 +214,7 @@ namespace Maikebing.Data.Taos
                 throw new InvalidOperationException("Open Requires Set ConnectionString");
             }
 
-            this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password, "", ConnectionStringBuilder.Port);
+            this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password,"", ConnectionStringBuilder.Port);
             if (this._taos == IntPtr.Zero)
             {
                 TaosException.ThrowExceptionForRC(_taos);
@@ -218,6 +222,7 @@ namespace Maikebing.Data.Taos
             else
             {
                 SetState(ConnectionState.Open);
+               
             }
         }
 
@@ -256,6 +261,7 @@ namespace Maikebing.Data.Taos
             {
                 Close();
             }
+            TDengine.Close(_taos);
             base.Dispose(disposing);
         }
 

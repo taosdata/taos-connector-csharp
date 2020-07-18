@@ -1,54 +1,37 @@
-﻿// Copyright (c)  maikebing All rights reserved.
-//// Licensed under the MIT License, See License.txt in the project root for license information.
+// Copyright (c)  Maikebing. All rights reserved.
+// Licensed under the MIT License, See License.txt in the project root for license information.
 
 using JetBrains.Annotations;
-using Maikebing.EntityFrameworkCore.Taos.Metadata.Conventions;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions.Internal;
-using Microsoft.EntityFrameworkCore.Utilities;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
+// ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
 {
     /// <summary>
-    ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
+    ///     <para>
+    ///         A builder for building conventions for Taos.
+    ///     </para>
+    ///     <para>
+    ///         The service lifetime is <see cref="ServiceLifetime.Scoped" /> and multiple registrations
+    ///         are allowed. This means that each <see cref="DbContext" /> instance will use its own
+    ///         set of instances of this service.
+    ///         The implementations may depend on other services registered with any lifetime.
+    ///         The implementations do not need to be thread-safe.
+    ///     </para>
     /// </summary>
     public class TaosConventionSetBuilder : RelationalConventionSetBuilder
     {
         /// <summary>
-        ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        ///     Creates a new <see cref="TaosConventionSetBuilder" /> instance.
         /// </summary>
-        public TaosConventionSetBuilder([NotNull] RelationalConventionSetBuilderDependencies dependencies)
-            : base(dependencies)
+        /// <param name="dependencies"> The core dependencies for this service. </param>
+        /// <param name="relationalDependencies"> The relational dependencies for this service. </param>
+        public TaosConventionSetBuilder(
+            [NotNull] ProviderConventionSetBuilderDependencies dependencies,
+            [NotNull] RelationalConventionSetBuilderDependencies relationalDependencies)
+            : base(dependencies, relationalDependencies)
         {
-        }
-        public override ConventionSet AddConventions(ConventionSet conventionSet)
-        {
-            Check.NotNull(conventionSet, nameof(conventionSet));
-            base.AddConventions(conventionSet);
-            ReplaceConvention(conventionSet.ModelAnnotationChangedConventions, (RelationalDbFunctionConvention)new  TaosDbFunctionConvention());
-
-            return conventionSet;
-        }
-            /// <summary>
-            ///     This API supports the Entity Framework Core infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            public static ConventionSet Build()
-        {
-            var serviceProvider = new ServiceCollection()
-                .AddEntityFrameworkTaos("")
-                .AddDbContext<DbContext>(o => o.UseTaos("Filename=_.db"))
-                .BuildServiceProvider();
-
-            using (var serviceScope = serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
-            {
-                using (var context = serviceScope.ServiceProvider.GetService<DbContext>())
-                {
-                    return ConventionSet.CreateConventionSet(context);
-                }
-            }
         }
     }
 }

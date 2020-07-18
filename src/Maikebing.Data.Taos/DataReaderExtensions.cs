@@ -52,7 +52,7 @@ namespace Maikebing.Data.Taos
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
+                TaosException.ThrowExceptionForRC(-10002, $"ToObject<{nameof(T)}>  Error", ex);
             }
             return jArray;
         }
@@ -87,7 +87,7 @@ namespace Maikebing.Data.Taos
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.Message);
+                TaosException.ThrowExceptionForRC(-10001, "ToJson Error", ex);
             }
             return jArray;
         }

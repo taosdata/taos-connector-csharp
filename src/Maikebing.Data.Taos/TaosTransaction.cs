@@ -103,7 +103,7 @@ namespace Maikebing.Data.Taos
 
         private void Complete()
         {
-            _connection.Transaction = null;
+            if (_connection!=null)_connection.Transaction = null;
             _connection = null;
             _completed = true;
         }
