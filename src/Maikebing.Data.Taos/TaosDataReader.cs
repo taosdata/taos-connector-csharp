@@ -154,6 +154,7 @@ namespace Maikebing.Data.Taos
             {
                 _command.Connection.Close();
             }
+            TDengine.FreeResult(_taosResult);
         }
 
         /// <summary>
@@ -396,7 +397,7 @@ namespace Maikebing.Data.Taos
         {
             object result = DBNull.Value;
             TDengineMeta meta = _metas[ordinal];
-            int offset =  (Environment.Is64BitProcess?8:4) * ordinal;
+            int offset =   IntPtr.Size * ordinal;
            return  Marshal.ReadIntPtr(rowdata, offset);
         }
         /// <summary>
@@ -408,7 +409,7 @@ namespace Maikebing.Data.Taos
         {
             object result = DBNull.Value;
             TDengineMeta meta = _metas[ordinal];
-            int offset =(Environment.Is64BitProcess? 8:4) * ordinal;
+            int offset = IntPtr.Size * ordinal;
             IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
             if (data != IntPtr.Zero)
             {

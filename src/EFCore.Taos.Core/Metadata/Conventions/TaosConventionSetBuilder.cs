@@ -33,35 +33,5 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Conventions
             : base(dependencies, relationalDependencies)
         {
         }
-
-        /// <summary>
-        ///     <para>
-        ///         Call this method to build a <see cref="ConventionSet" /> for Taos when using
-        ///         the <see cref="ModelBuilder" /> outside of <see cref="DbContext.OnModelCreating" />.
-        ///     </para>
-        ///     <para>
-        ///         Note that it is unusual to use this method.
-        ///         Consider using <see cref="DbContext" /> in the normal way instead.
-        ///     </para>
-        /// </summary>
-        /// <returns> The convention set. </returns>
-        public static ConventionSet Build()
-        {
-            var serviceProvider = new ServiceCollection()
-                .AddEntityFrameworkTaos()
-                .AddDbContext<DbContext>(
-                    (p, o) =>
-                        o.UseTaos("Filename=_.db")
-                            .UseInternalServiceProvider(p))
-                .BuildServiceProvider();
-
-            using (var serviceScope = serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
-            {
-                using (var context = serviceScope.ServiceProvider.GetService<DbContext>())
-                {
-                    return ConventionSet.CreateConventionSet(context);
-                }
-            }
-        }
     }
 }

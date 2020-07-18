@@ -48,7 +48,27 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
         ///     any release. You should only use it directly in your code with extreme caution and knowing that
         ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
-        public override void DelimitIdentifier(StringBuilder builder, string name, string schema)
-            => base.DelimitIdentifier(builder, name,schema);
+        public  override     void DelimitIdentifier(StringBuilder builder, string name, string schema)
+        {
+            if (!string.IsNullOrEmpty(schema))
+            {
+                DelimitIdentifier(builder, schema);
+                builder.Append(".");
+            }
+            DelimitIdentifier(builder, name);
+        }
+        public  override  void DelimitIdentifier(StringBuilder builder, string identifier)
+        {
+            Microsoft.EntityFrameworkCore.Utilities.Check.NotEmpty(identifier, "identifier");
+            EscapeIdentifier(builder, identifier);
+        }
+        public override  void EscapeIdentifier( StringBuilder builder, string identifier)
+        {
+            Microsoft.EntityFrameworkCore.Utilities.Check.NotEmpty(identifier, "identifier");
+            int length = builder.Length;
+            builder.Append(identifier);
+        }
+
+        public override string DelimitIdentifier(string identifier) => EscapeIdentifier(Microsoft.EntityFrameworkCore.Utilities.Check.NotEmpty(identifier, "identifier"));
     }
 }

@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
 {
@@ -95,17 +96,24 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
         public override bool Open(bool errorsExpected = false)
         {
             bool result = false;
-            try
+            _connection.ConnectionStringBuilder.ForceDatabaseName = true;
+            _connection.Open();
+            if (_connection.ConnectionStringBuilder.ForceDatabaseName)
             {
-                
-                _connection.Open();
-                result = _connection.State == System.Data.ConnectionState.Open;
-
+                var obj = _connection.CreateCommand("SELECT database()").ExecuteScalar();
+                if (obj == DBNull.Value)
+                {
+                    try
+                    {
+                        _connection. ChangeDatabase(_connection.Database);
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
             }
-            catch (System.Exception)
-            {
+            result = _connection.State == System.Data.ConnectionState.Open;
 
-            }
             return result;
         }
         public override bool Close()

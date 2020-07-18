@@ -4,8 +4,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data.Common;
 using System.Linq;
+using System.Reflection;
 
 namespace Maikebing.Data.Taos
 {
@@ -74,8 +76,8 @@ namespace Maikebing.Data.Taos
         /// <returns>The zero-based index of the parameter that was added.</returns>
         public override int Add(object value)
         {
-            _parameters.Add((TaosParameter)value);
-
+            var tpv = (TaosParameter)value;
+            _parameters.Add(tpv);
             return Count - 1;
         }
 

@@ -7,6 +7,8 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -231,17 +233,6 @@ namespace Maikebing.Data.Taos
                 throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(Prepare)}");
             }
  
-            var timer = Stopwatch.StartNew();
-
-            try
-            {
-                
-            }
-            catch
-            {
-
-                throw;
-            }
         }
 
         /// <summary>
@@ -292,18 +283,7 @@ namespace Maikebing.Data.Taos
                 throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(ExecuteReader)}");
             }
 
-            if (Transaction != _connection.Transaction)
-            {
-                throw new InvalidOperationException(
-                    Transaction == null
-                        ? "TransactionRequired"
-                        : "TransactionConnectionMismatch");
-            }
-            if (_connection.Transaction?.ExternalRollback == true)
-            {
-                throw new InvalidOperationException("TransactionCompleted");
-            }
-            
+         
             var unprepared=false; 
             TaosDataReader dataReader = null;
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
@@ -312,22 +292,91 @@ namespace Maikebing.Data.Taos
 #if DEBUG
                 Console.WriteLine($"_commandText:{_commandText}");
 #endif
-                var code = TDengine.Query( _taos, _commandText);
+                var _endcommandtext = _commandText;
+                if (  _parameters.IsValueCreated && _commandText?.ToLower().TrimStart().StartsWith("insert")==true)
+                {
+                    var pms = _parameters.Value;
+                    for (int i = 0; i < pms.Count; i++)
+                    {
+                        var tp = pms[i];
 
-                if (code == TDengine.TSDB_CODE_SUCCESS)
+                        switch (TypeInfo.GetTypeCode(tp.Value?.GetType()))
+                        {
+                            case TypeCode.Boolean:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName,((tp.Value as bool?).GetValueOrDefault().ToString().ToLower()));
+                                break;
+                            case TypeCode.Byte:
+                            case TypeCode.Char:
+                            case TypeCode.SByte:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{tp.Value}");
+                                break;
+                            case TypeCode.DateTime:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(long)((tp.Value as DateTime?).GetValueOrDefault().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}");
+                                break;
+                            case TypeCode.DBNull:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"");
+                                break;
+                            case TypeCode.Single:
+                            case TypeCode.Decimal:
+                            case TypeCode.Double:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as double?).GetValueOrDefault()}");
+                                break;
+                            case TypeCode.Int16:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as short?).GetValueOrDefault()}");
+                                break;
+                            case TypeCode.Int32:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as int ?).GetValueOrDefault()}");
+                                break;
+                            case TypeCode.Int64:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as long?).GetValueOrDefault()}");
+                                break;
+                            case TypeCode.UInt16:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as ushort?).GetValueOrDefault()}");
+                                break;
+                            case TypeCode.UInt32:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as uint ?).GetValueOrDefault()}");
+                                break;
+                            case TypeCode.UInt64:
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as ulong?).GetValueOrDefault()}");
+                                break;
+                            case TypeCode.String:
+                            default:
+                                    _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as string)}");
+                                break;
+                        }
+                     
+                    }
+                }
+                else
+                {
+                    _endcommandtext = _commandText;
+                
+                }
+             var   code = Task.Run(()=> TDengine.Query(_taos, _endcommandtext));
+                code.Wait(TimeSpan.FromSeconds(CommandTimeout));
+               
+                if (code.IsCompleted && code.Result == TDengine.TSDB_CODE_SUCCESS)
                 {
                         List<TDengineMeta> metas = TDengine.FetchFields(_taos);
                         for (int j = 0; j < metas.Count; j++)
                         {
                             TDengineMeta meta = (TDengineMeta)metas[j];
-                            //Console.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName() + ", name:" + meta.name + ", size:" + meta.size);
+                           Console.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName() + ", name:" + meta.name + ", size:" + meta.size);
                         }
                    
                     dataReader = new TaosDataReader(this, metas, closeConnection);
                 }
+                else if (code.IsCanceled)
+                {
+                    TaosException.ThrowExceptionForRC(-1, "Command is Canceled", null);
+                }
+                else if (code.IsFaulted)
+                {
+                    TaosException.ThrowExceptionForRC(-2, code.Exception.Message, code.Exception?.InnerException);
+                }
                 else
                 {
-                    TaosException.ThrowExceptionForRC(_commandText,  new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error =TDengine.Error(_taos)   });
+                    TaosException.ThrowExceptionForRC(_endcommandtext,  new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error =TDengine.Error(_taos)   });
                 }
             }
             catch when (unprepared)

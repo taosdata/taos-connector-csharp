@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 
 namespace TaosADODemo
 {
@@ -21,17 +22,24 @@ namespace TaosADODemo
                 DataBase = database,
                 Username = "maikebing",
                 Password = "maikebing",
-                Port=6060
+                Port = 6060
 
             };
             //Example for ADO.Net 
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
                 connection.Open();
-             
+
                 Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
                 Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table {database}.t (ts timestamp, cdata int);").ExecuteNonQuery());
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
+                var pmcmd = connection.CreateCommand($"insert into {database}.t values (@t, @c);");
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+                pmcmd.Parameters.AddWithValue("@t", (long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds));
+                pmcmd.Parameters.AddWithValue("@c", 1111);
+                pmcmd.ExecuteNonQuery();
+                Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
+
                 //Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.AddMonths(1).Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 20);").ExecuteNonQuery());
                 var cmd_select = connection.CreateCommand();
 #pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
@@ -55,7 +63,8 @@ namespace TaosADODemo
                 for (int i = 0; i < 10; i++)
                 {
                     var rd = new Random();
-                    context.sensor.Add(new sensor() { ts = DateTime.Now.AddMilliseconds(i), degree = rd.NextDouble(), pm25 = rd.Next(0, 1000) });
+                    context.sensor.Add(new sensor() { ts = DateTime.Now.AddMilliseconds(i + 10), degree = rd.NextDouble(), pm25 = rd.Next(0, 1000) });
+                    Thread.Sleep(10);
                 }
                 Console.WriteLine("Saveing");
                 context.SaveChanges();
