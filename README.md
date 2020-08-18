@@ -17,8 +17,8 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 
 [![Build status](https://ci.appveyor.com/api/projects/status/8krjmvsoiilo2r10?svg=true)](https://ci.appveyor.com/project/MaiKeBing/maikebing-entityframeworkcore-taos)
 [![License](https://img.shields.io/github/license/maikebing/Maikebing.EntityFrameworkCore.Taos.svg)](https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/blob/master/LICENSE)
-[![Nuget](https://img.shields.io/nuget/v/Maikebing.Data.Taos.svg)](https://www.nuget.org/packages/Maikebing.Data.Taos/)
-[![Nuget](https://img.shields.io/nuget/v/Maikebing.EntityFrameworkCore.Taos.svg)](https://www.nuget.org/packages/Maikebing.EntityFrameworkCore.Taos/)
+[![Maikebing.Data.Taos](https://img.shields.io/nuget/v/Maikebing.Data.Taos.svg)](https://www.nuget.org/packages/Maikebing.Data.Taos/)
+[![Maikebing.EntityFrameworkCore.Taos](https://img.shields.io/nuget/v/Maikebing.EntityFrameworkCore.Taos.svg)](https://www.nuget.org/packages/Maikebing.EntityFrameworkCore.Taos/)
 
 ---
 ## 目前支持的版本
@@ -36,6 +36,7 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 ## 如何安装？
 
  ` Install-Package Maikebing.Data.Taos`
+ 
  ` Install-Package Maikebing.EntityFrameworkCore.Taos`
 
 ##  如何使用？
