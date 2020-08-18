@@ -45,15 +45,13 @@ namespace Maikebing.Data.Taos
             if (_dll_isloaded == false)
             {
                 var libManager = new LibraryManager(
-                    typeof(TaosConnection).Assembly,
-
                     new LibraryItem(Platform.Windows, Bitness.x64,
                         new LibraryFile("taos.dll", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.taos_x64.dll"))),
                      new LibraryItem(Platform.Windows, Bitness.x32,
                         new LibraryFile("taos.dll", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.taos_x32.dll"))),
                     new LibraryItem(Platform.Linux, Bitness.x64,
                         new LibraryFile("libtaos.so", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.libtaos_x64.so"))));
-                libManager.LoadNativeLibrary(false);
+                libManager.LoadLibraryExplicit = true;
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
                     configDir = "/etc/taos";
