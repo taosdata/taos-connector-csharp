@@ -1,7 +1,7 @@
 # Maikebing.EntityFrameworkCore.Taos
 
 ## 项目简介
- 
+
 
 Entity, Framework, EF, Core, Data, O/RM, entity-framework-core,TDengine
 --
@@ -21,10 +21,19 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 
 ---
 ## 目前支持的版本
-    
-    1.6.5.9
-  
+
+
+
+| 操作系统    | 支持版本 | 注意事项                                                     |
+| ----------- | -------- | ------------------------------------------------------------ |
+| Windows X86 | 1.6.5.9  | 连接高于此版本的TD会提示版本不匹配                           |
+| Windows X64 | 1.6.6.1  | 连接高于此版本的TD会提示版本不匹配                           |
+| Linux X64   | 2.0.1.0  | Linux注意一定执行官方的install_client.sh脚本，否则会提示dll无法找到 |
+
+
+
 ## 如何安装？
+
  ` Install-Package Maikebing.Data.Taos`
 
 ##  如何使用？
