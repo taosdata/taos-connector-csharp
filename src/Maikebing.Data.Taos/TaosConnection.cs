@@ -11,6 +11,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using TDengineDriver;
 
 namespace Maikebing.Data.Taos
@@ -41,7 +42,7 @@ namespace Maikebing.Data.Taos
         ///     Initializes a new instance of the <see cref="TaosConnection" /> class.
         /// </summary>
         public TaosConnection()
-        {
+        {  
             if (_dll_isloaded == false)
             {
                 var libManager = new LibraryManager(
@@ -153,7 +154,8 @@ namespace Maikebing.Data.Taos
             {
                 if (string.IsNullOrEmpty(_version))
                 {
-                    _version = this.CreateCommand("  SELECT server_version()").ExecuteScalar() as string;
+                    var value= this.CreateCommand("  SELECT server_version()").ExecuteScalar();
+                    _version =Encoding.UTF8.GetString((byte[])Convert.ChangeType( value ,typeof(byte[])));
                 }
                 return _version;
             }
