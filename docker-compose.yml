@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  example:
+    depends_on:
+      - taos
+    links:
+      - taos
+    image: ${DOCKER_REGISTRY-}example
+    build:
+      context: .
+      dockerfile: src/Example/Dockerfile
+
+  taos:
+    image: tdengine/tdengine:2.0.1.1
+    restart: always
+    container_name: taos
+    ports:
+      - 6030:6030
+      - 6035:6035
+      - 6041:6041
+      - 6030-6040:6030-6040/udp
+    volumes:
+      - /etc/taos:/etc/taos

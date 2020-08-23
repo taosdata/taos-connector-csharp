@@ -1,6 +1,10 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 FROM mcr.microsoft.com/dotnet/core/runtime:3.1-buster-slim AS base
+WORKDIR /src
+COPY ["src/Example/TDengine-client-2.0.1.1-Linux-x64.tar.gz", "src/Example/TDengine-client-2.0.1.1-Linux-x64.tar.gz"]
+RUN  tar -xzvf src/Example/TDengine-client-2.0.1.1-Linux-x64.tar.gz
+RUN  cd TDengine-client && ./install_client.sh
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build

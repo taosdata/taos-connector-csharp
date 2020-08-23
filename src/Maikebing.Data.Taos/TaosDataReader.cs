@@ -27,15 +27,15 @@ namespace Maikebing.Data.Taos
         private IntPtr _taos = IntPtr.Zero;
         IntPtr rowdata;
         List<TDengineMeta> _metas = null;
-        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas,  bool closeConnection)
+        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas,  bool closeConnection,IntPtr res )
         {
            _taos = taosCommand.Connection._taos;
             _command = taosCommand;
             _closeConnection = closeConnection;
-            _fieldCount = TDengine.FieldCount(_taos);
-            _hasRows = TDengine.AffectRows(_taos) > 0;
+            _fieldCount = TDengine.FieldCount(res);
+            _hasRows = TDengine.AffectRows(res) > 0;
             _closed = _closeConnection;
-            _taosResult = TDengine.UseResult(_taos);
+            _taosResult = res;
             _metas = metas;
         }
 
@@ -217,7 +217,7 @@ namespace Maikebing.Data.Taos
                     type = typeof(double);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_BINARY:
-                    type = typeof(byte[]);
+                    type = typeof(string);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
                     type = typeof(long);
@@ -445,9 +445,7 @@ namespace Maikebing.Data.Taos
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_BINARY:
                         {
-                            byte[] buffer = new byte[meta.size];
-                            Marshal.Copy(data, buffer, 0, meta.size);
-                            result = buffer;
+                            result = Marshal.PtrToStringAnsi(data, meta.size)?.TrimEnd('\0');
                         }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
@@ -455,7 +453,7 @@ namespace Maikebing.Data.Taos
                         result = v9;
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
-                        string v10 = Marshal.PtrToStringAnsi(data);
+                        string v10 = Marshal.PtrToStringUni(data, meta.size)?.TrimEnd('\0');
                         result = v10;
                         break;
                 }

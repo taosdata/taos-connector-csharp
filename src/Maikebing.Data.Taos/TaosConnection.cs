@@ -154,8 +154,8 @@ namespace Maikebing.Data.Taos
             {
                 if (string.IsNullOrEmpty(_version))
                 {
-                    var value= this.CreateCommand("  SELECT server_version()").ExecuteScalar();
-                    _version =Encoding.UTF8.GetString((byte[])Convert.ChangeType( value ,typeof(byte[])));
+                    _version = this.CreateCommand("SELECT server_version()").ExecuteScalar() as string;
+                
                 }
                 return _version;
             }
@@ -215,7 +215,7 @@ namespace Maikebing.Data.Taos
             }
 
             this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password,"", ConnectionStringBuilder.Port);
-            if (this._taos == IntPtr.Zero)
+           if (this._taos == IntPtr.Zero)
             {
                 TaosException.ThrowExceptionForRC(_taos);
             }

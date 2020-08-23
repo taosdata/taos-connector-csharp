@@ -355,16 +355,16 @@ namespace Maikebing.Data.Taos
              var   code = Task.Run(()=> TDengine.Query(_taos, _endcommandtext));
                 code.Wait(TimeSpan.FromSeconds(CommandTimeout));
                
-                if (code.IsCompleted && code.Result == TDengine.TSDB_CODE_SUCCESS)
+                if (code.IsCompleted && code.Result !=  IntPtr.Zero)
                 {
-                        List<TDengineMeta> metas = TDengine.FetchFields(_taos);
+                        List<TDengineMeta> metas = TDengine.FetchFields(code.Result);
                         for (int j = 0; j < metas.Count; j++)
                         {
-                            TDengineMeta meta = (TDengineMeta)metas[j];
+                            TDengineMeta meta = metas[j];
                            Console.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName() + ", name:" + meta.name + ", size:" + meta.size);
                         }
                    
-                    dataReader = new TaosDataReader(this, metas, closeConnection);
+                    dataReader = new TaosDataReader(this, metas, closeConnection, code.Result);
                 }
                 else if (code.IsCanceled)
                 {

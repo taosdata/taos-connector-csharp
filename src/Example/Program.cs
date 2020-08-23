@@ -18,11 +18,11 @@ namespace TaosADODemo
             string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             var builder = new TaosConnectionStringBuilder()
             {
-                DataSource = "114.116.231.247",
+                DataSource = "taos",
                 DataBase = database,
-                Username = "maikebing",
-                Password = "maikebing",
-                Port = 6060
+                Username = "root",
+                Password = "taosdata",
+                Port = 6030
 
             };
             //Example for ADO.Net 
