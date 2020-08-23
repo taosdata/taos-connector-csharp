@@ -27,9 +27,9 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 
 | 操作系统    | 支持版本 | 注意事项                                                     |
 | ----------- | -------- | ------------------------------------------------------------ |
-| Windows X86 | 1.6.5.9  | 连接高于此版本的TD会提示版本不匹配                           |
-| Windows X64 | 2.0.1.1  |                                                              |
-| Linux X64   | 2.0.1.1  | Linux注意一定执行官方的install_client.sh脚本，否则会提示dll无法找到 |
+| Windows X86 | 1.6.5.9  | 要访问低版本， 请使用本库的 v1.0.104 版本，                  |
+| Windows X64 | 2.0.1.1  | 同上， 无法连接时请注意FQDN解析问题                          |
+| Linux X64   | 2.0.1.1  | 同上， Linux注意一定执行官方的install_client.sh脚本，否则会提示dll无法找到 |
 
 
 
