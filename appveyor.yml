@@ -15,7 +15,7 @@ dotnet_csproj:
   file_version: '{version}'
   informational_version: '{version}'
 build_script:
-- cmd: dotnet build  -c Release
+- cmd: dotnet build  -c Release EFCore.Taos.sln
 artifacts:
 - path: src\Maikebing.Data.Taos\bin\Release\Maikebing.Data.Taos.*.nupkg
   name: Maikebing.Data.Taos
