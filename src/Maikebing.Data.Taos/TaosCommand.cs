@@ -290,7 +290,7 @@ namespace Maikebing.Data.Taos
             try
             {
 #if DEBUG
-                Console.WriteLine($"_commandText:{_commandText}");
+                Debug.WriteLine($"_commandText:{_commandText}");
 #endif
                 var _endcommandtext = _commandText;
                 if (  _parameters.IsValueCreated && _commandText?.ToLower().TrimStart().StartsWith("insert")==true)
@@ -361,8 +361,10 @@ namespace Maikebing.Data.Taos
                         for (int j = 0; j < metas.Count; j++)
                         {
                             TDengineMeta meta = metas[j];
-                           Console.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName() + ", name:" + meta.name + ", size:" + meta.size);
-                        }
+#if DEBUG
+                        Debug.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName() + ", name:" + meta.name + ", size:" + meta.size);
+#endif
+                    }
                    
                     dataReader = new TaosDataReader(this, metas, closeConnection, code.Result);
                 }

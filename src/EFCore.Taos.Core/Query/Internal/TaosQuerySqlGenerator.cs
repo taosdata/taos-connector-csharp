@@ -23,7 +23,9 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
         protected override string AliasSeparator => "";
         protected override Expression VisitSelect(SelectExpression selectExpression)
         {
+#pragma warning disable EF1001 // Internal EF Core API usage.
             selectExpression.RemoveTypeAs();
+#pragma warning restore EF1001 // Internal EF Core API usage.
 
             return base.VisitSelect(selectExpression);
         }
