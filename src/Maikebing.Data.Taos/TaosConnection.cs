@@ -157,6 +157,21 @@ namespace Maikebing.Data.Taos
         {
             get
             {
+                if (_taos == IntPtr.Zero)
+                {
+                    TaosException.ThrowExceptionForRC(-10005, "Connection is not open",null);
+                }
+               else  if (string.IsNullOrEmpty(_version))
+                {
+                    _version = Marshal.PtrToStringAnsi(TDengine.GetServerInfo(_taos));
+                }
+                return _version;
+            }
+        }
+        public   string ClientVersion
+        {
+            get
+            {
                 if (string.IsNullOrEmpty(_version))
                 {
                     _version = Marshal.PtrToStringAnsi(TDengine.GetClientInfo());
@@ -164,8 +179,6 @@ namespace Maikebing.Data.Taos
                 return _version;
             }
         }
-
-
         /// <summary>
         ///     Gets the current state of the connection.
         /// </summary>

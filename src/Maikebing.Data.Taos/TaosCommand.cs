@@ -370,11 +370,11 @@ namespace Maikebing.Data.Taos
                 }
                 else if (code.IsCanceled)
                 {
-                    TaosException.ThrowExceptionForRC(-1, "Command is Canceled", null);
+                    TaosException.ThrowExceptionForRC(-10003, "Command is Canceled", null);
                 }
                 else if (code.IsFaulted)
                 {
-                    TaosException.ThrowExceptionForRC(-2, code.Exception.Message, code.Exception?.InnerException);
+                    TaosException.ThrowExceptionForRC(-10004, code.Exception.Message, code.Exception?.InnerException);
                 }
                 else
                 {

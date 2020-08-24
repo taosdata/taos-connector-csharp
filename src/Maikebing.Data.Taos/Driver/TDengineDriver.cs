@@ -162,5 +162,7 @@ namespace TDengineDriver
         [DllImport("taos", EntryPoint = "taos_get_client_info", CallingConvention = CallingConvention.StdCall)]
         static extern  public IntPtr GetClientInfo();
 
+        [DllImport("taos", EntryPoint = "taos_get_server_info", CallingConvention = CallingConvention.StdCall)]
+        static extern public IntPtr GetServerInfo(IntPtr taos);
     }
 }
