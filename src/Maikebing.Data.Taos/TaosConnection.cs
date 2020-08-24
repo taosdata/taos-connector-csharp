@@ -79,6 +79,10 @@ namespace Maikebing.Data.Taos
                     TDengine.Options((int)TDengineInitOption.TDDB_OPTION_CONFIGDIR, this.configDir);
                     TDengine.Options((int)TDengineInitOption.TDDB_OPTION_SHELL_ACTIVITY_TIMER, "60");
                     TDengine.Init();
+                    Process.GetCurrentProcess().Disposed += (object sender, EventArgs e) =>
+                        {
+                            TDengine.Cleanup();
+                        };
                     _dll_isloaded = true;
                 }
                 else
@@ -88,6 +92,7 @@ namespace Maikebing.Data.Taos
             }
         }
 
+       
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosConnection" /> class.
         /// </summary>
@@ -154,8 +159,7 @@ namespace Maikebing.Data.Taos
             {
                 if (string.IsNullOrEmpty(_version))
                 {
-                    _version = this.CreateCommand("SELECT server_version()").ExecuteScalar() as string;
-                
+                    _version = Marshal.PtrToStringAnsi(TDengine.GetClientInfo());
                 }
                 return _version;
             }

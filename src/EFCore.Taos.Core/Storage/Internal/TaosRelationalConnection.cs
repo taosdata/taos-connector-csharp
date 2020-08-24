@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Diagnostics;
 
 namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
 {
@@ -109,6 +110,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
                     }
                     catch (Exception ex)
                     {
+                        Debug.WriteLine(ex.Message);
                     }
                 }
             }
