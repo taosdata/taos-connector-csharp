@@ -17,23 +17,21 @@ namespace Maikebing.Data.Taos
         public TaosException(TaosErrorResult taosError) : base(taosError.Error, null)
         {
             _taosError = taosError;
+            base.HResult = _taosError.Code;
         }
 
         public TaosException(TaosErrorResult taosError, Exception ex) : base(taosError.Error, ex)
         {
             _taosError = taosError;
+            base.HResult = _taosError.Code;
         }
 
 
-        /// <summary>
-        ///     Gets the Taos error code.
-        /// </summary>
-        /// <value>The Taos error code.</value>
-        /// <seealso href="http://Taos.org/rescode.html">Taos Result Codes</seealso>
-        public virtual int TaosErrorCode => _taosError?.Code ?? 0;
+   
 
+      
         public override string Message => _taosError?.Error;
-        public override int ErrorCode => TaosErrorCode;
+        public override int ErrorCode =>   (int) _taosError?.Code;
         /// <summary>
         ///     Throws an exception with a specific Taos error code value.
         /// </summary>

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -350,24 +351,26 @@ namespace Maikebing.Data.Taos
                 else
                 {
                     _endcommandtext = _commandText;
-                
                 }
-             var   code = Task.Run(()=> TDengine.Query(_taos, _endcommandtext));
+                var code = Task.Run(() => TDengine.Query(_taos, _endcommandtext));
                 code.Wait(TimeSpan.FromSeconds(CommandTimeout));
-                if (code.IsCompleted && code.Result !=  IntPtr.Zero)
+                if (code.IsCompleted && code.Result != IntPtr.Zero && TDengine.ErrorNo(code.Result)==0)
                 {
-                        List<TDengineMeta> metas = TDengine.FetchFields(code.Result);
-                        for (int j = 0; j < metas.Count; j++)
-                        {
-                            TDengineMeta meta = metas[j];
+                    List<TDengineMeta> metas = TDengine.FetchFields(code.Result);
+                    for (int j = 0; j < metas.Count; j++)
+                    {
+                        TDengineMeta meta = metas[j];
 #if DEBUG
                         Debug.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName() + ", name:" + meta.name + ", size:" + meta.size);
 #endif
                     }
-                   
                     dataReader = new TaosDataReader(this, metas, closeConnection, code.Result);
                 }
-                else if(code.Status== TaskStatus.Running)
+                else if (  code.IsCompleted && code.Result == IntPtr.Zero)
+                {
+                    TaosException.ThrowExceptionForRC(_endcommandtext, new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = TDengine.Error(_taos) });
+                }
+                else if (code.Status == TaskStatus.Running)
                 {
                     TaosException.ThrowExceptionForRC(-10006, "Execute sql command timeout", null);
                 }
@@ -381,7 +384,7 @@ namespace Maikebing.Data.Taos
                 }
                 else
                 {
-                    TaosException.ThrowExceptionForRC(_endcommandtext,  new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error =TDengine.Error(_taos)   });
+                    TaosException.ThrowExceptionForRC(_endcommandtext, new TaosErrorResult() { Code = TDengine.ErrorNo(code.Result), Error = TDengine.Error(code.Result) });
                 }
             }
             catch when (unprepared)

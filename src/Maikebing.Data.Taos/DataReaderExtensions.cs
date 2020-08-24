@@ -97,5 +97,9 @@ namespace Maikebing.Data.Taos
             datatable.Load(reader);
             return datatable;
         }
+        public static string RemoveNull(this string str)
+        {
+            return (!string.IsNullOrEmpty(str) &&  str.IndexOf('\0')>0)? str.Remove(str.IndexOf('\0')):str;
+        }
     }
 }

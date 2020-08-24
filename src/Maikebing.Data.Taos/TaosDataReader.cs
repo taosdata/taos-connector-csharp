@@ -58,6 +58,9 @@ namespace Maikebing.Data.Taos
         public override bool HasRows
             => _hasRows;
 
+        public TaosException LastTaosException => TDengine.ErrorNo(_taosResult) ==0?null: new  TaosException( new TaosErrorResult() { Code = TDengine.ErrorNo(_taosResult), Error = TDengine.Error(_taosResult) }, null);
+
+        int ErrorNo => TDengine.ErrorNo(_taosResult);
         /// <summary>
         ///     Gets a value indicating whether the data reader is closed.
         /// </summary>
@@ -219,7 +222,7 @@ namespace Maikebing.Data.Taos
                     type = typeof(string);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
-                    type = typeof(long);
+                    type = typeof(DateTime);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                     type = typeof(string);
@@ -444,15 +447,15 @@ namespace Maikebing.Data.Taos
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_BINARY:
                         {
-                            result = Marshal.PtrToStringAnsi(data, meta.size)?.TrimEnd('\0');
+                            result = Marshal.PtrToStringAnsi(data, meta.size)?.RemoveNull();
                         }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
-                        long v9 = Marshal.ReadInt64(data);
-                        result = v9;
+                        var  v9 =   new   DateTime (1970,1,1,0,0,0, DateTimeKind.Utc).AddMilliseconds(Marshal.ReadInt64(data));
+                        result = v9.ToLocalTime();
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
-                        string v10 = Marshal.PtrToStringUni(data, meta.size)?.TrimEnd('\0');
+                        string v10 = Marshal.PtrToStringUni(data, meta.size)?.RemoveNull();
                         result = v10;
                         break;
                 }
