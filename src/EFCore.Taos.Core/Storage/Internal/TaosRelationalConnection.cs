@@ -106,7 +106,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
                 {
                     try
                     {
-                        _connection. ChangeDatabase(_connection.Database);
+                        _connection.ChangeDatabase(_connection.Database);
                     }
                     catch (Exception ex)
                     {

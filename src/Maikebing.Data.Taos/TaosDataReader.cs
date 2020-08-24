@@ -73,8 +73,7 @@ namespace Maikebing.Data.Taos
         {
             get
             {
-                
-                return TDengine.AffectRows(_taos);
+                return TDengine.AffectRows(_taosResult);
             }
         }
 

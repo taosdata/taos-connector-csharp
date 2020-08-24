@@ -145,7 +145,7 @@ namespace Maikebing.Data.Taos
         ///     <see cref="BeginTransaction()"/>.
         /// </summary>
         /// <value>The default <see cref="TaosCommand.CommandTimeout"/> value</value>
-        public virtual int DefaultTimeout { get; set; } = 30;
+        public virtual int DefaultTimeout { get; set; } = 60;
 
 
         string _version = string.Empty;
@@ -387,7 +387,9 @@ namespace Maikebing.Data.Taos
         /// <param name="databaseName">The name of the database to use.</param>
         public override void ChangeDatabase(string databaseName)
         {
-            this.CreateCommand($" use {databaseName};").ExecuteNonQuery();
+            int result = TDengine.SelectDatabase(_taos, databaseName);
+            Debug.WriteLine($"Select Database {databaseName} ,result is {result}");
+            // this.CreateCommand($" use {databaseName};").ExecuteNonQuery();
         }
 
         private class AggregateContext<T>

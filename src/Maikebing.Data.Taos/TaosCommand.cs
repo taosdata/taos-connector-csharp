@@ -354,7 +354,6 @@ namespace Maikebing.Data.Taos
                 }
              var   code = Task.Run(()=> TDengine.Query(_taos, _endcommandtext));
                 code.Wait(TimeSpan.FromSeconds(CommandTimeout));
-               
                 if (code.IsCompleted && code.Result !=  IntPtr.Zero)
                 {
                         List<TDengineMeta> metas = TDengine.FetchFields(code.Result);
@@ -367,6 +366,10 @@ namespace Maikebing.Data.Taos
                     }
                    
                     dataReader = new TaosDataReader(this, metas, closeConnection, code.Result);
+                }
+                else if(code.Status== TaskStatus.Running)
+                {
+                    TaosException.ThrowExceptionForRC(-10006, "Execute sql command timeout", null);
                 }
                 else if (code.IsCanceled)
                 {
