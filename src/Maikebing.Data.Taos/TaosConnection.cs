@@ -239,7 +239,10 @@ namespace Maikebing.Data.Taos
             else
             {
                 SetState(ConnectionState.Open);
-               
+                if (!string.IsNullOrEmpty( ConnectionStringBuilder.DataBase))
+                {
+                    this.ChangeDatabase(ConnectionStringBuilder.DataBase);
+                }
             }
         }
 
@@ -387,9 +390,10 @@ namespace Maikebing.Data.Taos
         /// <param name="databaseName">The name of the database to use.</param>
         public override void ChangeDatabase(string databaseName)
         {
-            int result = TDengine.SelectDatabase(_taos, databaseName);
+             int result = TDengine.SelectDatabase(_taos, databaseName);
+           // int result = this.CreateCommand($" use {databaseName};").ExecuteNonQuery();
             Debug.WriteLine($"Select Database {databaseName} ,result is {result}");
-            // this.CreateCommand($" use {databaseName};").ExecuteNonQuery();
+
         }
 
         private class AggregateContext<T>
