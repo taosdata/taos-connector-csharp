@@ -56,6 +56,19 @@ namespace TaosADODemo
                 Console.WriteLine("INSERT INTO d1001  ", connection.CreateCommand($"INSERT INTO d1001 USING METERS TAGS(\"Beijng.Chaoyang\", 2) VALUES(now, 10.2, 219, 0.32);").ExecuteNonQuery());
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
                 Console.WriteLine("DROP DATABASE {0} {1}", database, connection.CreateCommand($"DROP DATABASE   {database};").ExecuteNonQuery());
+                connection.CreateCommand("DROP DATABASE IF EXISTS  IoTSharp").ExecuteNonQuery();
+                connection.CreateCommand("CREATE DATABASE IoTSharp KEEP 365 DAYS 10 BLOCKS 4;").ExecuteNonQuery();
+                connection.ChangeDatabase("IoTSharp");
+                connection.CreateCommand("CREATE TABLE telemetrydata  (ts timestamp, value_boolean bool, value_string binary(4096), value_long bigint,value_datetime timestamp,value_double double,value_json binary(4096) ,value_xml binary(4096)  )   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
+                //connection.CreateCommand($"CREATE TABLE dev_Thermometer USING telemetrydata TAGS (\"Temperature\")").ExecuteNonQuery();
+                var devid = $"{Guid.NewGuid():N}";
+                UploadTelemetryData(connection, devid, "Temperature", 999);
+                UploadTelemetryData(connection,devid,   "Humidity", 888);
+                var devid2 = $"{Guid.NewGuid():N}";
+                UploadTelemetryData(connection, devid2, "Temperature", 777);
+                UploadTelemetryData(connection, devid2, "Humidity", 666);
+                var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
+                ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 connection.Close();
             }
             //Example for  Entity Framework Core  
@@ -83,8 +96,16 @@ namespace TaosADODemo
                 }
                 context.Database.EnsureDeleted();
             }
-          
 
+
+        }
+
+        static void UploadTelemetryData(  TaosConnection connection, string devid, string keyname, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                connection.CreateCommand($"INSERT INTO device_{devid}_{keyname} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\")  (ts,value_long) values (now,{i});").ExecuteNonQuery();
+            }
         }
     }
 }
