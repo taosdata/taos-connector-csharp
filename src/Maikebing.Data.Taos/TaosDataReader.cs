@@ -27,6 +27,9 @@ namespace Maikebing.Data.Taos
         private IntPtr _taos = IntPtr.Zero;
         IntPtr rowdata;
         List<TDengineMeta> _metas = null;
+        private double _date_max_1970 ;
+        private DateTime _dt1970;
+
         internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas,  bool closeConnection,IntPtr res )
         {
            _taos = taosCommand.Connection._taos;
@@ -37,6 +40,8 @@ namespace Maikebing.Data.Taos
             _closed = _closeConnection;
             _taosResult = res;
             _metas = metas;
+            _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            _date_max_1970 = DateTime.MaxValue.Subtract(_dt1970).TotalMilliseconds;
         }
 
         /// <summary>
@@ -402,6 +407,8 @@ namespace Maikebing.Data.Taos
             int offset =   IntPtr.Size * ordinal;
            return  Marshal.ReadIntPtr(rowdata, offset);
         }
+
+
         /// <summary>
         ///     Gets the value of the specified column.
         /// </summary>
@@ -451,8 +458,16 @@ namespace Maikebing.Data.Taos
                         }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
-                        var  v9 =   new   DateTime (1970,1,1,0,0,0, DateTimeKind.Utc).AddMilliseconds(Marshal.ReadInt64(data));
-                        result = v9.ToLocalTime();
+                        {
+                            var tsp = Marshal.ReadInt64(data);
+                            if (tsp>_date_max_1970)
+                            {
+                                //fix https://github.com/taosdata/TDengine/issues/3270
+                                tsp /= 1000;
+                            }
+                            var v9 = _dt1970.AddMilliseconds(tsp);
+                            result = v9.ToLocalTime();
+                        }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                         string v10 = Marshal.PtrToStringUni(data, meta.size)?.RemoveNull();
