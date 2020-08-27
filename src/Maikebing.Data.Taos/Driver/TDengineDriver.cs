@@ -46,7 +46,12 @@ namespace TDengineDriver
         TSDB_DATA_TYPE_TIMESTAMP = 9,
         TSDB_DATA_TYPE_NCHAR = 10
     }
-
+    public enum TSDB_TIME_PRECISION:int
+    {
+        TSDB_TIME_PRECISION_MILLI = 0,
+        TSDB_TIME_PRECISION_MICRO = 1,
+        TSDB_TIME_PRECISION_NANO = 2
+    }
     internal enum TDengineInitOption
     {
         TSDB_OPTION_LOCALE = 0,
@@ -179,5 +184,9 @@ namespace TDengineDriver
 
         [DllImport("taos", EntryPoint = "taos_select_db", CallingConvention = CallingConvention.StdCall)]
         public static extern int SelectDatabase(IntPtr taos, string db);
+
+        [DllImport("taos", EntryPoint = "taos_result_precision", CallingConvention = CallingConvention.StdCall)]
+        public static extern int ResultPrecision(IntPtr rest);
+        
     }
 }

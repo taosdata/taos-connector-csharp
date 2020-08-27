@@ -21,18 +21,18 @@ namespace Maikebing.Data.Taos
         private readonly TaosCommand _command;
         private bool _hasRows;
         private bool _closed;
-        private   bool _closeConnection;
-        private   IntPtr _taosResult;
+        private bool _closeConnection;
+        private IntPtr _taosResult;
         private int _fieldCount;
         private IntPtr _taos = IntPtr.Zero;
         IntPtr rowdata;
         List<TDengineMeta> _metas = null;
-        private double _date_max_1970 ;
+        private double _date_max_1970;
         private DateTime _dt1970;
 
-        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas,  bool closeConnection,IntPtr res )
+        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas, bool closeConnection, IntPtr res)
         {
-           _taos = taosCommand.Connection._taos;
+            _taos = taosCommand.Connection._taos;
             _command = taosCommand;
             _closeConnection = closeConnection;
             _fieldCount = TDengine.FieldCount(res);
@@ -63,7 +63,7 @@ namespace Maikebing.Data.Taos
         public override bool HasRows
             => _hasRows;
 
-        public TaosException LastTaosException => TDengine.ErrorNo(_taosResult) ==0?null: new  TaosException( new TaosErrorResult() { Code = TDengine.ErrorNo(_taosResult), Error = TDengine.Error(_taosResult) }, null);
+        public TaosException LastTaosException => TDengine.ErrorNo(_taosResult) == 0 ? null : new TaosException(new TaosErrorResult() { Code = TDengine.ErrorNo(_taosResult), Error = TDengine.Error(_taosResult) }, null);
 
         int ErrorNo => TDengine.ErrorNo(_taosResult);
         /// <summary>
@@ -108,7 +108,7 @@ namespace Maikebing.Data.Taos
         public override IEnumerator GetEnumerator()
             => new DbEnumerator(this, closeReader: false);
 
-     
+
         /// <summary>
         ///     Advances to the next row in the result set.
         /// </summary>
@@ -119,10 +119,10 @@ namespace Maikebing.Data.Taos
             {
                 throw new InvalidOperationException($"DataReaderClosed{nameof(Read)}");
             }
-       
+
             rowdata = TDengine.FetchRows(_taosResult);
             return rowdata != IntPtr.Zero;
- 
+
         }
 
         /// <summary>
@@ -194,7 +194,7 @@ namespace Maikebing.Data.Taos
         /// <returns>The data type of the column.</returns>
         public override Type GetFieldType(int ordinal)
         {
-            if (_metas==null ||ordinal>= _metas.Count)
+            if (_metas == null || ordinal >= _metas.Count)
             {
                 throw new InvalidOperationException($"DataReaderClosed{nameof(GetFieldType)}");
             }
@@ -243,7 +243,7 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>true if the specified column is <see cref="DBNull" />; otherwise, false.</returns>
         public override bool IsDBNull(int ordinal)
-                =>  GetValue(ordinal)==DBNull.Value;
+                => GetValue(ordinal) == DBNull.Value;
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="bool" />.
@@ -350,7 +350,7 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override string GetString(int ordinal) => Marshal.PtrToStringAnsi(GetValuePtr(ordinal)); 
+        public override string GetString(int ordinal) => Marshal.PtrToStringAnsi(GetValuePtr(ordinal));
 
         /// <summary>
         ///     Reads a stream of bytes from the specified column. Not supported.
@@ -399,13 +399,13 @@ namespace Maikebing.Data.Taos
         /// <returns>The value of the column.</returns>
         public override T GetFieldValue<T>(int ordinal) => (T)Convert.ChangeType(GetValue(ordinal), typeof(T));
 
-      
-        public   IntPtr GetValuePtr(int ordinal)
+
+        public IntPtr GetValuePtr(int ordinal)
         {
             object result = DBNull.Value;
             TDengineMeta meta = _metas[ordinal];
-            int offset =   IntPtr.Size * ordinal;
-           return  Marshal.ReadIntPtr(rowdata, offset);
+            int offset = IntPtr.Size * ordinal;
+            return Marshal.ReadIntPtr(rowdata, offset);
         }
 
 
@@ -459,8 +459,18 @@ namespace Maikebing.Data.Taos
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
                         {
-                            var tsp = Marshal.ReadInt64(data);
-                            if (tsp>_date_max_1970)
+                            var val = Marshal.ReadInt64(data);
+                            double tsp;
+                            var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taosResult);
+                            if (_dateTimePrecision == TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO)
+                            {
+                                tsp = (val / 1000);
+                            }
+                            else
+                            {
+                                tsp = val;
+                            }
+                            if (tsp > _date_max_1970)
                             {
                                 //fix https://github.com/taosdata/TDengine/issues/3270
                                 tsp /= 1000;
@@ -502,7 +512,7 @@ namespace Maikebing.Data.Taos
             }
             return count;
         }
-        
+
 
         /// <summary>
         ///     Returns a System.Data.DataTable that describes the column metadata of the System.Data.Common.DbDataReader.
@@ -511,7 +521,7 @@ namespace Maikebing.Data.Taos
         public override DataTable GetSchemaTable()
         {
             var schemaTable = new DataTable("SchemaTable");
-            if ( _metas!=null && _metas.Count>0)
+            if (_metas != null && _metas.Count > 0)
             {
                 var ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));
                 var ColumnOrdinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int));
@@ -563,7 +573,7 @@ namespace Maikebing.Data.Taos
                 for (var i = 0; i < _metas.Count; i++)
                 {
                     var schemaRow = schemaTable.NewRow();
-                   
+
                     schemaRow[ColumnName] = GetName(i);
                     schemaRow[ColumnOrdinal] = i;
                     schemaRow[ColumnSize] = _metas[i].size;
@@ -590,9 +600,9 @@ namespace Maikebing.Data.Taos
                     }
                     schemaTable.Rows.Add(schemaRow);
                 }
-             
+
             }
-          
+
             return schemaTable;
         }
     }
