@@ -59,7 +59,7 @@ namespace TaosADODemo
                 connection.CreateCommand("DROP DATABASE IF EXISTS  IoTSharp").ExecuteNonQuery();
                 connection.CreateCommand("CREATE DATABASE IoTSharp KEEP 365 DAYS 10 BLOCKS 4;").ExecuteNonQuery();
                 connection.ChangeDatabase("IoTSharp");
-                connection.CreateCommand("CREATE TABLE telemetrydata  (ts timestamp, value_boolean bool, value_string binary(4096), value_long bigint,value_datetime timestamp,value_double double,value_json binary(4096) ,value_xml binary(4096)  )   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
+                connection.CreateCommand("CREATE TABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
                 //connection.CreateCommand($"CREATE TABLE dev_Thermometer USING telemetrydata TAGS (\"Temperature\")").ExecuteNonQuery();
                 var devid = $"{Guid.NewGuid():N}";
                 UploadTelemetryData(connection, devid, "Temperature", 999);
@@ -104,7 +104,7 @@ namespace TaosADODemo
         {
             for (int i = 0; i < count; i++)
             {
-                connection.CreateCommand($"INSERT INTO device_{devid}_{keyname} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\")  (ts,value_long) values (now,{i});").ExecuteNonQuery();
+                connection.CreateCommand($"INSERT INTO device_{devid}_{keyname} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\")  (ts,value_type,value_long) values (now,2,{i});").ExecuteNonQuery();
             }
         }
     }

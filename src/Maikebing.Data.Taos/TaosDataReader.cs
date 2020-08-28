@@ -273,7 +273,7 @@ namespace Maikebing.Data.Taos
         /// <returns>The value of the column.</returns>
         public override DateTime GetDateTime(int ordinal)
         {
-            return new DateTime(1970, 1, 1, 0, 0, 0, 0).AddMilliseconds(Marshal.ReadInt64(GetValuePtr(ordinal)));
+            return GetDateTimeFrom(GetValuePtr(ordinal));
         }
 
         /// <summary>
@@ -283,7 +283,7 @@ namespace Maikebing.Data.Taos
         /// <returns>The value of the column.</returns>
         public virtual DateTimeOffset GetDateTimeOffset(int ordinal)
         {
-            return new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero).AddMilliseconds(Marshal.ReadInt64(GetValuePtr(ordinal)));
+            return GetDateTime(ordinal);
         }
 
         /// <summary>
@@ -293,7 +293,17 @@ namespace Maikebing.Data.Taos
         /// <returns>The value of the column.</returns>
         public virtual TimeSpan GetTimeSpan(int ordinal)
         {
-            return TimeSpan.FromMilliseconds(Marshal.ReadInt64(GetValuePtr(ordinal)));
+            double tsp;
+            var val = Marshal.ReadInt64(GetValuePtr(ordinal));
+            var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taosResult);
+            if (_dateTimePrecision == TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO)
+            {
+                return TimeSpan.FromMilliseconds(val / 1000);
+            }
+            else
+            {
+                return TimeSpan.FromMilliseconds(val);
+            }
         }
 
         /// <summary>
@@ -459,24 +469,7 @@ namespace Maikebing.Data.Taos
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
                         {
-                            var val = Marshal.ReadInt64(data);
-                            double tsp;
-                            var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taosResult);
-                            if (_dateTimePrecision == TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO)
-                            {
-                                tsp = (val / 1000);
-                            }
-                            else
-                            {
-                                tsp = val;
-                            }
-                            if (tsp > _date_max_1970)
-                            {
-                                //fix https://github.com/taosdata/TDengine/issues/3270
-                                tsp /= 1000;
-                            }
-                            var v9 = _dt1970.AddMilliseconds(tsp);
-                            result = v9.ToLocalTime();
+                            result = GetDateTimeFrom(data);
                         }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
@@ -491,6 +484,28 @@ namespace Maikebing.Data.Taos
                 result = DBNull.Value;
             }
             return result;
+        }
+
+        private DateTime GetDateTimeFrom(IntPtr data)
+        {
+            var val = Marshal.ReadInt64(data);
+            double tsp;
+            var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taosResult);
+            if (_dateTimePrecision == TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO)
+            {
+                tsp = (val / 1000);
+            }
+            else
+            {
+                tsp = val;
+            }
+            if (tsp > _date_max_1970)
+            {
+                //fix https://github.com/taosdata/TDengine/issues/3270
+                tsp /= 1000;
+            }
+            var v9 = _dt1970.AddMilliseconds(tsp);
+            return  v9.ToLocalTime();
         }
 
         /// <summary>
