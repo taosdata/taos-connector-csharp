@@ -101,3 +101,40 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
     Console.WriteLine("Pass any key to exit....");
     Console.ReadKey();
 ```
+
+
+用于物联网的超级表示例:
+
+[IoTSharp/Storage/TaosStorage.cs](https://github.com/IoTSharp/IoTSharp/blob/master/IoTSharp/Storage/TaosStorage.cs)
+
+```
+
+   using (var connection = new TaosConnection(builder.ConnectionString))
+            {
+                connection.Open();
+                Console.WriteLine("ServerVersion:{0}", connection.ServerVersion);
+                connection.CreateCommand("DROP DATABASE IF EXISTS  IoTSharp").ExecuteNonQuery();
+                connection.CreateCommand("CREATE DATABASE IoTSharp KEEP 365 DAYS 10 BLOCKS 4;").ExecuteNonQuery();
+                connection.ChangeDatabase("IoTSharp");
+                connection.CreateCommand("CREATE TABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
+                //connection.CreateCommand($"CREATE TABLE dev_Thermometer USING telemetrydata TAGS (\"Temperature\")").ExecuteNonQuery();
+                var devid = $"{Guid.NewGuid():N}";
+                UploadTelemetryData(connection, devid, "Temperature", 999);
+                UploadTelemetryData(connection,devid,   "Humidity", 888);
+                var devid2 = $"{Guid.NewGuid():N}";
+                UploadTelemetryData(connection, devid2, "Temperature", 777);
+                UploadTelemetryData(connection, devid2, "Humidity", 666);
+                var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
+                ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                connection.Close();
+            }
+            
+             static void UploadTelemetryData(  TaosConnection connection, string devid, string keyname, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                connection.CreateCommand($"INSERT INTO device_{devid}_{keyname} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\")  (ts,value_type,value_long) values (now,2,{i});").ExecuteNonQuery();
+            }
+        }
+        
+```
