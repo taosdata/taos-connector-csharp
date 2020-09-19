@@ -21,6 +21,7 @@ namespace Maikebing.Data.Taos
         private const string DataSourceKeyword = "Data Source";
         private const string UserNameKeyword = "Username";
         private const string PasswordKeyword = "Password";
+        private const string CharsetKeyword = "Charset";
         private const string DataSourceNoSpaceKeyword = "DataSource";
         private const string DataBaseKeyword = "DataBase";
         private const string PortKeyword = "Port";
@@ -31,7 +32,8 @@ namespace Maikebing.Data.Taos
             DataBase,
             Username,
             Password,
-            Port
+            Port,
+            Charset
 
         }
 
@@ -41,15 +43,17 @@ namespace Maikebing.Data.Taos
         private string _dataSource = string.Empty;
         private string _dataBase=string.Empty;
         private string _userName = string.Empty;
+        private string _charset = System.Text.Encoding.UTF8.EncodingName;
         private string _password = string.Empty;
         private int  _port =6060;
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[5];
+            var validKeywords = new string[6];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
             validKeywords[(int)Keywords.Password] = PasswordKeyword;
+            validKeywords[(int)Keywords.Charset] =CharsetKeyword;
             validKeywords[(int)Keywords.Port] = PortKeyword;
             _validKeywords = validKeywords;
 
@@ -59,6 +63,7 @@ namespace Maikebing.Data.Taos
                 [UserNameKeyword] = Keywords.Username,
                 [PasswordKeyword] = Keywords.Password,
                 [DataBaseKeyword] = Keywords.DataBase,
+                [CharsetKeyword] = Keywords.Charset,
                 [DataSourceNoSpaceKeyword] = Keywords.DataSource,
                 [PortKeyword] = Keywords.Port
             };
@@ -93,6 +98,14 @@ namespace Maikebing.Data.Taos
         {
             get => _userName;
             set => base[UserNameKeyword] = _userName = value;
+        }
+        /// <summary>
+        /// Charset
+        /// </summary>
+        public virtual string Charset
+        {
+            get => _charset;
+            set => base[CharsetKeyword] = _charset = value;
         }
         public virtual string Password
         {
@@ -175,6 +188,9 @@ namespace Maikebing.Data.Taos
                         return;
                     case Keywords.Port:
                         Port = Convert.ToInt32(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.Charset:
+                        Charset = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
@@ -296,6 +312,8 @@ namespace Maikebing.Data.Taos
                     return DataBase;
                 case Keywords.Port:
                     return Port;
+                case Keywords.Charset:
+                    return Charset;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -325,6 +343,9 @@ namespace Maikebing.Data.Taos
                     return;
                 case Keywords.Port:
                     _port=6060;
+                    return;
+                case Keywords.Charset:
+                    _charset = System.Text.Encoding.UTF8.EncodingName;
                     return;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);

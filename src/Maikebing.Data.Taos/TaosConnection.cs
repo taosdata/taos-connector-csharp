@@ -118,7 +118,7 @@ namespace Maikebing.Data.Taos
             {
                 _connectionString = value;
                 ConnectionStringBuilder = new TaosConnectionStringBuilder(value);
-
+                TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CHARSET, ConnectionStringBuilder.Charset);
             }
         }
 
