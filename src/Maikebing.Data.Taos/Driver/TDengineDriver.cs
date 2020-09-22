@@ -156,7 +156,11 @@ namespace TDengineDriver
             for (int i = 0; i < fieldCount; ++i)
             {
                 int offset = i * fieldSize;
+#if NET45
+                taosField field = (taosField)Marshal.PtrToStructure(fieldsPtr + offset,typeof(taosField));
+#else 
                 taosField field = Marshal.PtrToStructure<taosField>(fieldsPtr + offset);
+#endif 
                 TDengineMeta meta = new TDengineMeta() { name = Encoding.Default.GetString(field.name)?.TrimEnd('\0'), size = field.bytes, type = field.type };
                 metas.Add(meta);
             }

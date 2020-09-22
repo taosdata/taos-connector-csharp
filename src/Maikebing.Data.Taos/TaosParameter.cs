@@ -189,7 +189,9 @@ namespace Maikebing.Data.Taos
             get => _value;
             set { _value = value; }
         }
-
+#if NET45
+        public override DataRowVersion SourceVersion { get; set; }
+#endif
         /// <summary>
         ///     Resets the <see cref="DbType" /> property to its original value.
         /// </summary>

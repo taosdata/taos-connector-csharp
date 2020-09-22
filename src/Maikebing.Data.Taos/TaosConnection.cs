@@ -1,7 +1,6 @@
 ﻿// Copyright (c)  maikebing All rights reserved.
 //// Licensed under the MIT License, See License.txt in the project root for license information.
 
-using NativeLibraryManager;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -52,7 +51,6 @@ namespace Maikebing.Data.Taos
                         new LibraryFile("taos.dll", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.taos_x32.dll"))),
                     new LibraryItem(Platform.Linux, Bitness.x64,
                         new LibraryFile("libtaos.so", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.libtaos_x64.so"))));
-                libManager.LoadLibraryExplicit = true;
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
                     configDir = "/etc/taos";

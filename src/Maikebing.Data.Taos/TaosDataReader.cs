@@ -293,7 +293,6 @@ namespace Maikebing.Data.Taos
         /// <returns>The value of the column.</returns>
         public virtual TimeSpan GetTimeSpan(int ordinal)
         {
-            double tsp;
             var val = Marshal.ReadInt64(GetValuePtr(ordinal));
             var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taosResult);
             if (_dateTimePrecision == TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO)

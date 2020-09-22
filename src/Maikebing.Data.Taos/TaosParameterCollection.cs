@@ -39,6 +39,13 @@ namespace Maikebing.Data.Taos
         public override object SyncRoot
             => ((ICollection)_parameters).SyncRoot;
 
+#if NET45
+        public override bool IsFixedSize => throw null;
+
+        public override bool IsReadOnly => throw null;
+
+        public override bool IsSynchronized => ((ICollection)_parameters).IsSynchronized;
+#endif
         /// <summary>
         ///     Gets or sets the parameter at the specified index.
         /// </summary>
