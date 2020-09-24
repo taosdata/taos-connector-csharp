@@ -17,8 +17,15 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 
 [![Build status](https://ci.appveyor.com/api/projects/status/8krjmvsoiilo2r10?svg=true)](https://ci.appveyor.com/project/MaiKeBing/maikebing-entityframeworkcore-taos)
 [![License](https://img.shields.io/github/license/maikebing/Maikebing.EntityFrameworkCore.Taos.svg)](https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/blob/master/LICENSE)
-[![Maikebing.Data.Taos](https://img.shields.io/nuget/v/Maikebing.Data.Taos.svg)](https://www.nuget.org/packages/Maikebing.Data.Taos/)
-[![Maikebing.EntityFrameworkCore.Taos](https://img.shields.io/nuget/v/Maikebing.EntityFrameworkCore.Taos.svg)](https://www.nuget.org/packages/Maikebing.EntityFrameworkCore.Taos/)
+
+
+
+| NuGet名称    | 版本| 如何安装| 说明                                                     |
+| ----------- | -------- | -------- | ------------------------------------------------------------ |
+| Maikebing.Data.Taos |[![Maikebing.Data.Taos](https://img.shields.io/nuget/v/Maikebing.Data.Taos.svg)](https://www.nuget.org/packages/Maikebing.Data.Taos/) | ` Install-Package Maikebing.Data.Taos`  |ADO.Net Core 基础组件
+| Maikebing.EntityFrameworkCore.Taos |[![Maikebing.EntityFrameworkCore.Taos](https://img.shields.io/nuget/v/Maikebing.EntityFrameworkCore.Taos.svg)](https://www.nuget.org/packages/Maikebing.EntityFrameworkCore.Taos/) | ` Install-Package Maikebing.EntityFrameworkCore.Taos`  | 供EF Core使用的组件
+| Maikebing.HealthChecks.Taos |[![Maikebing.HealthChecks.Taos](https://img.shields.io/nuget/v/Maikebing.HealthChecks.Taos.svg)](https://www.nuget.org/packages/Maikebing.HealthChecks.Taos/)  |  ` Maikebing.HealthChecks.Taos` | 供Asp.Net Core 使用的健康检查组件
+
 
 ---
 ## 目前支持的版本
@@ -27,17 +34,10 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 
 | 操作系统    | 支持版本 | 注意事项                                                     |
 | ----------- | -------- | ------------------------------------------------------------ |
-| Windows X86 | 1.6.5.9  | 要访问低版本， 请使用本库的 v1.0.104 版本，                  |
-| Windows X64 | 2.0.1.1  | 同上， 无法连接时请注意FQDN解析问题                          |
-| Linux X64   | 2.0.1.1  | 同上， Linux注意一定执行官方的install_client.sh脚本，否则会提示dll无法找到 |
+| Windows X86 | 1.6.5.9 <=  | 要访问低版本， 请使用本库的 v1.0.104 版本，                  |
+| Windows X64 | 2.0.1.1 >=  | 同上， 无法连接时请注意FQDN解析问题                          |
+| Linux X64   | 2.0.1.1 >=  | 同上， Linux注意一定执行官方的install_client.sh脚本，否则会提示dll无法找到 |
 
-
-
-## 如何安装？
-
- ` Install-Package Maikebing.Data.Taos`
-
- ` Install-Package Maikebing.EntityFrameworkCore.Taos`
 
 ##  如何使用？
 
@@ -45,7 +45,7 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 
 ![Example](docs/Example.png)
 
-```C#
+```csharp
     ///Specify the name of the database
     string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
       string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");

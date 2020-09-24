@@ -21,3 +21,5 @@ artifacts:
   name: Maikebing.Data.Taos
 - path: src\EFCore.Taos.Core\bin\Release\Maikebing.EntityFrameworkCore.Taos.*.nupkg
   name: Maikebing.EntityFrameworkCore.Taos
+- path: src\Maikebing.HealthChecks.Taos\bin\Release\*.nupkg
+  name: Maikebing.HealthChecks.Taos
