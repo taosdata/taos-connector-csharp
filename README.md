@@ -21,7 +21,7 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 
 
 | NuGet名称    | 版本| 说明                                                     |
-| ----------- | -------- | -------- | ------------------------------------------------------------ |
+| ----------- | --------  | ------------------------------------------------------------ |
 | Maikebing.Data.Taos |[![Maikebing.Data.Taos](https://img.shields.io/nuget/v/Maikebing.Data.Taos.svg)](https://www.nuget.org/packages/Maikebing.Data.Taos/)   |ADO.Net Core 基础组件
 | Maikebing.EntityFrameworkCore.Taos |[![Maikebing.EntityFrameworkCore.Taos](https://img.shields.io/nuget/v/Maikebing.EntityFrameworkCore.Taos.svg)](https://www.nuget.org/packages/Maikebing.EntityFrameworkCore.Taos/)    | 供EF Core使用的组件
 | Maikebing.HealthChecks.Taos |[![Maikebing.HealthChecks.Taos](https://img.shields.io/nuget/v/Maikebing.HealthChecks.Taos.svg)](https://www.nuget.org/packages/Maikebing.HealthChecks.Taos/)    | 供Asp.Net Core 使用的健康检查组件
