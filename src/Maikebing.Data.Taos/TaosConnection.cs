@@ -279,7 +279,6 @@ namespace Maikebing.Data.Taos
             {
                 Close();
             }
-            TDengine.Close(_taos);
             base.Dispose(disposing);
         }
 
