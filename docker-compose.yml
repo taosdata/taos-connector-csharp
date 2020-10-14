@@ -10,15 +10,23 @@ services:
     build:
       context: .
       dockerfile: src/Example/Dockerfile
+    networks:
+      - taos-network
 
   taos:
-    image: tdengine/tdengine:2.0.1.1
+    image: tdengine/tdengine
     restart: always
     container_name: taos
+    hostname: taos
     ports:
       - 6030:6030
       - 6035:6035
       - 6041:6041
       - 6030-6040:6030-6040/udp
-    volumes:
-      - /etc/taos:/etc/taos
+
+    networks:
+      - taos-network
+
+networks: 
+  taos-network:
+      driver:  bridge
