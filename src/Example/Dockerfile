@@ -2,9 +2,10 @@
 
 FROM mcr.microsoft.com/dotnet/core/runtime:3.1-buster-slim AS base
 WORKDIR /src
-COPY ["src/Example/TDengine-client-2.0.3.1-Linux-x64.tar.gz", "src/Example/TDengine-client-2.0.3.1-Linux-x64.tar.gz"]
-RUN  tar -xzvf src/Example/TDengine-client-2.0.3.1-Linux-x64.tar.gz
-RUN  cd TDengine-client && ./install_client.sh
+#COPY ["src/Example/TDengine-client-2.0.5.1-Linux-x64.tar.gz", "src/Example/TDengine-client-2.0.5.1-Linux-x64.tar.gz"]
+RUN curl -o TDengine-client.tar.gz https://www.taosdata.com/download/download-gettingStarted.php?pkg=tdengine_linux && \
+   tar -xzvf TDengine-client.tar.gz && rm TDengine-client.tar.gz -f  && cd  $(ls TDengine-client*  -d) && ./install_client.sh && \
+    rm $(pwd) -rf
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
