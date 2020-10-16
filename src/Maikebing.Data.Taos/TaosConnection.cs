@@ -249,9 +249,8 @@ namespace Maikebing.Data.Taos
         /// </summary>
         public override void Close()
         {
-            if (State != ConnectionState.Closed)
-                TDengine.Close(_taos);
 
+            TDengine.Close(_taos);
             Transaction?.Dispose();
 
             foreach (var reference in _commands)
