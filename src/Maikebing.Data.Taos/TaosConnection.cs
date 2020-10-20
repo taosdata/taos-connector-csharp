@@ -29,64 +29,37 @@ namespace Maikebing.Data.Taos
         internal IntPtr _taos;
 
         private static bool  _dll_isloaded=false;
-        public   byte[] Binary( Assembly _assembly, string name)
-        {
-            using (MemoryStream memoryStream = new MemoryStream())
-            {
-                (_assembly.GetManifestResourceStream(name) ?? throw new InvalidOperationException($"Resource {name} not available.")).CopyTo(memoryStream);
-                return memoryStream.ToArray();
-            }
-        }
+     
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosConnection" /> class.
         /// </summary>
         public TaosConnection()
-        {  
+        {
             if (_dll_isloaded == false)
             {
-                var libManager = new LibraryManager(
-                    new LibraryItem(Platform.Windows, Bitness.x64,
-                        new LibraryFile("taos.dll", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.taos_x64.dll"))),
-                     new LibraryItem(Platform.Windows, Bitness.x32,
-                        new LibraryFile("taos.dll", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.taos_x32.dll"))),
-                    new LibraryItem(Platform.Linux, Bitness.x64,
-                        new LibraryFile("libtaos.so", Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.libs.libtaos_x64.so"))));
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+#if NET45
+
+                configDir = "C:/TDengine/cfg";
+#else 
+
+                if (  RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
                     configDir = "/etc/taos";
-                 
+
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     configDir = "C:/TDengine/cfg";
                 }
-                if (!System.IO.Directory.Exists(configDir))
-                {
-                    configDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "taos.studio");
-                }
-                var cfg = new System.IO.FileInfo(System.IO.Path.Combine(configDir, "taos.cfg"));
-                if (!cfg.Directory.Exists) cfg.Directory.Create();
-                if (!cfg.Exists)
-                {
-                     System.IO.File.WriteAllBytes(cfg.FullName,  Binary(typeof(TaosConnection).Assembly, $"{typeof(TaosConnection).Namespace}.cfg.taos.cfg"));
-                }
-                if ((RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && RuntimeInformation.OSArchitecture == Architecture.X64)
-                    || (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X64)
-                    || (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture == Architecture.X86))
-                {
-                    TDengine.Options((int)TDengineInitOption.TDDB_OPTION_CONFIGDIR, this.configDir);
-                    TDengine.Options((int)TDengineInitOption.TDDB_OPTION_SHELL_ACTIVITY_TIMER, "60");
-                    TDengine.Init();
-                    Process.GetCurrentProcess().Disposed += (object sender, EventArgs e) =>
-                        {
-                            TDengine.Cleanup();
-                        };
-                    _dll_isloaded = true;
-                }
-                else
-                {
-                    throw new PlatformNotSupportedException("Only Support Linux X64 And Windows X64/X86");
-                }
+#endif
+                TDengine.Options((int)TDengineInitOption.TDDB_OPTION_CONFIGDIR, this.configDir);
+                TDengine.Options((int)TDengineInitOption.TDDB_OPTION_SHELL_ACTIVITY_TIMER, "60");
+                TDengine.Init();
+                Process.GetCurrentProcess().Disposed += (object sender, EventArgs e) =>
+                    {
+                        TDengine.Cleanup();
+                    };
+                _dll_isloaded = true;
             }
         }
 

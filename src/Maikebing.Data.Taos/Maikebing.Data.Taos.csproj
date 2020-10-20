@@ -6,7 +6,6 @@
 		<PackageId>Maikebing.Data.Taos</PackageId>
 		<Description>
 			Taos implementation of the System.Data.Common provider model.
-
 			Commonly Used Types:
 			Maikebing.Data.Taos.TaosCommand
 			Maikebing.Data.Taos.TaosConnection
@@ -47,17 +46,8 @@
 		<PackageIcon>48876650.jpg</PackageIcon>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-		<PlatformTarget>x64</PlatformTarget>
-	</PropertyGroup>
+	 
+ 
 
 	<ItemGroup>
 		<Compile Update="TaosCommand.cs">
@@ -79,19 +69,8 @@
 			<PackagePath></PackagePath>
 		</None>
 	</ItemGroup>
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
-		<PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<EmbeddedResource Include="libs\taos_x64.dll" />
-		<EmbeddedResource Include="libs\taos_x32.dll" />
-		<EmbeddedResource Include="cfg\taos.cfg" />
-		<EmbeddedResource Include="libs\libtaos_x64.so" />
 	</ItemGroup>
 </Project>
