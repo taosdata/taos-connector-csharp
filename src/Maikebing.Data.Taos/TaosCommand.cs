@@ -353,8 +353,8 @@ namespace Maikebing.Data.Taos
                     _endcommandtext = _commandText;
                 }
                 var code = Task.Run(() => TDengine.Query(_taos, _endcommandtext));
-                code.Wait(TimeSpan.FromSeconds(CommandTimeout));
-                if (code.IsCompleted && code.Result != IntPtr.Zero && TDengine.ErrorNo(code.Result)==0)
+              bool isok=  code.Wait(TimeSpan.FromSeconds(CommandTimeout));
+                if (isok &&  TDengine.ErrorNo(code.Result)==0)
                 {
                     List<TDengineMeta> metas = TDengine.FetchFields(code.Result);
                     for (int j = 0; j < metas.Count; j++)
@@ -366,11 +366,15 @@ namespace Maikebing.Data.Taos
                     }
                     dataReader = new TaosDataReader(this, metas, closeConnection, code.Result);
                 }
-                else if (  code.IsCompleted && code.Result == IntPtr.Zero)
+                else if (isok &&      TDengine.ErrorNo(code.Result)  != 0)
+                {
+                    TaosException.ThrowExceptionForRC(_endcommandtext, new TaosErrorResult() { Code = TDengine.ErrorNo(code.Result), Error = TDengine.Error(code.Result) });
+                }
+                else if (isok && code.Result == IntPtr.Zero)
                 {
                     TaosException.ThrowExceptionForRC(_endcommandtext, new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = TDengine.Error(_taos) });
                 }
-                else if (code.Status == TaskStatus.Running)
+                else if (code.Status == TaskStatus.Running || !isok)
                 {
                     TaosException.ThrowExceptionForRC(-10006, "Execute sql command timeout", null);
                 }
@@ -384,7 +388,7 @@ namespace Maikebing.Data.Taos
                 }
                 else
                 {
-                    TaosException.ThrowExceptionForRC(_endcommandtext, new TaosErrorResult() { Code = TDengine.ErrorNo(code.Result), Error = TDengine.Error(code.Result) });
+                    TaosException.ThrowExceptionForRC(_endcommandtext, new TaosErrorResult() { Code = -10007, Error = $"Unknow Exception" });
                 }
             }
             catch when (unprepared)

@@ -50,13 +50,9 @@
  
 
 	<ItemGroup>
-		<Compile Update="TaosCommand.cs">
-			<SubType>Component</SubType>
-		</Compile>
+		<Compile Update="TaosCommand.cs" />
 
-		<Compile Update="TaosConnection.cs">
-			<SubType>Component</SubType>
-		</Compile>
+		<Compile Update="TaosConnection.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
