@@ -32,7 +32,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="3.1.9" />
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="3.1.6" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Maikebing.Data.Taos\Maikebing.Data.Taos.csproj" />
