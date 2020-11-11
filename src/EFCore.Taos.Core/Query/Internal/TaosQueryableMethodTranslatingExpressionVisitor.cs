@@ -17,8 +17,8 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
         public TaosQueryableMethodTranslatingExpressionVisitor(
             QueryableMethodTranslatingExpressionVisitorDependencies dependencies,
             RelationalQueryableMethodTranslatingExpressionVisitorDependencies relationalDependencies,
-            IModel model)
-            : base(dependencies, relationalDependencies, model)
+            QueryCompilationContext queryCompilationContext)
+            : base(dependencies, relationalDependencies, queryCompilationContext)
         {
         }
 

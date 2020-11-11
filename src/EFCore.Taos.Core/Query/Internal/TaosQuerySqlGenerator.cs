@@ -42,11 +42,12 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
             return tableExpression;
         }
 
+        [System.Obsolete]
         protected override string GenerateOperator(SqlBinaryExpression binaryExpression)
             => binaryExpression.OperatorType == ExpressionType.Add
                 && binaryExpression.Type == typeof(string)
                     ? " || "
-                    : base.GenerateOperator(binaryExpression);
+                    : base.GetOperator(binaryExpression);
       
         protected override void GenerateLimitOffset(SelectExpression selectExpression)
         {

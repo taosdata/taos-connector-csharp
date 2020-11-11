@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
@@ -32,7 +34,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
             _sqlExpressionFactory = sqlExpressionFactory;
         }
 
-        public virtual SqlExpression Translate(SqlExpression instance, MemberInfo member, Type returnType)
+        public virtual SqlExpression Translate(SqlExpression instance, MemberInfo member, Type returnType, IDiagnosticsLogger<DbLoggerCategory.Query> logger)
         {
             if (member.DeclaringType == typeof(DateTime))
             {
@@ -139,5 +141,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
 
             return null;
         }
+
+   
     }
 }

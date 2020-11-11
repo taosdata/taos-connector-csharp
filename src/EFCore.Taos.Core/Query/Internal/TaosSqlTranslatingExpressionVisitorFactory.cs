@@ -17,12 +17,12 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
             _dependencies = dependencies;
         }
 
-        public virtual RelationalSqlTranslatingExpressionVisitor Create(
-            IModel model,
-            QueryableMethodTranslatingExpressionVisitor queryableMethodTranslatingExpressionVisitor)
-            => new TaosSqlTranslatingExpressionVisitor(
+    
+
+        public RelationalSqlTranslatingExpressionVisitor Create(QueryCompilationContext queryCompilationContext, QueryableMethodTranslatingExpressionVisitor queryableMethodTranslatingExpressionVisitor)
+              => new TaosSqlTranslatingExpressionVisitor(
                 _dependencies,
-                model,
+                queryCompilationContext,
                 queryableMethodTranslatingExpressionVisitor);
     }
 }

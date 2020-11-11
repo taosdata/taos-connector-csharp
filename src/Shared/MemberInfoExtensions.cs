@@ -68,7 +68,7 @@ namespace System.Reflection
 
             var map = targetMethod.DeclaringType.GetInterfaceMap(interfaceType);
 #pragma warning disable EF1001 // Internal EF Core API usage.
-            var index = map.TargetMethods.IndexOf(targetMethod, MemberInfoComparer.Instance);
+            var index = map.TargetMethods.ToList().IndexOf( targetMethod);
 #pragma warning restore EF1001 // Internal EF Core API usage.
 
             return index != -1

@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
@@ -34,7 +36,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
             _sqlExpressionFactory = sqlExpressionFactory;
         }
 
-        public virtual SqlExpression Translate(SqlExpression instance, MethodInfo method, IReadOnlyList<SqlExpression> arguments)
+        public virtual SqlExpression Translate(SqlExpression instance, MethodInfo method, IReadOnlyList<SqlExpression> arguments,  IDiagnosticsLogger<DbLoggerCategory.Query> logger)
         {
             SqlExpression modifier = null;
             if (_addMilliseconds.Equals(method))

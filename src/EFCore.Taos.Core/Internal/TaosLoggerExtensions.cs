@@ -29,12 +29,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogSchemaConfigured(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     entityType.DisplayName(), schema);
             }
 
@@ -71,12 +69,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogSequenceConfigured(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     sequence.Name);
             }
 
@@ -114,12 +110,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogFoundColumn(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     tableName, columnName, dataTypeName, notNull, defaultValue);
             }
 
@@ -137,10 +131,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogUsingSchemaSelectionsWarning(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
+            var warningBehavior = definition.WarningBehavior;
             if (warningBehavior != WarningBehavior.Ignore)
             {
-                definition.Log(diagnostics, warningBehavior);
+                definition.Log(diagnostics);
             }
 
             // No DiagnosticsSource events because these are purely design-time messages
@@ -158,13 +152,12 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogForeignKeyScaffoldErrorPrincipalTableNotFound(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
-                    foreignKeyName);
+                                        foreignKeyName);
             }
 
             // No DiagnosticsSource events because these are purely design-time messages
@@ -182,12 +175,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogFoundTable(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     tableName);
             }
 
@@ -206,12 +197,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogMissingTable(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     tableName);
             }
 
@@ -233,12 +222,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogPrincipalColumnNotFound(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     foreignKeyName, tableName, principalColumnName, principalTableName);
             }
 
@@ -259,12 +246,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogFoundIndex(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     indexName, tableName, unique);
             }
 
@@ -286,12 +271,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogFoundForeignKey(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     tableName, id, principalTableName, deleteAction);
             }
 
@@ -311,12 +294,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogFoundPrimaryKey(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     primaryKeyName, tableName);
             }
 
@@ -336,12 +317,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
         {
             var definition = TaosResources.LogFoundUniqueConstraint(diagnostics);
 
-            var warningBehavior = definition.GetLogBehavior(diagnostics);
-            if (warningBehavior != WarningBehavior.Ignore)
+            if (definition.WarningBehavior != WarningBehavior.Ignore)
             {
                 definition.Log(
                     diagnostics,
-                    warningBehavior,
                     uniqueConstraintName, tableName);
             }
 

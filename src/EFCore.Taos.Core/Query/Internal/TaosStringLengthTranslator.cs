@@ -3,6 +3,8 @@
 
 using System;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
@@ -16,13 +18,13 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
         {
             _sqlExpressionFactory = sqlExpressionFactory;
         }
-
-        public virtual SqlExpression Translate(SqlExpression instance, MemberInfo member, Type returnType)
+    
+        public SqlExpression Translate(SqlExpression instance, MemberInfo member, Type returnType, IDiagnosticsLogger<DbLoggerCategory.Query> logger)
         {
             return instance?.Type == typeof(string)
-                && member.Name == nameof(string.Length)
-                    ? _sqlExpressionFactory.Function("length", new[] { instance }, returnType)
-                    : null;
+                   && member.Name == nameof(string.Length)
+                       ? _sqlExpressionFactory.Function("length", new[] { instance }, returnType)
+                       : null;
         }
     }
 }

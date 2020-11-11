@@ -19,7 +19,9 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
             _relationalDependencies = relationalDependencies;
         }
 
-        public virtual QueryableMethodTranslatingExpressionVisitor Create(IModel model)
-            => new TaosQueryableMethodTranslatingExpressionVisitor(_dependencies, _relationalDependencies, model);
+ 
+
+        public QueryableMethodTranslatingExpressionVisitor Create(QueryCompilationContext queryCompilationContext)
+          => new TaosQueryableMethodTranslatingExpressionVisitor(_dependencies, _relationalDependencies, queryCompilationContext);
     }
 }

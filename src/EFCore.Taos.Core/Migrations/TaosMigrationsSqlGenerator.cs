@@ -49,14 +49,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             _taosConnectionStringBuilder = new TaosConnectionStringBuilder(connection.ConnectionString);
         }
       
-        /// <summary>
-        ///     Generates commands from a list of operations.
-        /// </summary>
-        /// <param name="operations"> The operations. </param>
-        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
-        /// <returns> The list of commands to be executed or scripted. </returns>
-        public override IReadOnlyList<MigrationCommand> Generate(IReadOnlyList<MigrationOperation> operations, IModel model = null)
-            => base.Generate(RewriteOperations(operations, model), model);
+   
         private bool IsSpatialiteColumn(AddColumnOperation operation, IModel model)
             => TaosTypeMappingSource.IsSpatialiteType(
                 operation.ColumnType
@@ -256,49 +249,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
                     .EndCommand();
             }
         }
-
-        /// <summary>
-        ///     Builds commands for the given <see cref="RenameIndexOperation" />
-        ///     by making calls on the given <see cref="MigrationCommandListBuilder" />.
-        /// </summary>
-        /// <param name="operation"> The operation. </param>
-        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
-        /// <param name="builder"> The command builder to use to build the commands. </param>
-        protected override void Generate(RenameIndexOperation operation, IModel model, MigrationCommandListBuilder builder)
-        {
-            var index = FindEntityTypes(model, operation.Schema, operation.Table)
-                ?.SelectMany(t => t.GetDeclaredIndexes()).Where(i => i.GetName() == operation.NewName)
-                .FirstOrDefault();
-            if (index == null)
-            {
-                throw new NotSupportedException(
-                    TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
-            }
-
-            var dropOperation = new DropIndexOperation
-            {
-                Schema = operation.Schema,
-                Table = operation.Table,
-                Name = operation.Name
-            };
-            dropOperation.AddAnnotations(_migrationsAnnotations.ForRemove(index));
-
-            var createOperation = new CreateIndexOperation
-            {
-                IsUnique = index.IsUnique,
-                Name = operation.NewName,
-                Schema = operation.Schema,
-                Table = operation.Table,
-                Columns = index.Properties.Select(p => p.GetColumnName()).ToArray(),
-                Filter = index.GetFilter()
-            };
-            createOperation.AddAnnotations(_migrationsAnnotations.For(index));
-
-            Generate(dropOperation, model, builder, terminate: false);
-            builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
-
-            Generate(createOperation, model, builder);
-        }
+ 
 
         /// <summary>
         ///     Builds commands for the given <see cref="RenameTableOperation" />
@@ -514,16 +465,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations
             => throw new NotSupportedException(
                 TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
 
-        /// <summary>
-        ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
-        ///     are not yet supported.
-        /// </summary>
-        /// <param name="operation"> The operation. </param>
-        /// <param name="model"> The target model which may be <c>null</c> if the operations exist without a model. </param>
-        /// <param name="builder"> The command builder to use to build the commands. </param>
-        protected override void Generate(CreateCheckConstraintOperation operation, IModel model, MigrationCommandListBuilder builder)
-            => throw new NotSupportedException(
-                TaosStrings.InvalidMigrationOperation(operation.GetType().ShortDisplayName()));
+  
 
         /// <summary>
         ///     Throws <see cref="NotSupportedException" /> since this operation requires table rebuilds, which
