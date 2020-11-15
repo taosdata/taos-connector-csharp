@@ -49,6 +49,8 @@ namespace TaosADODemo
                 cmd_select.CommandText = $"select * from {database}.t";
 #pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
                 var reader = cmd_select.ExecuteReader();
+                int index =reader.GetOrdinal("cdata");
+                Console.WriteLine($"cdata index at {index}");
                 Console.WriteLine(cmd_select.CommandText);
                 Console.WriteLine("");
                 ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
