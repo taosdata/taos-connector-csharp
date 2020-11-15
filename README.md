@@ -28,10 +28,13 @@ Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器�
 
 
 ---
-## 目前支持的版本
 
 
- 由于本库不再内置官方驱动， 因此支持情况请参见官方文档 https://www.taosdata.com/cn/getting-started/#%E5%BF%AB%E6%8D%B7%E5%AE%89%E8%A3%85 
+[TDengine技术开放日 — 从技术创新和设计思想，认识TDengine](https://live.photoplus.cn/live/pc/38916035/#/live)
+
+![荣誉证书](docs/taos_ch_600.png)
+
+
 
 
 ##  如何使用？

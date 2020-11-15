@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		appveyor.yml = appveyor.yml
 		LICENSE = LICENSE
 		README.md = README.md
+		docs\taos_ch.png = docs\taos_ch.png
+		docs\taos_ch_600.png = docs\taos_ch_600.png
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example", "src\Example\Example.csproj", "{D7F52FA5-1CAA-4D9F-80D8-F141D104AE64}"
@@ -22,7 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{B2
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{BB633149-0332-4156-A592-8590E74FAD32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maikebing.HealthChecks.Taos", "src\Maikebing.HealthChecks.Taos\Maikebing.HealthChecks.Taos.csproj", "{61524D14-E365-4D00-A058-479AAE4D2B49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maikebing.HealthChecks.Taos", "src\Maikebing.HealthChecks.Taos\Maikebing.HealthChecks.Taos.csproj", "{61524D14-E365-4D00-A058-479AAE4D2B49}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
