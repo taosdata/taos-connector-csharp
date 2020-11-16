@@ -69,9 +69,6 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
             _connection = connection;
             return connection;
         }
-
-
-
         
 
         /// <summary>
@@ -82,7 +79,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
         /// </summary>
         public virtual ITaosRelationalConnection CreateReadOnlyConnection()
         {
-            var connectionStringBuilder = new TaosConnectionStringBuilder(ConnectionString) { ForceDatabaseName=true };
+            var connectionStringBuilder = new TaosConnectionStringBuilder(ConnectionString);
 
             var contextOptions = new DbContextOptionsBuilder().UseTaos(connectionStringBuilder.ToString()).Options;
 
@@ -90,26 +87,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
         }
         public override bool Open(bool errorsExpected = false)
         {
-            bool result = false;
-            _connection.ConnectionStringBuilder.ForceDatabaseName = true;
             _connection.Open();
-            if (_connection.ConnectionStringBuilder.ForceDatabaseName)
-            {
-                var obj = _connection.CreateCommand("SELECT database()").ExecuteScalar();
-                if (obj == DBNull.Value)
-                {
-                    try
-                    {
-                        _connection.ChangeDatabase(_connection.Database);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex.Message);
-                    }
-                }
-            }
-            result = _connection.State == System.Data.ConnectionState.Open;
-
+            _connection._nowdatabase = string.Empty;
+            bool result = _connection.State == System.Data.ConnectionState.Open;
+            _connection.ChangeDatabase(_connection.Database);
             return result;
         }
         public override bool Close()
@@ -120,9 +101,8 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
                 _connection.Close();
                 result = _connection.State== System.Data.ConnectionState.Closed;
             }
-            catch (System.Exception)
+            catch (Exception)
             {
-
             
             }
             return result;

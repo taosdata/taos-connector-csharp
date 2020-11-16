@@ -278,6 +278,10 @@ namespace Maikebing.Data.Taos
                     throw new InvalidOperationException($"CallRequiresOpenConnection{nameof(ExecuteReader)}");
                 }
             }
+           if (!_connection.SelectedDataBase)
+            {
+                _connection.ChangeDatabase(_connection.Database);
+            }
 
             if (string.IsNullOrEmpty(_commandText))
             {

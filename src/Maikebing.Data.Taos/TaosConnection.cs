@@ -210,13 +210,10 @@ namespace Maikebing.Data.Taos
             else
             {
                 SetState(ConnectionState.Open);
-                if (!string.IsNullOrEmpty( ConnectionStringBuilder.DataBase))
-                {
-                    this.ChangeDatabase(ConnectionStringBuilder.DataBase);
-                }
+                this.ChangeDatabase(ConnectionStringBuilder.DataBase);
             }
         }
-
+      
         /// <summary>
         ///     Closes the connection to the database. Open transactions are rolled back.
         /// </summary>
@@ -226,7 +223,7 @@ namespace Maikebing.Data.Taos
                 TDengine.Close(_taos);
 
             Transaction?.Dispose();
-
+            _nowdatabase = string.Empty;
             foreach (var reference in _commands)
             {
                 if (reference.TryGetTarget(out var command))
@@ -354,17 +351,28 @@ namespace Maikebing.Data.Taos
 
             return Transaction = new TaosTransaction(this, isolationLevel);
         }
+        internal string _nowdatabase = string.Empty;
 
+        internal bool SelectedDataBase => _nowdatabase != string.Empty ;
         /// <summary>
         ///     Changes the current database.  
         /// </summary>
         /// <param name="databaseName">The name of the database to use.</param>
         public override void ChangeDatabase(string databaseName)
         {
-             int result = TDengine.SelectDatabase(_taos, databaseName);
-           // int result = this.CreateCommand($" use {databaseName};").ExecuteNonQuery();
-            Debug.WriteLine($"Select Database {databaseName} ,result is {result}");
+            if (!SelectedDataBase   ||   _nowdatabase!= databaseName)
+            {
+                int result = TDengine.SelectDatabase(_taos, databaseName);
+                if (result == 0)
+                {
+                    _nowdatabase = databaseName;
+                }
+                else
+                {
+                    Debug.WriteLine($"Select Database {databaseName} ,result is {result}");
+                }
 
+            }
         }
 
         private class AggregateContext<T>

@@ -83,7 +83,6 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
             {
                 using (var tc = new TaosConnection(Dependencies.Connection.ConnectionString))
                 {
-                    tc.ConnectionStringBuilder.ForceDatabaseName = true;
                     tc.Open();
                     tc.Close();
                 }
@@ -107,7 +106,6 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
             {
                 using (var tc = new TaosConnection(Dependencies.Connection.ConnectionString))
                 {
-                    tc.ConnectionStringBuilder.ForceDatabaseName = true;
                     tc.Open();
                     count = tc.CreateCommand("SHOW TABLES").ExecuteReader().ToJson().Count();
                     tc.Close();
