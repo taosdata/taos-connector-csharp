@@ -58,7 +58,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
                             _sqlExpressionFactory.Subtract(
                                 _sqlExpressionFactory.Function(
                                     "julianday",
-                                    new[] { instance },
+                                    new[] { instance }, true, null,
                                     typeof(double)),
                                 _sqlExpressionFactory.Constant(1721425.5)), // NB: Result of julianday('0001-01-01 00:00:00')
                             _sqlExpressionFactory.Constant(TimeSpan.TicksPerDay)),
@@ -132,10 +132,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
                                     timestring,
                                     modifiers),
                                 _sqlExpressionFactory.Constant("0")
-                            },
+                            }, true, null,
                             returnType),
                         _sqlExpressionFactory.Constant(".")
-                    },
+                    }, true, null,
                     returnType);
             }
 

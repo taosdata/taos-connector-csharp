@@ -83,10 +83,10 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
                                     instance,
                                     new[] { modifier }),
                                 _sqlExpressionFactory.Constant("0")
-                            },
+                            },true,null,
                             method.ReturnType),
                         _sqlExpressionFactory.Constant(".")
-                    },
+                    },true,null,
                     method.ReturnType);
             }
 

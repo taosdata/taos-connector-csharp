@@ -54,7 +54,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
 
             return sqlExpressionFactory.Function(
                 "strftime",
-                new[] { sqlExpressionFactory.Constant(format), timestring }.Concat(modifiers),
+                new[] { sqlExpressionFactory.Constant(format), timestring }.Concat(modifiers), true, null,
                 returnType,
                 typeMapping);
         }

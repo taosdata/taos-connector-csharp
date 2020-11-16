@@ -74,7 +74,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
 
                 return _sqlExpressionFactory.Function(
                     sqlFunctionName,
-                    newArguments ?? arguments,
+                    newArguments ?? arguments, true, null,
                     method.ReturnType,
                     typeMapping);
             }

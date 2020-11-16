@@ -93,7 +93,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
                         {
                             _sqlExpressionFactory.ApplyTypeMapping(instance, stringTypeMapping),
                             _sqlExpressionFactory.ApplyTypeMapping(argument, stringTypeMapping)
-                        },
+                        }, true, null,
                         method.ReturnType),
                     _sqlExpressionFactory.Constant(1));
             }
@@ -111,7 +111,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
                         _sqlExpressionFactory.ApplyTypeMapping(instance, stringTypeMapping),
                         _sqlExpressionFactory.ApplyTypeMapping(firstArgument, stringTypeMapping),
                         _sqlExpressionFactory.ApplyTypeMapping(secondArgument, stringTypeMapping)
-                    },
+                    }, true, null,
                     method.ReturnType,
                     stringTypeMapping);
             }
@@ -121,7 +121,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
             {
                 return _sqlExpressionFactory.Function(
                     _toLowerMethodInfo.Equals(method) ? "lower" : "upper",
-                    new[] { instance },
+                    new[] { instance }, true, null,
                     method.ReturnType,
                     instance.TypeMapping);
             }
@@ -130,7 +130,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
             {
                 return _sqlExpressionFactory.Function(
                     "substr",
-                    new[] { instance, _sqlExpressionFactory.Add(arguments[0], _sqlExpressionFactory.Constant(1)), arguments[1] },
+                    new[] { instance, _sqlExpressionFactory.Add(arguments[0], _sqlExpressionFactory.Constant(1)), arguments[1] }, true, null,
                     method.ReturnType,
                     instance.TypeMapping);
             }
@@ -143,7 +143,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
                     _sqlExpressionFactory.IsNull(argument),
                     _sqlExpressionFactory.Equal(
                         _sqlExpressionFactory.Function(
-                            "trim", new[] { argument }, argument.Type, argument.TypeMapping),
+                            "trim", new[] { argument }, true, null, argument.Type, argument.TypeMapping),
                         _sqlExpressionFactory.Constant(string.Empty)));
             }
 
@@ -183,7 +183,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
                     _sqlExpressionFactory.GreaterThan(
                         _sqlExpressionFactory.Function(
                             "instr",
-                            new[] { instance, pattern },
+                            new[] { instance, pattern }, true, null,
                             typeof(int)),
                         _sqlExpressionFactory.Constant(0)));
             }
@@ -255,8 +255,8 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
                                 {
                                     instance,
                                     _sqlExpressionFactory.Constant(1),
-                                    _sqlExpressionFactory.Function("length", new[] { pattern }, typeof(int))
-                                },
+                                    _sqlExpressionFactory.Function("length", new[] { pattern }, true, null, typeof(int))
+                                }, true, null,
                                 typeof(string),
                                 stringTypeMapping),
                             pattern)),
@@ -273,8 +273,8 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
                         {
                             instance,
                             _sqlExpressionFactory.Negate(
-                                _sqlExpressionFactory.Function("length", new[] { pattern }, typeof(int)))
-                        },
+                                _sqlExpressionFactory.Function("length", new[] { pattern }, true, null, typeof(int)))
+                        }, true, null,
                         typeof(string),
                         stringTypeMapping),
                     pattern),
@@ -339,14 +339,14 @@ namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
 
             return _sqlExpressionFactory.Function(
                 functionName,
-                sqlArguments,
+                sqlArguments, true, null,
                 typeof(string),
                 typeMapping);
         }
 
         public SqlExpression Translate(SqlExpression instance, MethodInfo method, IReadOnlyList<SqlExpression> arguments, IDiagnosticsLogger<DbLoggerCategory.Query> logger)
         {
-            throw new NotImplementedException();
+            return Translate(instance, method, arguments);
         }
     }
 }
