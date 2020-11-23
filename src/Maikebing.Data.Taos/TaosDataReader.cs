@@ -359,7 +359,7 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override string GetString(int ordinal) => Marshal.PtrToStringAnsi(GetValuePtr(ordinal));
+        public override string GetString(int ordinal) => Marshal.PtrToStringAnsi(GetValuePtr(ordinal), _metas[ordinal].size)?.RemoveNull();
 
         /// <summary>
         ///     Reads a stream of bytes from the specified column. Not supported.
@@ -411,8 +411,6 @@ namespace Maikebing.Data.Taos
 
         public IntPtr GetValuePtr(int ordinal)
         {
-            object result = DBNull.Value;
-            TDengineMeta meta = _metas[ordinal];
             int offset = IntPtr.Size * ordinal;
             return Marshal.ReadIntPtr(rowdata, offset);
         }
