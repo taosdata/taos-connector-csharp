@@ -470,7 +470,13 @@ namespace Maikebing.Data.Taos
                         }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
-                        string v10 = Marshal.PtrToStringUni(data, meta.size)?.RemoveNull();
+#if NET
+                        string v10 = Marshal.PtrToStringUTF8(data, meta.size)?.RemoveNull();
+#else
+                        byte[] bf = new byte[meta.size];
+                       Marshal.Copy(data,bf,0,  meta.size);
+                        string v10 = System.Text.Encoding.UTF8.GetString(bf)?.RemoveNull();
+#endif
                         result = v10;
                         break;
                 }

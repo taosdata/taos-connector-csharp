@@ -44,16 +44,26 @@ namespace TaosADODemo
 
                 //Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.AddMonths(1).Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 20);").ExecuteNonQuery());
                 var cmd_select = connection.CreateCommand();
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
                 cmd_select.CommandText = $"select * from {database}.t;";
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
                 var reader = cmd_select.ExecuteReader();
                 int index =reader.GetOrdinal("cdata");
                 Console.WriteLine($"cdata index at {index}");
                 Console.WriteLine(cmd_select.CommandText);
                 Console.WriteLine("");
                 ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
+
+
                 Console.WriteLine("");
+                connection.CreateCommand($"CREATE TABLE datas ('reportTime' timestamp, type int, 'bufferedEnd' bool, address nchar(64), parameter nchar(64), value nchar(64)) TAGS ('boxCode' nchar(64), 'machineId' int);").ExecuteNonQuery();
+                connection.CreateCommand($"INSERT INTO  data_history_67 USING datas TAGS (mongo, 67) values ( 1608173534840 2 false 'Channel1.窑.烟囱温度' '烟囱温度' '122.00' );").ExecuteNonQuery();
+                var cmd_datas = connection.CreateCommand();
+                cmd_datas.CommandText = $"SELECT  reportTime,type,bufferedEnd,address,parameter,value FROM  {database}.data_history_67 LIMIT  100";
+                var readerdatas = cmd_datas.ExecuteReader();
+                Console.WriteLine(cmd_datas.CommandText);
+                Console.WriteLine("");
+                ConsoleTableBuilder.From(readerdatas.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                Console.WriteLine("");
+
                 Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupdId int);").ExecuteNonQuery());
                 Console.WriteLine("CREATE TABLE d1001 ", connection.CreateCommand($"CREATE TABLE d1001 USING meters TAGS (\"Beijing.Chaoyang\", 2);").ExecuteNonQuery());
                 Console.WriteLine("INSERT INTO d1001  ", connection.CreateCommand($"INSERT INTO d1001 USING METERS TAGS(\"Beijng.Chaoyang\", 2) VALUES(now, 10.2, 219, 0.32);").ExecuteNonQuery());
@@ -72,7 +82,11 @@ namespace TaosADODemo
                 UploadTelemetryData(connection, devid2, "Humidity", 666);
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
                 ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+               
+
                 connection.Close();
+
+
             }
             //Example for  Entity Framework Core  
             using (var context = new TaosContext(new DbContextOptionsBuilder()
