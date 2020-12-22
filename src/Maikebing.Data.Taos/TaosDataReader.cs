@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using TDengineDriver;
 
 namespace Maikebing.Data.Taos
@@ -310,21 +311,21 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override decimal GetDecimal(int ordinal) => (decimal)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(decimal));
+        public override decimal GetDecimal(int ordinal) => (decimal)GetValue(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="double" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override double GetDouble(int ordinal) => (double)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(double));
+        public override double GetDouble(int ordinal) => (double)GetValue(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="float" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override float GetFloat(int ordinal) => (float)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(float));
+        public override float GetFloat(int ordinal) => (float)GetValue(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="Guid" />.
@@ -338,28 +339,28 @@ namespace Maikebing.Data.Taos
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override short GetInt16(int ordinal) => (short)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(short));
+        public override short GetInt16(int ordinal) => (short)GetValue(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="int" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override int GetInt32(int ordinal) => (int)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(int));
+        public override int GetInt32(int ordinal) => (int)GetValue(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="long" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override long GetInt64(int ordinal) => (long)Marshal.PtrToStructure(GetValuePtr(ordinal), typeof(long));
+        public override long GetInt64(int ordinal) => (long)GetValue(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="string" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
-        public override string GetString(int ordinal) => Marshal.PtrToStringAnsi(GetValuePtr(ordinal), _metas[ordinal].size)?.RemoveNull();
+        public override string GetString(int ordinal) => (string)GetValue(ordinal);
 
         /// <summary>
         ///     Reads a stream of bytes from the specified column. Not supported.
@@ -415,7 +416,74 @@ namespace Maikebing.Data.Taos
             return Marshal.ReadIntPtr(rowdata, offset);
         }
 
+        public static System.Text.Encoding GetType(FileStream fs)
+        {
+            byte[] Unicode = new byte[] { 0xFF, 0xFE, 0x41 };
+            byte[] UnicodeBIG = new byte[] { 0xFE, 0xFF, 0x00 };
+            byte[] UTF8 = new byte[] { 0xEF, 0xBB, 0xBF }; //带BOM
+            Encoding reVal = Encoding.Default;
 
+            BinaryReader r = new BinaryReader(fs, System.Text.Encoding.Default);
+            int i;
+            int.TryParse(fs.Length.ToString(), out i);
+            byte[] ss = r.ReadBytes(i);
+            if (IsUTF8Bytes(ss) || (ss[0] == 0xEF && ss[1] == 0xBB && ss[2] == 0xBF))
+            {
+                reVal = Encoding.UTF8;
+            }
+            else if (ss[0] == 0xFE && ss[1] == 0xFF && ss[2] == 0x00)
+            {
+                reVal = Encoding.BigEndianUnicode;
+            }
+            else if (ss[0] == 0xFF && ss[1] == 0xFE && ss[2] == 0x41)
+            {
+                reVal = Encoding.Unicode;
+            }
+            r.Close();
+            return reVal;
+
+        }
+
+    
+        private static bool IsUTF8Bytes(byte[] data)
+        {
+            int charByteCounter = 1; //计算当前正分析的字符应还有的字节数
+            byte curByte; //当前分析的字节.
+            for (int i = 0; i < data.Length; i++)
+            {
+                curByte = data[i];
+                if (charByteCounter == 1)
+                {
+                    if (curByte >= 0x80)
+                    {
+                        //判断当前
+                        while (((curByte <<= 1) & 0x80) != 0)
+                        {
+                            charByteCounter++;
+                        }
+                        //标记位首位若为非0 则至少以2个1开始 如:110XXXXX…1111110X
+                        if (charByteCounter == 1 || charByteCounter > 6)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    //若是UTF-8 此时第一位必须为1
+                    if ((curByte & 0xC0) != 0x80)
+                    {
+                        return false;
+                    }
+                    charByteCounter--;
+                }
+            }
+            if (charByteCounter > 1)
+            {
+                return false;
+            }
+            return true;
+        }
         /// <summary>
         ///     Gets the value of the specified column.
         /// </summary>
@@ -470,14 +538,20 @@ namespace Maikebing.Data.Taos
                         }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
-#if NET
-                        string v10 = Marshal.PtrToStringUTF8(data, meta.size)?.RemoveNull();
-#else
-                        byte[] bf = new byte[meta.size];
-                       Marshal.Copy(data,bf,0,  meta.size);
-                        string v10 = System.Text.Encoding.UTF8.GetString(bf)?.RemoveNull();
-#endif
-                        result = v10;
+                        {
+                            byte[] bf = new byte[meta.size];
+                            Marshal.Copy(data, bf, 0, meta.size);
+                            string v10 = string.Empty;
+                            if (IsUTF8Bytes(bf) || (bf[0] == 0xEF && bf[1] == 0xBB && bf[2] == 0xBF))
+                            {
+                                  v10 = System.Text.Encoding.UTF8.GetString(bf)?.RemoveNull();
+                            }
+                            else
+                            {
+                                v10 = System.Text.Encoding.GetEncoding(936).GetString(bf)?.RemoveNull();
+                            }
+                            result = v10;
+                        }
                         break;
                 }
 
