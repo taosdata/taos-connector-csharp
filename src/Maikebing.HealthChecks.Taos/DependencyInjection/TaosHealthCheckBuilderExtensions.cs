@@ -18,7 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Add a health check for TDengine services.
         /// </summary>
         /// <param name="builder">The <see cref="IHealthChecksBuilder"/>.</param>
-        /// <param name="connectionString">The Sql Server connection string to be used.</param>
+        /// <param name="connectionString">The TDengine connection string to be used.</param>
         /// <param name="healthQuery">The query to be executed.Optional. If <c>null</c> select 1 is used.</param>
         /// <param name="name">The health check name. Optional. If <c>null</c> the type name 'TDengine' will be used for the name.</param>
         /// <param name="failureStatus">
@@ -43,7 +43,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Add a health check for TDengine services.
         /// </summary>
         /// <param name="builder">The <see cref="IHealthChecksBuilder"/>.</param>
-        /// <param name="connectionStringFactory">A factory to build the SQL Server connection string to use.</param>
+        /// <param name="connectionStringFactory">A factory to build the TDengine connection string to use.</param>
         /// <param name="healthQuery">The query to be executed.Optional. If <c>null</c> select 1 is used.</param>
         /// <param name="name">The health check name. Optional. If <c>null</c> the type name 'TDengine' will be used for the name.</param>
         /// <param name="failureStatus">
