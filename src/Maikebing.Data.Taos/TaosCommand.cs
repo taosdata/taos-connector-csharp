@@ -298,7 +298,7 @@ namespace Maikebing.Data.Taos
                 Debug.WriteLine($"_commandText:{_commandText}");
 #endif
                 var _endcommandtext = _commandText;
-                if (  _parameters.IsValueCreated && _commandText?.ToLower().TrimStart().StartsWith("insert")==true)
+                if (  _parameters.IsValueCreated /*&& _commandText?.ToLower().TrimStart().StartsWith("insert")==true*/)
                 {
                     var pms = _parameters.Value;
                     for (int i = 0; i < pms.Count; i++)
