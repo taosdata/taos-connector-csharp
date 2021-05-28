@@ -380,7 +380,11 @@ namespace TDengineDriver
         TSDB_DATA_TYPE_DOUBLE = 7,
         TSDB_DATA_TYPE_BINARY = 8,
         TSDB_DATA_TYPE_TIMESTAMP = 9,
-        TSDB_DATA_TYPE_NCHAR = 10
+        TSDB_DATA_TYPE_NCHAR = 10,
+        TSDB_DATA_TYPE_UTINYINT = 11,
+        TSDB_DATA_TYPE_USMALLINT = 12,
+        TSDB_DATA_TYPE_UINT = 13,
+        TSDB_DATA_TYPE_UBIGINT = 14
     }
     public enum TSDB_TIME_PRECISION : int
     {
@@ -411,16 +415,26 @@ namespace TDengineDriver
                     return "BOOLEAN";
 
                 case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
+                case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
                     return "BYTE";
 
                 case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
                     return "SHORT";
 
+                case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
+                    return "USHORT";
+
                 case TDengineDataType.TSDB_DATA_TYPE_INT:
                     return "INT";
 
+                case TDengineDataType.TSDB_DATA_TYPE_UINT:
+                    return "UINT";
+
                 case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
                     return "LONG";
+
+                case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
+                    return "ULONG";
 
                 case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
                     return "FLOAT";

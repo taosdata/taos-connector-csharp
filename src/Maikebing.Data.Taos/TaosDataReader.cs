@@ -207,16 +207,26 @@ namespace Maikebing.Data.Taos
                     type = typeof(bool);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
+                case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
                     type = typeof(byte);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
                     type = typeof(short);
                     break;
+                case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
+                    type = typeof(ushort);
+                    break;
                 case TDengineDataType.TSDB_DATA_TYPE_INT:
                     type = typeof(int);
                     break;
+                case TDengineDataType.TSDB_DATA_TYPE_UINT:
+                    type = typeof(uint);
+                    break;
                 case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
                     type = typeof(long);
+                    break;
+                case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
+                    type = typeof(ulong);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
                     type = typeof(float);
@@ -342,6 +352,13 @@ namespace Maikebing.Data.Taos
         public override short GetInt16(int ordinal) => (short)GetValue(ordinal);
 
         /// <summary>
+        ///     Gets the value of the specified column as a <see cref="ushort" />.
+        /// </summary>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <returns>The value of the column.</returns>
+        public ushort GetUInt16(int ordinal) => (ushort)GetValue(ordinal);
+
+        /// <summary>
         ///     Gets the value of the specified column as a <see cref="int" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
@@ -349,11 +366,25 @@ namespace Maikebing.Data.Taos
         public override int GetInt32(int ordinal) => (int)GetValue(ordinal);
 
         /// <summary>
+        ///     Gets the value of the specified column as a <see cref="uint" />.
+        /// </summary>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <returns>The value of the column.</returns>
+        public uint GetUInt32(int ordinal) => (uint)GetValue(ordinal);
+
+        /// <summary>
         ///     Gets the value of the specified column as a <see cref="long" />.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override long GetInt64(int ordinal) => (long)GetValue(ordinal);
+
+        /// <summary>
+        ///     Gets the value of the specified column as a <see cref="ulong" />.
+        /// </summary>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <returns>The value of the column.</returns>
+        public ulong GetUInt64(int ordinal) => (ulong)GetValue(ordinal);
 
         /// <summary>
         ///     Gets the value of the specified column as a <see cref="string" />.
@@ -504,6 +535,7 @@ namespace Maikebing.Data.Taos
                         result = v1;
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
+                    case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
                         byte v2 = Marshal.ReadByte(data);
                         result = v2;
                         break;
@@ -511,13 +543,25 @@ namespace Maikebing.Data.Taos
                         short v3 = Marshal.ReadInt16(data);
                         result = v3;
                         break;
+                    case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
+                        ushort v12 = (ushort)Marshal.ReadInt16(data);
+                        result = v12;
+                        break;
                     case TDengineDataType.TSDB_DATA_TYPE_INT:
                         int v4 = Marshal.ReadInt32(data);
                         result = v4;
                         break;
+                    case TDengineDataType.TSDB_DATA_TYPE_UINT:
+                        uint v13 = (uint)Marshal.ReadInt32(data);
+                        result = v13;
+                        break;
                     case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
                         long v5 = Marshal.ReadInt64(data);
                         result = v5;
+                        break;
+                    case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
+                        ulong v14 = (ulong)Marshal.ReadInt64(data);
+                        result = v14;
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
                         float v6 = (float)Marshal.PtrToStructure(data, typeof(float));
