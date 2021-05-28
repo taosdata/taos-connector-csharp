@@ -207,6 +207,8 @@ namespace Maikebing.Data.Taos
                     type = typeof(bool);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
+                    type = typeof(sbyte);
+                    break;
                 case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
                     type = typeof(byte);
                     break;
@@ -430,7 +432,19 @@ namespace Maikebing.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The returned object.</returns>
         public override Stream GetStream(int ordinal)
-              => throw new NotSupportedException();
+        {
+            MemoryStream result = null;
+            TDengineMeta meta = _metas[ordinal];
+            int offset = IntPtr.Size * ordinal;
+            IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
+            if (data != IntPtr.Zero)
+            {
+                byte[] bf = new byte[meta.size];
+                Marshal.Copy(data, bf, 0, meta.size);
+                result = new MemoryStream(bf);
+            }
+            return result;
+        }
 
         /// <summary>
         ///     Gets the value of the specified column.
@@ -535,6 +549,9 @@ namespace Maikebing.Data.Taos
                         result = v1;
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
+                        sbyte v2s = (sbyte)Marshal.ReadByte(data);
+                        result = v2s;
+                        break;
                     case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
                         byte v2 = Marshal.ReadByte(data);
                         result = v2;
@@ -583,16 +600,20 @@ namespace Maikebing.Data.Taos
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                         {
-                            byte[] bf = new byte[meta.size];
-                            Marshal.Copy(data, bf, 0, meta.size);
                             string v10 = string.Empty;
-                            if (IsUTF8Bytes(bf) || (bf[0] == 0xEF && bf[1] == 0xBB && bf[2] == 0xBF))
+                            if (meta.size > 0)// https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/issues/99
                             {
-                                  v10 = System.Text.Encoding.UTF8.GetString(bf)?.RemoveNull();
-                            }
-                            else
-                            {
-                                v10 = System.Text.Encoding.GetEncoding(936).GetString(bf)?.RemoveNull();
+                                byte[] bf = new byte[meta.size];
+                                Marshal.Copy(data, bf, 0, meta.size);
+                              
+                                if (IsUTF8Bytes(bf) || (bf[0] == 0xEF && bf[1] == 0xBB && bf[2] == 0xBF))
+                                {
+                                    v10 = System.Text.Encoding.UTF8.GetString(bf)?.RemoveNull();
+                                }
+                                else
+                                {
+                                    v10 = System.Text.Encoding.GetEncoding(936).GetString(bf)?.RemoveNull();
+                                }
                             }
                             result = v10;
                         }
