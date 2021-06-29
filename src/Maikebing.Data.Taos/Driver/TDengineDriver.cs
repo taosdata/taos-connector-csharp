@@ -485,6 +485,9 @@ namespace TDengineDriver
         [DllImport("taos", EntryPoint = "taos_query", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr Query(IntPtr taos, string sqlstr);
 
+        [DllImport("taos", EntryPoint = "taos_stop_query", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void StopQuery(IntPtr taos);
+
         [DllImport("taos", EntryPoint = "taos_affected_rows", CallingConvention = CallingConvention.Cdecl)]
         public static extern int AffectRows(IntPtr res);
 
