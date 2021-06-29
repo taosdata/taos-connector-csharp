@@ -45,7 +45,7 @@ namespace Maikebing.Data.Taos
         private string _userName = string.Empty;
         private string _charset = System.Text.Encoding.UTF8.EncodingName;
         private string _password = string.Empty;
-        private int  _port =6060;
+        private int  _port =6030;
         static TaosConnectionStringBuilder()
         {
             var validKeywords = new string[6];
