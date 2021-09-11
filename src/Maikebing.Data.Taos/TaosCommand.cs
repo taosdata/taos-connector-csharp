@@ -316,7 +316,12 @@ namespace Maikebing.Data.Taos
                                 _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{tp.Value}");
                                 break;
                             case TypeCode.DateTime:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(long)((tp.Value as DateTime?).GetValueOrDefault().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}");
+                                var t0 = tp.Value as DateTime?;
+                                if (!t0.HasValue)
+                                {
+                                    throw new ArgumentException($"InvalidArgumentOfDateTime{tp.Value}");
+                                }
+                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"'{t0.Value:yyyy-MM-dd HH:mm:ss.ffffff}'");
                                 break;
                             case TypeCode.DBNull:
                                 _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"");
