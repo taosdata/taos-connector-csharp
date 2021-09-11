@@ -46,7 +46,12 @@ namespace TaosADODemo
                 var cmd_select = connection.CreateCommand();
                 cmd_select.CommandText = $"select * from {database}.t;";
                 var reader = cmd_select.ExecuteReader();
+
                 int index =reader.GetOrdinal("cdata");
+                if (reader.Read())
+                {
+                    var ts = reader.GetDateTime("ts");
+                }
                 Console.WriteLine($"cdata index at {index}");
                 Console.WriteLine(cmd_select.CommandText);
                 Console.WriteLine("");

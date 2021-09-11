@@ -363,7 +363,10 @@ namespace Maikebing.Data.Taos
                 }
                 var code = Task.Run(() => TDengine.Query(_taos, _endcommandtext));
                 bool isok = code.Wait(TimeSpan.FromSeconds(CommandTimeout));
-                TDengine.StopQuery(_taos);
+                if (isok == false)
+                {
+                    TDengine.StopQuery(_taos);
+                }
                 if (isok && TDengine.ErrorNo(code.Result) == 0)
                 {
                     List<TDengineMeta> metas = TDengine.FetchFields(code.Result);
