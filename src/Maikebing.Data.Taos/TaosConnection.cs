@@ -202,7 +202,7 @@ namespace Maikebing.Data.Taos
                 throw new InvalidOperationException("Open Requires Set ConnectionString");
             }
 
-            this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password,"", ConnectionStringBuilder.Port);
+            this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password,"", (short)ConnectionStringBuilder.Port);
            if (this._taos == IntPtr.Zero)
             {
                 TaosException.ThrowExceptionForRC(_taos);

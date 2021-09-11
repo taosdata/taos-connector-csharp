@@ -18,10 +18,17 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
+
 namespace TDengineDriver
 {
+    using TAOS = System.IntPtr;
+    using TAOS_STMT = System.IntPtr;
+    using TAOS_RES = System.IntPtr;
+    using TAOS_STREAM = System.IntPtr;
+    using TAOS_SUB = System.IntPtr;
+    using TAOS_ROW = System.IntPtr;
 
-    public enum TSDB_CODE:int
+    public enum TSDB_CODE : int
     {
 
         // rpc
@@ -368,6 +375,7 @@ namespace TDengineDriver
         [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
         public ushort bytes;
     }
+
     enum TDengineDataType
     {
         TSDB_DATA_TYPE_NULL = 0,     // 1 bytes
@@ -444,9 +452,10 @@ namespace TDengineDriver
             }
         }
     }
-
     internal class TDengine
     {
+
+
         public const int TSDB_CODE_SUCCESS = 0;
 
         [DllImport("taos", EntryPoint = "taos_init", CallingConvention = CallingConvention.Cdecl)]
@@ -456,10 +465,10 @@ namespace TDengineDriver
         public static extern void Options(int option, string value);
 
         [DllImport("taos", EntryPoint = "taos_connect", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr Connect(string ip, string user, string password, string db, int port);
+        public static extern IntPtr Connect(string ip, string user, string password, string db, short port);
 
         [DllImport("taos", EntryPoint = "taos_errstr", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr taos_errstr(IntPtr taos);
+        private static extern IntPtr taos_errstr(IntPtr res);
 
         public static string Error(IntPtr conn)
         {
@@ -525,13 +534,22 @@ namespace TDengineDriver
         public static extern IntPtr GetClientInfo();
 
         [DllImport("taos", EntryPoint = "taos_get_server_info", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr GetServerInfo(IntPtr taos);
+        public static extern IntPtr GetServerInfo(TAOS taos);
 
         [DllImport("taos", EntryPoint = "taos_select_db", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int SelectDatabase(IntPtr taos, string db);
+        public static extern int SelectDatabase(TAOS taos, string db);
 
         [DllImport("taos", EntryPoint = "taos_result_precision", CallingConvention = CallingConvention.Cdecl)]
-        static extern public int ResultPrecision(IntPtr taos);
+        public static extern  int ResultPrecision(TAOS taos);
+
+        [DllImport("taos", EntryPoint = "taos_is_null", CallingConvention = CallingConvention.Cdecl)]
+        public  static extern  bool IsNull(TAOS_RES res,int row,int col );
+
+        [DllImport("taos", EntryPoint = "taos_validate_sql", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int ValidateSQL(TAOS taos,  string sql);
+
+        [DllImport("taos", EntryPoint = "taos_num_fields", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int NumFields(TAOS_RES res);
 
     }
 }
