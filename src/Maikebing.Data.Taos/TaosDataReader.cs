@@ -308,13 +308,22 @@ namespace Maikebing.Data.Taos
         {
             var val = Marshal.ReadInt64(GetValuePtr(ordinal));
             var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taosResult);
-            if (_dateTimePrecision == TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO)
+            switch (_dateTimePrecision)
             {
-                return TimeSpan.FromMilliseconds(val / 1000);
-            }
-            else
-            {
-                return TimeSpan.FromMilliseconds(val);
+                /*
+                * ticks为100纳秒，必须乘以10才能达到微秒级的区分度
+                * 1秒s    = 1000毫秒ms
+                * 1毫秒ms = 1000微秒us
+                * 1微秒us = 1000纳秒ns
+                * 因此， 1毫秒ms = 1000000纳秒ns = 10000ticks
+                */
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
+                    return TimeSpan.FromTicks(val / 100);
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
+                    return TimeSpan.FromTicks(val * 10);
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MILLI:
+                default:
+                    return TimeSpan.FromTicks(val * 10000);
             }
         }
 
@@ -627,27 +636,34 @@ namespace Maikebing.Data.Taos
             }
             return result;
         }
-
+    
         private DateTime GetDateTimeFrom(IntPtr data)
         {
             var val = Marshal.ReadInt64(data);
-            double tsp;
+            //double tsp;
             var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taosResult);
-            if (_dateTimePrecision == TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO)
+            switch (_dateTimePrecision)
             {
-                tsp = (val / 1000);
+                /*
+                * ticks为100纳秒，必须乘以10才能达到微秒级的区分度
+                * 1秒s    = 1000毫秒ms
+                * 1毫秒ms = 1000微秒us
+                * 1微秒us = 1000纳秒ns
+                * 因此， 1毫秒ms = 1000000纳秒ns = 10000ticks
+                */
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
+                    val /= 100;
+                    break;
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
+                    val *= 10;
+                    break;
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MILLI:
+                default:
+                    val *= 10000;
+                    break;
             }
-            else
-            {
-                tsp = val;
-            }
-            if (tsp > _date_max_1970)
-            {
-                //fix https://github.com/taosdata/TDengine/issues/3270
-                tsp /= 1000;
-            }
-            var v9 = _dt1970.AddMilliseconds(tsp);
-            return  v9.ToLocalTime();
+            var v9 = _dt1970.AddTicks(val);
+            return v9.ToLocalTime();
         }
 
         /// <summary>
