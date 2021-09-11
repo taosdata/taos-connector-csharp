@@ -368,23 +368,23 @@ namespace TDengineDriver
         [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
         public ushort bytes;
     }
-
-    internal enum TDengineDataType
+    enum TDengineDataType
     {
-        TSDB_DATA_TYPE_BOOL = 1,
-        TSDB_DATA_TYPE_TINYINT = 2,
-        TSDB_DATA_TYPE_SMALLINT = 3,
-        TSDB_DATA_TYPE_INT = 4,
-        TSDB_DATA_TYPE_BIGINT = 5,
-        TSDB_DATA_TYPE_FLOAT = 6,
-        TSDB_DATA_TYPE_DOUBLE = 7,
-        TSDB_DATA_TYPE_BINARY = 8,
-        TSDB_DATA_TYPE_TIMESTAMP = 9,
-        TSDB_DATA_TYPE_NCHAR = 10,
-        TSDB_DATA_TYPE_UTINYINT = 11,
-        TSDB_DATA_TYPE_USMALLINT = 12,
-        TSDB_DATA_TYPE_UINT = 13,
-        TSDB_DATA_TYPE_UBIGINT = 14
+        TSDB_DATA_TYPE_NULL = 0,     // 1 bytes
+        TSDB_DATA_TYPE_BOOL = 1,     // 1 bytes
+        TSDB_DATA_TYPE_TINYINT = 2,  // 1 bytes
+        TSDB_DATA_TYPE_SMALLINT = 3, // 2 bytes
+        TSDB_DATA_TYPE_INT = 4,      // 4 bytes
+        TSDB_DATA_TYPE_BIGINT = 5,   // 8 bytes
+        TSDB_DATA_TYPE_FLOAT = 6,    // 4 bytes
+        TSDB_DATA_TYPE_DOUBLE = 7,   // 8 bytes
+        TSDB_DATA_TYPE_BINARY = 8,   // string
+        TSDB_DATA_TYPE_TIMESTAMP = 9,// 8 bytes
+        TSDB_DATA_TYPE_NCHAR = 10,   // unicode string
+        TSDB_DATA_TYPE_UTINYINT = 11,// 1 byte
+        TSDB_DATA_TYPE_USMALLINT = 12,// 2 bytes
+        TSDB_DATA_TYPE_UINT = 13,    // 4 bytes
+        TSDB_DATA_TYPE_UBIGINT = 14   // 8 bytes
     }
     public enum TSDB_TIME_PRECISION : int
     {
@@ -412,45 +412,33 @@ namespace TDengineDriver
             switch ((TDengineDataType)type)
             {
                 case TDengineDataType.TSDB_DATA_TYPE_BOOL:
-                    return "BOOLEAN";
-
+                    return "BOOL";
                 case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
-                case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
-                    return "BYTE";
-
+                    return "TINYINT";
                 case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
-                    return "SHORT";
-
-                case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
-                    return "USHORT";
-
+                    return "SMALLINT";
                 case TDengineDataType.TSDB_DATA_TYPE_INT:
                     return "INT";
-
-                case TDengineDataType.TSDB_DATA_TYPE_UINT:
-                    return "UINT";
-
                 case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
-                    return "LONG";
-
+                    return "BIGINT";
+                case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
+                    return "TINYINT UNSIGNED";
+                case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
+                    return "SMALLINT UNSIGNED";
+                case TDengineDataType.TSDB_DATA_TYPE_UINT:
+                    return "INT UNSIGNED";
                 case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
-                    return "ULONG";
-
+                    return "BIGINT UNSIGNED";
                 case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
                     return "FLOAT";
-
                 case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
                     return "DOUBLE";
-
                 case TDengineDataType.TSDB_DATA_TYPE_BINARY:
                     return "STRING";
-
                 case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
                     return "TIMESTAMP";
-
                 case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                     return "NCHAR";
-
                 default:
                     return "undefine";
             }
@@ -543,7 +531,7 @@ namespace TDengineDriver
         public static extern int SelectDatabase(IntPtr taos, string db);
 
         [DllImport("taos", EntryPoint = "taos_result_precision", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int ResultPrecision(IntPtr rest);
+        static extern public int ResultPrecision(IntPtr taos);
 
     }
 }
