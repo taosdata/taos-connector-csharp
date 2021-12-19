@@ -3,7 +3,7 @@
   <PropertyGroup>
 
     <Description>TaosData database provider for Entity Framework Core.</Description>
-    <TargetFramework>net5</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Maikebing</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

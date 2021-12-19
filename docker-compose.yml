@@ -2,11 +2,12 @@ version: '3.4'
 
 services:
   example:
-    depends_on:
-      - taos
-    links:
-      - taos
     image: ${DOCKER_REGISTRY-}example
+    depends_on:
+      - taos 
+    links:
+      - taos 
+
     build:
       context: .
       dockerfile: src/Example/Dockerfile
