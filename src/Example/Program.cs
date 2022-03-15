@@ -35,10 +35,10 @@ namespace TaosADODemo
                 Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
                 Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table {database}.t (ts timestamp, cdata int);").ExecuteNonQuery());
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
-                var pmcmd = connection.CreateCommand($"insert into {database}.t values (@t, @c);");
+                var pmcmd = connection.CreateCommand($"insert into {database}.t values (@ts, @v);");
                 Thread.Sleep(TimeSpan.FromSeconds(1));
-                pmcmd.Parameters.AddWithValue("@t", (long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds));
-                pmcmd.Parameters.AddWithValue("@c", 1111);
+                pmcmd.Parameters.AddWithValue("@ts", DateTime.Now);//(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds));
+                pmcmd.Parameters.AddWithValue("@v",1111);
                 pmcmd.ExecuteNonQuery();
                 Console.WriteLine("单表插入一行数据  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
                 Thread.Sleep(100);

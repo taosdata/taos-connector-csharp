@@ -27,7 +27,7 @@ namespace IoTSharp.Data.Taos
         public TaosParameter()
         {
         }
-
+       
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosParameter" /> class.
         /// </summary>

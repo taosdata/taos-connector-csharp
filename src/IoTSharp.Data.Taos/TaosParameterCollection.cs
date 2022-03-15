@@ -161,7 +161,18 @@ namespace IoTSharp.Data.Taos
 
             return parameter;
         }
-
+        /// <summary>
+        ///     Adds a parameter to the collection.
+        /// </summary>
+        /// <param name="parameterName">The name of the parameter.</param>
+        /// <param name="value">The value of the parameter. Can be null.</param>
+        /// <returns>The parameter that was added.</returns>
+        public virtual TaosParameter AddWithValue( object value)
+        {
+            var parameter = new TaosParameter(Guid.NewGuid().ToString(), value);
+            Add(parameter);
+            return parameter;
+        }
         /// <summary>
         ///     Removes all parameters from the collection.
         /// </summary>

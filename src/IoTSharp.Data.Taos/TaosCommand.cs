@@ -332,24 +332,16 @@ namespace IoTSharp.Data.Taos
                 if (_parameters.IsValueCreated)
                 {
                     var stmt = TDengine.StmtInit(_taos);
-                    if (stmt == IntPtr.Zero)
+                    if (stmt != IntPtr.Zero)
                     {
-                        int res = TDengine.StmtPrepare(stmt, _commandText);
-                        if (res == 0)
-                        {
-                            Console.WriteLine("stmt prepare success");
-                        }
-                        else
-                        {
 
-                            Console.WriteLine("stmt prepare failed " + TDengine.StmtErrorStr(stmt));
-
-                        }
                         var pms = _parameters.Value;
                         List<TAOS_BIND> binds = new List<TAOS_BIND>();
                         for (int i = 0; i < pms.Count; i++)
                         {
+                            
                             var tp = pms[i];
+                            _commandText = _commandText.Replace(tp.ParameterName, "?");
                             switch (TypeInfo.GetTypeCode(tp.Value?.GetType()))
                             {
                                 case TypeCode.Boolean:
@@ -359,7 +351,6 @@ namespace IoTSharp.Data.Taos
                                     binds.Add(TaosBind.BindNchar(tp.Value as string));
                                     break;
                                 case TypeCode.Byte:
-
                                 case TypeCode.SByte:
                                     binds.Add(TaosBind.BindUTinyInt((tp.Value as byte?).GetValueOrDefault()));
                                     break;
@@ -405,24 +396,56 @@ namespace IoTSharp.Data.Taos
                                     break;
                             }
                         }
-                        int ret = TDengine.StmtBindParam(stmt, binds.ToArray());
-                        if (ret == 0)
+
+                        int res = TDengine.StmtPrepare(stmt, _commandText);
+                        if (res == 0)
                         {
-                            code = Task.Run(() =>
+                            int ret = TDengine.StmtBindParam(stmt, binds.ToArray());
+                            if (ret == 0)
                             {
-                                int re = TDengine.StmtExecute(stmt);
-                                IntPtr res = TDengine.StmtUseResult(stmt);
-                                return res;
-                            });
-                            isok = code.Wait(TimeSpan.FromSeconds(CommandTimeout));
-                            if (isok == false)
+                              int addbech=  TDengine.StmtAddBatch(stmt);
+
+                                code = Task.Run(() =>
+                                {
+                                    IntPtr ptr = IntPtr.Zero;
+                                    int re = TDengine.StmtExecute(stmt);
+                                    if (re == 0)
+                                    {
+                                        ptr = TDengine.StmtUseResult(stmt);
+                                    }
+                                    else
+                                    {
+                                        string error = TDengine.StmtErrorStr(stmt);
+                                        TaosBind.FreeTaosBind(binds.ToArray());
+                                        TDengine.StmtClose(stmt);
+                                        TaosException.ThrowExceptionForRC(-10010, $"stmt execute failed,{ TDengine.StmtErrorStr(stmt)}", null);
+                                    }
+                                    return ptr;
+                                 
+                                });
+                                isok = code.Wait(TimeSpan.FromSeconds(CommandTimeout));
+                                if (isok == false)
+                                {
+                                    string error = TDengine.StmtErrorStr(stmt);
+                                    TaosBind.FreeTaosBind(binds.ToArray());
+                                    TDengine.StmtClose(stmt);
+                                    TaosException.ThrowExceptionForRC(-10009, $"stmt execute timeout.", null);
+                                }
+                            }
+                            else
                             {
                                 string error = TDengine.StmtErrorStr(stmt);
                                 TDengine.StmtClose(stmt);
-                                TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = error });
+                                TaosBind.FreeTaosBind(binds.ToArray());
+                                TaosException.ThrowExceptionForRC(-10008, $"stmt prepare failed,{ TDengine.StmtErrorStr(stmt)}", null);
                             }
+                        
                         }
-                        TaosBind.FreeTaosBind(binds.ToArray());
+                      
+                    }
+                    else
+                    {
+                        TaosException.ThrowExceptionForRC(-10007, "Stmt init failed", null);
                     }
                 }
                 else
@@ -435,7 +458,7 @@ namespace IoTSharp.Data.Taos
                     }
                 }
 
-                if (isok && TDengine.ErrorNo(code.Result) == 0)
+                if (isok && code !=null && TDengine.ErrorNo(code.Result) == 0)
                 {
                     List<TDengineMeta> metas = TDengine.FetchFields(code.Result);
                     for (int j = 0; j < metas.Count; j++)
