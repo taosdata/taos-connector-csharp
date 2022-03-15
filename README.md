@@ -11,7 +11,7 @@ IoTSharp.Data.Taos  是一个采用TDengine的原生动态库构建的ADO.Net提
 ---
 
 IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于IoTSharp.Data.Taos实现。 
-
+(原名称为 Maikebing.EntityFrameworkCore.Taos)
 
 ---
 
