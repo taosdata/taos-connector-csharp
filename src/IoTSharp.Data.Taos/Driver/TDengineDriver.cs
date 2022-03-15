@@ -402,6 +402,24 @@ namespace TDengineDriver
         [DllImport("taos", EntryPoint = "taos_stmt_add_batch", CallingConvention = CallingConvention.Cdecl)]
         static extern public int StmtAddBatch(IntPtr stmt);
 
+        [DllImport("taos", EntryPoint = "taos_stmt_is_insert", CallingConvention = CallingConvention.Cdecl)]
+        static extern private int StmtIsInsert(IntPtr stmt, IntPtr insert);
+
+        public static bool StmtIsInsert(IntPtr stmt)
+        {
+            bool result = false;
+            IntPtr ptr = Marshal.AllocHGlobal(sizeof(int));
+            int code = StmtIsInsert(stmt, ptr);
+            if (code == 0)
+            {
+                result = Marshal.ReadInt32(ptr) == 1;
+            }
+            Marshal.FreeHGlobal(ptr);
+            return result;
+        }
+
+        [DllImport("taos", EntryPoint = "taos_stmt_affected_rows", CallingConvention = CallingConvention.Cdecl)]
+        static extern public int StmtAffected_rows(IntPtr stmt);
         /// <summary>
         /// actually execute the INSERT/SELECT sql statement. 
         /// User application can continue to bind new data after calling to this API.

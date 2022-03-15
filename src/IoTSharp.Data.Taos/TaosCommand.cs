@@ -326,7 +326,7 @@ namespace IoTSharp.Data.Taos
 #if DEBUG
                 Debug.WriteLine($"_commandText:{_commandText}");
 #endif
-
+                int _affectRows = 0;
                 Task<IntPtr> code = null;
                 bool isok = false;
                 if (_parameters.IsValueCreated)
@@ -334,83 +334,25 @@ namespace IoTSharp.Data.Taos
                     var stmt = TDengine.StmtInit(_taos);
                     if (stmt != IntPtr.Zero)
                     {
-
                         var pms = _parameters.Value;
-                        List<TAOS_BIND> binds = new List<TAOS_BIND>();
-                        for (int i = 0; i < pms.Count; i++)
-                        {
-                            
-                            var tp = pms[i];
-                            _commandText = _commandText.Replace(tp.ParameterName, "?");
-                            switch (TypeInfo.GetTypeCode(tp.Value?.GetType()))
-                            {
-                                case TypeCode.Boolean:
-                                    binds.Add(TaosBind.BindBool((tp.Value as bool?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.Char:
-                                    binds.Add(TaosBind.BindNchar(tp.Value as string));
-                                    break;
-                                case TypeCode.Byte:
-                                case TypeCode.SByte:
-                                    binds.Add(TaosBind.BindUTinyInt((tp.Value as byte?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.DateTime:
-                                    var t0 = tp.Value as DateTime?;
-                                    if (!t0.HasValue)
-                                    {
-                                        throw new ArgumentException($"InvalidArgumentOfDateTime{tp.Value}");
-                                    }
-                                    binds.Add(TaosBind.BindTimestamp(GetDateTimeFrom(t0.GetValueOrDefault(), _taos)));
-                                    break;
-                                case TypeCode.DBNull:
-                                    binds.Add(TaosBind.BindNil());
-                                    break;
-                                case TypeCode.Single:
-                                    binds.Add(TaosBind.BindFloat((tp.Value as float?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.Decimal:
-                                case TypeCode.Double:
-                                    binds.Add(TaosBind.BindDouble((tp.Value as double?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.Int16:
-                                    binds.Add(TaosBind.BindSmallInt((tp.Value as short?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.Int32:
-                                    binds.Add(TaosBind.BindInt((tp.Value as int?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.Int64:
-                                    binds.Add(TaosBind.BindBigInt((tp.Value as long?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.UInt16:
-                                    binds.Add(TaosBind.BindSmallInt((tp.Value as short?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.UInt32:
-                                    binds.Add(TaosBind.BindUInt((tp.Value as uint?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.UInt64:
-                                    binds.Add(TaosBind.BindUBigInt((tp.Value as ulong?).GetValueOrDefault()));
-                                    break;
-                                case TypeCode.String:
-                                default:
-                                    binds.Add(TaosBind.BindBinary(tp.Value as string));
-                                    break;
-                            }
-                        }
-
+                        List<TAOS_BIND> binds = BindParamters(pms);
                         int res = TDengine.StmtPrepare(stmt, _commandText);
                         if (res == 0)
                         {
                             int ret = TDengine.StmtBindParam(stmt, binds.ToArray());
                             if (ret == 0)
                             {
-                              int addbech=  TDengine.StmtAddBatch(stmt);
-
+                                if (TDengine.StmtIsInsert(stmt))
+                                {
+                                    int addbech = TDengine.StmtAddBatch(stmt);
+                                }
                                 code = Task.Run(() =>
                                 {
                                     IntPtr ptr = IntPtr.Zero;
                                     int re = TDengine.StmtExecute(stmt);
                                     if (re == 0)
                                     {
+                                        _affectRows = TDengine.StmtAffected_rows(stmt);
                                         ptr = TDengine.StmtUseResult(stmt);
                                     }
                                     else
@@ -421,7 +363,7 @@ namespace IoTSharp.Data.Taos
                                         TaosException.ThrowExceptionForRC(-10010, $"stmt execute failed,{ TDengine.StmtErrorStr(stmt)}", null);
                                     }
                                     return ptr;
-                                 
+
                                 });
                                 isok = code.Wait(TimeSpan.FromSeconds(CommandTimeout));
                                 if (isok == false)
@@ -439,9 +381,9 @@ namespace IoTSharp.Data.Taos
                                 TaosBind.FreeTaosBind(binds.ToArray());
                                 TaosException.ThrowExceptionForRC(-10008, $"stmt prepare failed,{ TDengine.StmtErrorStr(stmt)}", null);
                             }
-                        
+
                         }
-                      
+
                     }
                     else
                     {
@@ -456,6 +398,7 @@ namespace IoTSharp.Data.Taos
                     {
                         TDengine.StopQuery(_taos);
                     }
+                    _affectRows = TDengine.AffectRows(_taos);
                 }
 
                 if (isok && code !=null && TDengine.ErrorNo(code.Result) == 0)
@@ -468,7 +411,7 @@ namespace IoTSharp.Data.Taos
                         Debug.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName() + ", name:" + meta.name + ", size:" + meta.size);
 #endif
                     }
-                    dataReader = new TaosDataReader(this, metas, closeConnection, code.Result);
+                    dataReader = new TaosDataReader(this, metas, closeConnection, code.Result, _affectRows, metas.Count);
                 }
                 else if (isok && TDengine.ErrorNo(code.Result) != 0)
                 {
@@ -500,6 +443,72 @@ namespace IoTSharp.Data.Taos
                 throw;
             }
             return dataReader;
+        }
+
+        private List<TAOS_BIND> BindParamters(TaosParameterCollection pms)
+        {
+            List<TAOS_BIND> binds = new List<TAOS_BIND>();
+            for (int i = 0; i < pms.Count; i++)
+            {
+
+                var tp = pms[i];
+                _commandText = _commandText.Replace(tp.ParameterName, "?");
+                switch (TypeInfo.GetTypeCode(tp.Value?.GetType()))
+                {
+                    case TypeCode.Boolean:
+                        binds.Add(TaosBind.BindBool((tp.Value as bool?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.Char:
+                        binds.Add(TaosBind.BindNchar(tp.Value as string));
+                        break;
+                    case TypeCode.Byte:
+                    case TypeCode.SByte:
+                        binds.Add(TaosBind.BindUTinyInt((tp.Value as byte?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.DateTime:
+                        var t0 = tp.Value as DateTime?;
+                        if (!t0.HasValue)
+                        {
+                            throw new ArgumentException($"InvalidArgumentOfDateTime{tp.Value}");
+                        }
+                        binds.Add(TaosBind.BindTimestamp(GetDateTimeFrom(t0.GetValueOrDefault(), _taos)));
+                        break;
+                    case TypeCode.DBNull:
+                        binds.Add(TaosBind.BindNil());
+                        break;
+                    case TypeCode.Single:
+                        binds.Add(TaosBind.BindFloat((tp.Value as float?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.Decimal:
+                    case TypeCode.Double:
+                        binds.Add(TaosBind.BindDouble((tp.Value as double?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.Int16:
+                        binds.Add(TaosBind.BindSmallInt((tp.Value as short?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.Int32:
+                        binds.Add(TaosBind.BindInt((tp.Value as int?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.Int64:
+                        binds.Add(TaosBind.BindBigInt((tp.Value as long?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.UInt16:
+                        binds.Add(TaosBind.BindSmallInt((tp.Value as short?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.UInt32:
+                        binds.Add(TaosBind.BindUInt((tp.Value as uint?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.UInt64:
+                        binds.Add(TaosBind.BindUBigInt((tp.Value as ulong?).GetValueOrDefault()));
+                        break;
+                    case TypeCode.String:
+                    default:
+                        binds.Add(TaosBind.BindBinary(tp.Value as string));
+                        break;
+                }
+            }
+
+            return binds;
         }
 
         /// <summary>

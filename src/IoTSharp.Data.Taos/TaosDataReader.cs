@@ -21,6 +21,7 @@ namespace IoTSharp.Data.Taos
     {
         private readonly TaosCommand _command;
         private bool _hasRows;
+        private readonly int _recordsAffected;
         private bool _closed;
         private bool _closeConnection;
         private IntPtr _taosResult;
@@ -31,13 +32,14 @@ namespace IoTSharp.Data.Taos
         private double _date_max_1970;
         private DateTime _dt1970;
 
-        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas, bool closeConnection, IntPtr res)
+        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas, bool closeConnection, IntPtr res,int  recordsAffected,int fieldcount)
         {
             _taos = taosCommand.Connection._taos;
             _command = taosCommand;
             _closeConnection = closeConnection;
-            _fieldCount = TDengine.FieldCount(res);
-            _hasRows = TDengine.AffectRows(res) > 0;
+            _fieldCount = fieldcount;
+            _hasRows = recordsAffected > 0;
+            _recordsAffected = recordsAffected;
             _closed = _closeConnection;
             _taosResult = res;
             _metas = metas;
@@ -82,7 +84,7 @@ namespace IoTSharp.Data.Taos
         {
             get
             {
-                return TDengine.AffectRows(_taosResult);
+                return _recordsAffected;;
             }
         }
 
