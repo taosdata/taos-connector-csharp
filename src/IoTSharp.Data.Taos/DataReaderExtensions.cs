@@ -99,7 +99,7 @@ namespace IoTSharp.Data.Taos
         }
         public static string RemoveNull(this string str)
         {
-            return (!string.IsNullOrEmpty(str) &&  str.IndexOf('\0')>0)? str.Remove(str.IndexOf('\0')):str;
+            return str?.Trim('\0');
         }
     }
 }
