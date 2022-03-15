@@ -11,19 +11,19 @@ IoTSharp.Data.Taos  是一个采用TDengine的原生动态库构建的ADO.Net提
 ---
 
 IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于IoTSharp.Data.Taos实现。 
-
+(原名称为 Maikebing.EntityFrameworkCore.Taos)
 
 ---
 
 [![Build status](https://ci.appveyor.com/api/projects/status/8krjmvsoiilo2r10?svg=true)](https://ci.appveyor.com/project/iotsharp/entityframeworkcore-taos)
-[![License](https://img.shields.io/github/license/iotsharp/iotsharp.EntityFrameworkCore.Taos.svg)](https://github.com/maikebing/IoTSharp.EntityFrameworkCore.Taos/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/iotsharp/EntityFrameworkCore.Taos.svg)](https://github.com/IoTSharp/EntityFrameworkCore.Taos/blob/master/LICENSE)
 
 
 
 | NuGet名称    | 版本|下载量| 说明                                                     |
 | ----------- | --------  | --------  | ------------------------------------------------------------ |
-| IoTSharp.Data.Taos |[![Maikebing.Data.Taos](https://img.shields.io/nuget/v/iotsharp.Data.Taos.svg)](https://www.nuget.org/packages/IoTSharp.Data.Taos/) |![Nuget](https://img.shields.io/nuget/dt/IoTSharp.Data.Taos) |ADO.Net Core 基础组件
-| IoTSharp.EntityFrameworkCore.Taos |[![IoTSharp.EntityFrameworkCore.Taos](https://img.shields.io/nuget/v/iotsharp.EntityFrameworkCore.Taos.svg)](https://www.nuget.org/packages/IoTSharp.EntityFrameworkCore.Taos/) |![Nuget](https://img.shields.io/nuget/dt/IoTSharp.EntityFrameworkCore.Taos)     | 供EF Core使用的组件
+| IoTSharp.Data.Taos |[![IoTSharp.Data.Taos](https://img.shields.io/nuget/v/iotsharp.Data.Taos.svg)](https://www.nuget.org/packages/IoTSharp.Data.Taos/) |![Nuget](https://img.shields.io/nuget/dt/IoTSharp.Data.Taos) |ADO.Net Core 基础组件
+| IoTSharp.EntityFrameworkCore.Taos |[![IoTSharp.EntityFrameworkCore.Taos](https://img.shields.io/nuget/v/IoTSharp.EntityFrameworkCore.Taos.svg)](https://www.nuget.org/packages/IoTSharp.EntityFrameworkCore.Taos/) |![Nuget](https://img.shields.io/nuget/dt/IoTSharp.EntityFrameworkCore.Taos)     | 供EF Core使用的组件
 | IoTSharp.HealthChecks.Taos |[![IoTSharp.HealthChecks.Taos](https://img.shields.io/nuget/v/IoTSharp.HealthChecks.Taos.svg)](https://www.nuget.org/packages/IoTSharp.HealthChecks.Taos/)  |  ![Nuget](https://img.shields.io/nuget/dt/IoTSharp.HealthChecks.Taos)| 供Asp.Net Core 使用的健康检查组件
 
 
