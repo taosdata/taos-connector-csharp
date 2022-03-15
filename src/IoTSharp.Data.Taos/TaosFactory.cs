@@ -3,7 +3,7 @@
 
 using System.Data.Common;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     /// <summary>
     ///     Creates instances of various Maikebing.Data.Taos classes.

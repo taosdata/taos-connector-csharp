@@ -4,7 +4,7 @@
 using System;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Maikebing.EntityFrameworkCore.Taos.Metadata.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Utilities;
 
 // ReSharper disable once CheckNamespace

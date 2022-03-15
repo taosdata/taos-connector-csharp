@@ -1,0 +1,76 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<AssemblyName>IoTSharp.Data.Taos</AssemblyName>
+		<RootNamespace>$(AssemblyName)</RootNamespace>
+		<PackageId>IoTSharp.Data.Taos</PackageId>
+		<Description>
+			Taos implementation of the System.Data.Common provider model.
+			Commonly Used Types:
+			IoTSharp.Data.Taos.TaosCommand
+			IoTSharp.Data.Taos.TaosConnection
+			IoTSharp.Data.Taos.TaosConnectionStringBuilder
+			IoTSharp.Data.Taos.TaosDataReader
+			IoTSharp.Data.Taos.TaosException
+			IoTSharp.Data.Taos.TaosFactory
+			IoTSharp.Data.Taos.TaosParameter
+			IoTSharp.Data.Taos.TaosTransaction
+		</Description>
+		<TargetFrameworks>net5;net6</TargetFrameworks>
+
+		<PackageTags>Taos;Data;ADO.NET;Entity Framework,;EF; Core;Data O/RM,;entity-framework-core;TDengine;IoTSharp</PackageTags>
+
+		<Authors>Yanhong Ma</Authors>
+
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+		<PackageProjectUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</PackageProjectUrl>
+
+		<PackageIconUrl></PackageIconUrl>
+
+		<RepositoryUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</RepositoryUrl>
+
+		<PackageReleaseNotes>
+			IoTSharp.Data.Taos  是一个基于TDengine 的RESTful Connector构建的ADO.Net 提供器。 这将允许你通过.Net Core 访问TDengine数据库。
+			IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于IoTSharp.Data.Taos构建。
+		</PackageReleaseNotes>
+
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+
+		<Copyright>Copyright © 2019-2022 IoTSharp All rights reserved.</Copyright>
+
+		<Version>1.0.1</Version>
+
+		<Platforms>AnyCPU;x64;x86</Platforms>
+
+		<PackageIcon>48876650.jpg</PackageIcon>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net5|x64'">
+	  <PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	 
+ 
+
+	<ItemGroup>
+		<Compile Update="TaosCommand.cs" />
+
+		<Compile Update="TaosConnection.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\docs\48876650.jpg">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+		<None Include="..\..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	</ItemGroup>
+</Project>

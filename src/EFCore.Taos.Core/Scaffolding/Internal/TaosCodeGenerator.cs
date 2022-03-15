@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Scaffolding.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Scaffolding.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

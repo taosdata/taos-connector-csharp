@@ -2,7 +2,7 @@
 //// Licensed under the MIT License, See License.txt in the project root for license information.
 
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     /// <summary>
     ///     Represents the type affinities used by columns in Taos tables.

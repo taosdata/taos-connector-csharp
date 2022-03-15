@@ -9,7 +9,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     /// <summary>
     ///     Represents a collection of Taos parameters.

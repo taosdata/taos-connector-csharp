@@ -4,7 +4,7 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     <para>

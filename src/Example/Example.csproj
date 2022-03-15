@@ -32,14 +32,14 @@
 
   <ItemGroup>
     <PackageReference Include="ConsoleTableExt" Version="3.1.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.9" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.3" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EFCore.Taos.Core\Maikebing.EntityFrameworkCore.Taos.csproj" />
-    <ProjectReference Include="..\Maikebing.Data.Taos\Maikebing.Data.Taos.csproj" />
+    <ProjectReference Include="..\EFCore.Taos.Core\IoTSharp.EntityFrameworkCore.Taos.csproj" />
+    <ProjectReference Include="..\IoTSharp.Data.Taos\IoTSharp.Data.Taos.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -8,7 +8,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     <para>
@@ -54,7 +54,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
         private static readonly LongTypeMapping _integer = new LongTypeMapping(BIGINTTypeName);
         private static readonly DoubleTypeMapping _real = new DoubleTypeMapping(DOUBLETypeName);
         private static readonly ByteArrayTypeMapping _blob = new ByteArrayTypeMapping(BINARYTypeName);
-        private static readonly StringTypeMapping _text = new StringTypeMapping(TextTypeName);
+        private static readonly StringTypeMapping _text = new StringTypeMapping(TextTypeName, System.Data.DbType.String);
 
         private readonly Dictionary<Type, RelationalTypeMapping> _clrTypeMappings
             = new Dictionary<Type, RelationalTypeMapping>

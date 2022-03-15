@@ -5,9 +5,9 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 15.0.26730.03
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CE6B50B2-34AE-44C9-940A-4E48C3E1B3BC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maikebing.Data.Taos", "src\Maikebing.Data.Taos\Maikebing.Data.Taos.csproj", "{EFD6587E-F538-4656-95E3-514EEA16E494}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IoTSharp.Data.Taos", "src\IoTSharp.Data.Taos\IoTSharp.Data.Taos.csproj", "{EFD6587E-F538-4656-95E3-514EEA16E494}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maikebing.EntityFrameworkCore.Taos", "src\EFCore.Taos.Core\Maikebing.EntityFrameworkCore.Taos.csproj", "{9D7B7248-3ADD-4DC3-A800-18CE10FEA752}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IoTSharp.EntityFrameworkCore.Taos", "src\EFCore.Taos.Core\IoTSharp.EntityFrameworkCore.Taos.csproj", "{9D7B7248-3ADD-4DC3-A800-18CE10FEA752}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{61AA7587-946B-4B2F-92C9-73D0BA670B97}"
 	ProjectSection(SolutionItems) = preProject
@@ -22,7 +22,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example", "src\Example\Exam
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{B24685BC-E919-46BE-ADE8-52AC8697A1F1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maikebing.HealthChecks.Taos", "src\Maikebing.HealthChecks.Taos\Maikebing.HealthChecks.Taos.csproj", "{61524D14-E365-4D00-A058-479AAE4D2B49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IoTSharp.HealthChecks.Taos", "src\IoTSharp.HealthChecks.Taos\IoTSharp.HealthChecks.Taos.csproj", "{61524D14-E365-4D00-A058-479AAE4D2B49}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{1F3895A2-ED79-499F-A6A1-3F88A3D8D7F7}"
 EndProject

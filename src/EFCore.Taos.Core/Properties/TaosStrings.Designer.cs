@@ -8,7 +8,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -68,7 +68,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Internal
     }
 }
 
-namespace Maikebing.EntityFrameworkCore.Taos.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

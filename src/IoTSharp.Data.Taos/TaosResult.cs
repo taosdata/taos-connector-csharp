@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     public class TaosErrorResult
     {

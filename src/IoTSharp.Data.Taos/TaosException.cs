@@ -5,7 +5,7 @@ using System;
 using System.Data.Common;
 using TDengineDriver;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     /// <summary>
     ///     Represents a Taos error.

@@ -5,7 +5,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     // TODO: Truncate to specified size
     // TODO: Infer type and size from value

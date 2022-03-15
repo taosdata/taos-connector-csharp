@@ -3,7 +3,7 @@
 
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Maikebing.EntityFrameworkCore.Taos.Metadata.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Metadata.Internal;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore

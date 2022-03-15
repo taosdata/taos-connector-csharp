@@ -5,7 +5,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     /// <summary>
     ///     Represents a transaction made against a Taos database.
@@ -19,18 +19,8 @@ namespace Maikebing.Data.Taos
 
         internal TaosTransaction(TaosConnection connection, IsolationLevel isolationLevel)
         {
-             
-
             _connection = connection;
             _isolationLevel = isolationLevel;
-
-            
-
-            //connection.ExecuteNonQuery(
-            //    IsolationLevel == IsolationLevel.Serializable
-            //        ? "BEGIN IMMEDIATE;"
-            //        : "BEGIN;");
-          
         }
 
         /// <summary>
@@ -110,18 +100,11 @@ namespace Maikebing.Data.Taos
 
         private void RollbackInternal()
         {
-            //if (!_externalRollback)
-            //{
-            //    raw.Taos3_rollback_hook(_connection.Handle, null, null);
-            //    _connection.ExecuteNonQuery("ROLLBACK;");
-            //}
-
             Complete();
         }
 
         private void RollbackExternal(object userData)
         {
-            //raw.Taos3_rollback_hook(_connection.Handle, null, null);
             _externalRollback = true;
         }
     }

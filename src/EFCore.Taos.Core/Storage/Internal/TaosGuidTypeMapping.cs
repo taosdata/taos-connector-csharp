@@ -6,7 +6,7 @@ using System.Data;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

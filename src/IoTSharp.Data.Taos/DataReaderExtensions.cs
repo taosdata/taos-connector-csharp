@@ -5,7 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     public static class DataReaderExtensions
     {

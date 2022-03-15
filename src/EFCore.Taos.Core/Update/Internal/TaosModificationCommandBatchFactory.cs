@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Update;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Update.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Update.Internal
 {
     /// <summary>
     ///     <para>

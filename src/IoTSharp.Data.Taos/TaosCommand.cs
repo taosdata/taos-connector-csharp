@@ -15,7 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TDengineDriver;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     /// <summary>
     ///     Represents a SQL statement to be executed against a Taos database.
@@ -24,7 +24,7 @@ namespace Maikebing.Data.Taos
     {
         private readonly Lazy<TaosParameterCollection> _parameters = new Lazy<TaosParameterCollection>(
             () => new TaosParameterCollection());
-
+        private readonly DateTime _dt1970;
         private TaosConnection _connection;
         private string _commandText;
         private IntPtr _taos =>_connection._taos;
@@ -33,6 +33,7 @@ namespace Maikebing.Data.Taos
         /// </summary>
         public TaosCommand()
         {
+            _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         }
 
         /// <summary>
@@ -244,6 +245,35 @@ namespace Maikebing.Data.Taos
         public new virtual TaosDataReader ExecuteReader()
             => ExecuteReader(CommandBehavior.Default);
 
+
+        internal long GetDateTimeFrom(DateTime dt,IntPtr _taos)
+        {
+            var val = dt.ToUniversalTime().Ticks - _dt1970.Ticks;
+            //double tsp;
+            var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taos);
+            switch (_dateTimePrecision)
+            {
+                /*
+                * ticks为100纳秒，必须乘以10才能达到微秒级的区分度
+                * 1秒s    = 1000毫秒ms
+                * 1毫秒ms = 1000微秒us
+                * 1微秒us = 1000纳秒ns
+                * 因此， 1毫秒ms = 1000000纳秒ns = 10000ticks
+                */
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
+                    val *= 100;
+                    break;
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
+                    val /= 10;
+                    break;
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MILLI:
+                default:
+                    val /= 10000;
+                    break;
+            }
+            return val;
+        }
+
         /// <summary>
         ///     Executes the <see cref="CommandText" /> against the database and returns a data reader.
         /// </summary>
@@ -278,7 +308,7 @@ namespace Maikebing.Data.Taos
                     throw new InvalidOperationException($"CallRequiresOpenConnection{nameof(ExecuteReader)}");
                 }
             }
-           if (!_connection.SelectedDataBase)
+            if (!_connection.SelectedDataBase)
             {
                 _connection.ChangeDatabase(_connection.Database);
             }
@@ -288,8 +318,7 @@ namespace Maikebing.Data.Taos
                 throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(ExecuteReader)}");
             }
 
-         
-            var unprepared=false; 
+            var unprepared = false;
             TaosDataReader dataReader = null;
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
             try
@@ -297,76 +326,115 @@ namespace Maikebing.Data.Taos
 #if DEBUG
                 Debug.WriteLine($"_commandText:{_commandText}");
 #endif
-                var _endcommandtext = _commandText;
-                if (  _parameters.IsValueCreated /*&& _commandText?.ToLower().TrimStart().StartsWith("insert")==true*/)
-                {
-                    var pms = _parameters.Value;
-                    for (int i = 0; i < pms.Count; i++)
-                    {
-                        var tp = pms[i];
 
-                        switch (TypeInfo.GetTypeCode(tp.Value?.GetType()))
+                Task<IntPtr> code = null;
+                bool isok = false;
+                if (_parameters.IsValueCreated)
+                {
+                    var stmt = TDengine.StmtInit(_taos);
+                    if (stmt == IntPtr.Zero)
+                    {
+                        int res = TDengine.StmtPrepare(stmt, _commandText);
+                        if (res == 0)
                         {
-                            case TypeCode.Boolean:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName,((tp.Value as bool?).GetValueOrDefault().ToString().ToLower()));
-                                break;
-                            case TypeCode.Byte:
-                            case TypeCode.Char:
-                            case TypeCode.SByte:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{tp.Value}");
-                                break;
-                            case TypeCode.DateTime:
-                                var t0 = tp.Value as DateTime?;
-                                if (!t0.HasValue)
-                                {
-                                    throw new ArgumentException($"InvalidArgumentOfDateTime{tp.Value}");
-                                }
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"'{t0.Value:yyyy-MM-dd HH:mm:ss.ffffff}'");
-                                break;
-                            case TypeCode.DBNull:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"");
-                                break;
-                            case TypeCode.Single:
-                            case TypeCode.Decimal:
-                            case TypeCode.Double:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as double?).GetValueOrDefault()}");
-                                break;
-                            case TypeCode.Int16:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as short?).GetValueOrDefault()}");
-                                break;
-                            case TypeCode.Int32:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as int ?).GetValueOrDefault()}");
-                                break;
-                            case TypeCode.Int64:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as long?).GetValueOrDefault()}");
-                                break;
-                            case TypeCode.UInt16:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as ushort?).GetValueOrDefault()}");
-                                break;
-                            case TypeCode.UInt32:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as uint ?).GetValueOrDefault()}");
-                                break;
-                            case TypeCode.UInt64:
-                                _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as ulong?).GetValueOrDefault()}");
-                                break;
-                            case TypeCode.String:
-                            default:
-                                    _endcommandtext = _endcommandtext.Replace(tp.ParameterName, $"{(tp.Value as string)}");
-                                break;
+                            Console.WriteLine("stmt prepare success");
                         }
-                     
+                        else
+                        {
+
+                            Console.WriteLine("stmt prepare failed " + TDengine.StmtErrorStr(stmt));
+
+                        }
+                        var pms = _parameters.Value;
+                        List<TAOS_BIND> binds = new List<TAOS_BIND>();
+                        for (int i = 0; i < pms.Count; i++)
+                        {
+                            var tp = pms[i];
+                            switch (TypeInfo.GetTypeCode(tp.Value?.GetType()))
+                            {
+                                case TypeCode.Boolean:
+                                    binds.Add(TaosBind.BindBool((tp.Value as bool?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.Char:
+                                    binds.Add(TaosBind.BindNchar(tp.Value as string));
+                                    break;
+                                case TypeCode.Byte:
+
+                                case TypeCode.SByte:
+                                    binds.Add(TaosBind.BindUTinyInt((tp.Value as byte?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.DateTime:
+                                    var t0 = tp.Value as DateTime?;
+                                    if (!t0.HasValue)
+                                    {
+                                        throw new ArgumentException($"InvalidArgumentOfDateTime{tp.Value}");
+                                    }
+                                    binds.Add(TaosBind.BindTimestamp(GetDateTimeFrom(t0.GetValueOrDefault(), _taos)));
+                                    break;
+                                case TypeCode.DBNull:
+                                    binds.Add(TaosBind.BindNil());
+                                    break;
+                                case TypeCode.Single:
+                                    binds.Add(TaosBind.BindFloat((tp.Value as float?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.Decimal:
+                                case TypeCode.Double:
+                                    binds.Add(TaosBind.BindDouble((tp.Value as double?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.Int16:
+                                    binds.Add(TaosBind.BindSmallInt((tp.Value as short?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.Int32:
+                                    binds.Add(TaosBind.BindInt((tp.Value as int?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.Int64:
+                                    binds.Add(TaosBind.BindBigInt((tp.Value as long?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.UInt16:
+                                    binds.Add(TaosBind.BindSmallInt((tp.Value as short?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.UInt32:
+                                    binds.Add(TaosBind.BindUInt((tp.Value as uint?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.UInt64:
+                                    binds.Add(TaosBind.BindUBigInt((tp.Value as ulong?).GetValueOrDefault()));
+                                    break;
+                                case TypeCode.String:
+                                default:
+                                    binds.Add(TaosBind.BindBinary(tp.Value as string));
+                                    break;
+                            }
+                        }
+                        int ret = TDengine.StmtBindParam(stmt, binds.ToArray());
+                        if (ret == 0)
+                        {
+                            code = Task.Run(() =>
+                            {
+                                int re = TDengine.StmtExecute(stmt);
+                                IntPtr res = TDengine.StmtUseResult(stmt);
+                                return res;
+                            });
+                            isok = code.Wait(TimeSpan.FromSeconds(CommandTimeout));
+                            if (isok == false)
+                            {
+                                string error = TDengine.StmtErrorStr(stmt);
+                                TDengine.StmtClose(stmt);
+                                TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = error });
+                            }
+                        }
+                        TaosBind.FreeTaosBind(binds.ToArray());
                     }
                 }
                 else
                 {
-                    _endcommandtext = _commandText;
+                    code = Task.Run(() => TDengine.Query(_taos, _commandText));
+                    isok = code.Wait(TimeSpan.FromSeconds(CommandTimeout));
+                    if (isok == false)
+                    {
+                        TDengine.StopQuery(_taos);
+                    }
                 }
-                var code = Task.Run(() => TDengine.Query(_taos, _endcommandtext));
-                bool isok = code.Wait(TimeSpan.FromSeconds(CommandTimeout));
-                if (isok == false)
-                {
-                    TDengine.StopQuery(_taos);
-                }
+
                 if (isok && TDengine.ErrorNo(code.Result) == 0)
                 {
                     List<TDengineMeta> metas = TDengine.FetchFields(code.Result);
@@ -379,13 +447,13 @@ namespace Maikebing.Data.Taos
                     }
                     dataReader = new TaosDataReader(this, metas, closeConnection, code.Result);
                 }
-                else if (isok &&      TDengine.ErrorNo(code.Result)  != 0)
+                else if (isok && TDengine.ErrorNo(code.Result) != 0)
                 {
-                    TaosException.ThrowExceptionForRC(_endcommandtext, new TaosErrorResult() { Code = TDengine.ErrorNo(code.Result), Error = TDengine.Error(code.Result) });
+                    TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = TDengine.ErrorNo(code.Result), Error = TDengine.Error(code.Result) });
                 }
                 else if (isok && code.Result == IntPtr.Zero)
                 {
-                    TaosException.ThrowExceptionForRC(_endcommandtext, new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = TDengine.Error(_taos) });
+                    TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = TDengine.Error(_taos) });
                 }
                 else if (code.Status == TaskStatus.Running || !isok)
                 {
@@ -401,7 +469,7 @@ namespace Maikebing.Data.Taos
                 }
                 else
                 {
-                    TaosException.ThrowExceptionForRC(_endcommandtext, new TaosErrorResult() { Code = -10007, Error = $"Unknow Exception" });
+                    TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = -10007, Error = $"Unknow Exception" });
                 }
             }
             catch when (unprepared)

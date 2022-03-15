@@ -1,7 +1,7 @@
 // Copyright (c)  Maikebing. All rights reserved.
 // Licensed under the MIT License, See License.txt in the project root for license information.
 
-namespace Maikebing.EntityFrameworkCore.Taos.Metadata.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Metadata.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

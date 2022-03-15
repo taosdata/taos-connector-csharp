@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Internal
 {
     /// <summary>
     ///     <para>

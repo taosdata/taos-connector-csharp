@@ -5,11 +5,11 @@ using System;
 using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
-using Maikebing.Data.Taos;
+using IoTSharp.Data.Taos;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     <para>

@@ -5,7 +5,7 @@ using System;
 using System.Reflection;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Maikebing.EntityFrameworkCore.Taos.Infrastructure.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Infrastructure.Internal;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore

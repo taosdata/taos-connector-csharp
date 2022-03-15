@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Query.Internal
 {
     public class TaosDateTimeAddTranslator : IMethodCallTranslator
     {

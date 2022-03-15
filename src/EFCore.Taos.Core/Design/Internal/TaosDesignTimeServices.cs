@@ -4,13 +4,13 @@
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Scaffolding;
-using Maikebing.EntityFrameworkCore.Taos.Diagnostics.Internal;
-using Maikebing.EntityFrameworkCore.Taos.Scaffolding.Internal;
-using Maikebing.EntityFrameworkCore.Taos.Storage.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Diagnostics.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Scaffolding.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Design.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Design.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

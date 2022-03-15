@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Query.Internal
 {
     public class TaosMathTranslator : IMethodCallTranslator
     {

@@ -4,11 +4,11 @@
 using System;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Maikebing.EntityFrameworkCore.Taos.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Migrations.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Migrations.Internal
 {
     /// <summary>
     ///     <para>

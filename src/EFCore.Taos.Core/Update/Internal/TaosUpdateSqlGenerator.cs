@@ -5,15 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using JetBrains.Annotations;
-using Maikebing.Data.Taos;
-using Maikebing.EntityFrameworkCore.Taos.Internal;
-using Maikebing.EntityFrameworkCore.Taos.Storage.Internal;
+using IoTSharp.Data.Taos;
+using IoTSharp.EntityFrameworkCore.Taos.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Update;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Update.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Update.Internal
 {
     /// <summary>
     ///     <para>
@@ -41,41 +41,17 @@ namespace Maikebing.EntityFrameworkCore.Taos.Update.Internal
             : base(dependencies)
         {
         }
-      
-     
-   
-        protected override void AppendDeleteCommand(StringBuilder commandStringBuilder, string name, string schema, IReadOnlyList<ColumnModification> conditionOperations)
+
+        protected override void AppendDeleteCommand(StringBuilder commandStringBuilder, string name, string schema, IReadOnlyList<IColumnModification> conditionOperations)
         {
-            base.AppendDeleteCommand(commandStringBuilder, name, schema , conditionOperations);
+            base.AppendDeleteCommand(commandStringBuilder, name, schema, conditionOperations);
         }
+    
         protected override void AppendDeleteCommandHeader(StringBuilder commandStringBuilder, string name, string schema)
         {
             base.AppendDeleteCommandHeader(commandStringBuilder, name, schema);
         }
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        protected override void AppendIdentityWhereCondition(StringBuilder commandStringBuilder, ColumnModification columnModification)
-        {
-            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
-            Check.NotNull(columnModification, nameof(columnModification));
-
-            SqlGenerationHelper.DelimitIdentifier(commandStringBuilder, "rowid");
-            commandStringBuilder.Append(" = ")
-                .Append("last_insert_rowid()");
-        }
-
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        protected override ResultSetMapping AppendSelectAffectedCountCommand(
-            StringBuilder commandStringBuilder, string name, string schema, int commandPosition)
+        protected override ResultSetMapping AppendSelectAffectedCommand(StringBuilder commandStringBuilder, string name, string schema, IReadOnlyList<IColumnModification> readOperations, IReadOnlyList<IColumnModification> conditionOperations, int commandPosition)
         {
             Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
             Check.NotEmpty(name, nameof(name));
@@ -87,7 +63,15 @@ namespace Maikebing.EntityFrameworkCore.Taos.Update.Internal
 
             return ResultSetMapping.LastInResultSet;
         }
-
+        protected override void AppendIdentityWhereCondition(StringBuilder commandStringBuilder, IColumnModification columnModification)
+        {
+       
+            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
+            Check.NotNull(columnModification, nameof(columnModification));
+            SqlGenerationHelper.DelimitIdentifier(commandStringBuilder, "rowid");
+            commandStringBuilder.Append(" = ")
+                .Append("last_insert_rowid()");
+        }
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -111,5 +95,7 @@ namespace Maikebing.EntityFrameworkCore.Taos.Update.Internal
         {
             throw new NotSupportedException(TaosStrings.SequencesNotSupported);
         }
+
+    
     }
 }

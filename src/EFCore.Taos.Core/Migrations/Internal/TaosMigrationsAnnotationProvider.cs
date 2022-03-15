@@ -8,12 +8,12 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Maikebing.EntityFrameworkCore.Taos.Metadata.Internal;
-using Maikebing.EntityFrameworkCore.Taos.Storage.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Metadata.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Storage.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Migrations.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Migrations.Internal
 {
     /// <summary>
     ///     <para>

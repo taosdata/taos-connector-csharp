@@ -9,13 +9,13 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
-using Maikebing.EntityFrameworkCore.Taos.Internal;
-using Maikebing.EntityFrameworkCore.Taos.Metadata.Internal;
-using Maikebing.EntityFrameworkCore.Taos.Storage.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Metadata.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
-using Maikebing.Data.Taos;
+using IoTSharp.Data.Taos;
 using System.Text;
 
 namespace Microsoft.EntityFrameworkCore.Migrations

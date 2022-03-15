@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using TDengineDriver;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     /// <summary>
     ///     Provides methods for reading the result of a command executed against a Taos database.
@@ -404,6 +404,9 @@ namespace Maikebing.Data.Taos
         /// <returns>The value of the column.</returns>
         public override string GetString(int ordinal) => (string)GetValue(ordinal);
 
+        public  System.Text.Json.JsonDocument GetJsonDocument(int ordinal) => System.Text.Json.JsonDocument.Parse(GetString(ordinal));
+        public  Newtonsoft.Json.Linq.JToken GetJToken(int ordinal) => Newtonsoft.Json.Linq.JToken.Parse(GetString(ordinal));
+      
         /// <summary>
         ///     Reads a stream of bytes from the specified column. Not supported.
         /// </summary>
@@ -607,6 +610,7 @@ namespace Maikebing.Data.Taos
                             result = GetDateTimeFrom(data);
                         }
                         break;
+                    case TDengineDataType.TSDB_DATA_TYPE_JSONTAG:
                     case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                         {
                             string v10 = string.Empty;
@@ -627,8 +631,10 @@ namespace Maikebing.Data.Taos
                             result = v10;
                         }
                         break;
+                    case TDengineDataType.TSDB_DATA_TYPE_NULL:
+                        result = DBNull.Value;
+                        break;
                 }
-
             }
             else
             {
@@ -651,7 +657,7 @@ namespace Maikebing.Data.Taos
                 * 1微秒us = 1000纳秒ns
                 * 因此， 1毫秒ms = 1000000纳秒ns = 10000ticks
                 */
-                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
+                case   TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
                     val /= 100;
                     break;
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
@@ -665,6 +671,7 @@ namespace Maikebing.Data.Taos
             var v9 = _dt1970.AddTicks(val);
             return v9.ToLocalTime();
         }
+  
 
         /// <summary>
         ///     Gets the column values of the current row.

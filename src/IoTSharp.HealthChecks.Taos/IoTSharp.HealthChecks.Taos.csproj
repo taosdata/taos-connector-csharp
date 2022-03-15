@@ -11,18 +11,14 @@
     <RepositoryUrl>https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>taos;HealthChecks;TDengine</PackageTags>
-    <Copyright>Copyright 2020 Maikebing</Copyright>
+    <Copyright>Copyright 2022 Maikebing</Copyright>
     <Description>提供涛思时序数据库的健康检查</Description>
     <Authors>maikebing</Authors>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="6.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Maikebing.Data.Taos\Maikebing.Data.Taos.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="6.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="6.0.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +30,10 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IoTSharp.Data.Taos\IoTSharp.Data.Taos.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,7 +4,7 @@
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Query.Internal
 {
     public class TaosQueryableMethodTranslatingExpressionVisitorFactory : IQueryableMethodTranslatingExpressionVisitorFactory
     {

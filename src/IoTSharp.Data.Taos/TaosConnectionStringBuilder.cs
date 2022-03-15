@@ -10,7 +10,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     /// <summary>
     ///     Provides a simple way to create and manage the contents of connection strings used by

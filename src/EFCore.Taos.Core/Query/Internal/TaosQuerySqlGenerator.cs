@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Query.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Query.Internal
 {
     public class TaosQuerySqlGenerator : QuerySqlGenerator
     {

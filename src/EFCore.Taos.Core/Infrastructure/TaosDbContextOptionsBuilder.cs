@@ -2,7 +2,7 @@
 // Licensed under the MIT License, See License.txt in the project root for license information.
 
 using JetBrains.Annotations;
-using Maikebing.EntityFrameworkCore.Taos.Infrastructure.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Infrastructure.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Infrastructure
 {

@@ -10,18 +10,18 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
-using Maikebing.Data.Taos;
+using IoTSharp.Data.Taos;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
-using Maikebing.EntityFrameworkCore.Taos.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Scaffolding.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Scaffolding.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

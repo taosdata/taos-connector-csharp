@@ -1,11 +1,11 @@
-﻿using Maikebing.Data.Taos;
+﻿using IoTSharp.Data.Taos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Maikebing.HealthChecks.Taos
+namespace IoTSharp.HealthChecks.Taos
 {
     public class TaosHealthCheck
          : IHealthCheck

@@ -4,9 +4,9 @@
 using System.Data.Common;
 using System.Linq;
 using JetBrains.Annotations;
-using Maikebing.Data.Taos;
+using IoTSharp.Data.Taos;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Maikebing.EntityFrameworkCore.Taos.Infrastructure.Internal;
+using IoTSharp.EntityFrameworkCore.Taos.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Diagnostics;
 
-namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
+namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
 {
     /// <summary>
     ///     <para>
@@ -80,10 +80,9 @@ namespace Maikebing.EntityFrameworkCore.Taos.Storage.Internal
         public virtual ITaosRelationalConnection CreateReadOnlyConnection()
         {
             var connectionStringBuilder = new TaosConnectionStringBuilder(ConnectionString);
-
             var contextOptions = new DbContextOptionsBuilder().UseTaos(connectionStringBuilder.ToString()).Options;
-
-            return new TaosRelationalConnection(Dependencies.With(contextOptions), _rawSqlCommandBuilder);
+           // Dependencies.CurrentContext. = contextOptions;
+            return new TaosRelationalConnection(Dependencies, _rawSqlCommandBuilder);
         }
         public override bool Open(bool errorsExpected = false)
         {

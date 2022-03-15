@@ -13,7 +13,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using TDengineDriver;
 
-namespace Maikebing.Data.Taos
+namespace IoTSharp.Data.Taos
 {
     /// <summary>
     ///     Represents a connection to a Taos database.
@@ -52,8 +52,8 @@ namespace Maikebing.Data.Taos
                     configDir = "C:/TDengine/cfg";
                 }
 #endif
-                TDengine.Options((int)TDengineInitOption.TDDB_OPTION_CONFIGDIR, this.configDir);
-                TDengine.Options((int)TDengineInitOption.TDDB_OPTION_SHELL_ACTIVITY_TIMER, "60");
+                TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR , this.configDir);
+                TDengine.Options((int)TDengineInitOption.TSDB_OPTION_SHELL_ACTIVITY_TIMER  , "60");
                 TDengine.Init();
                 Process.GetCurrentProcess().Disposed += (object sender, EventArgs e) =>
                     {
@@ -362,7 +362,7 @@ namespace Maikebing.Data.Taos
         {
             if (!SelectedDataBase   ||   _nowdatabase!= databaseName)
             {
-                int result = TDengine.SelectDatabase(_taos, databaseName);
+                int result = TDengine. SelectDatabase(_taos, databaseName);
                 if (result == 0)
                 {
                     _nowdatabase = databaseName;
