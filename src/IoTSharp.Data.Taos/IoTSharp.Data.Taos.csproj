@@ -46,13 +46,6 @@
 		<PackageIcon>48876650.jpg</PackageIcon>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net5|x64'">
-	  <PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
-
-	 
- 
-
 	<ItemGroup>
 		<Compile Update="TaosCommand.cs" />
 

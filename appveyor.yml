@@ -1,5 +1,5 @@
 version: 2.0.{build}
-image: Visual Studio 2019
+image: Visual Studio 2022
 assembly_info:
   patch: true
   file: '**\AssemblyInfo.*'
@@ -17,9 +17,9 @@ dotnet_csproj:
 build_script:
 - cmd: dotnet build  -c Release EFCore.Taos.sln
 artifacts:
-- path: src\Maikebing.Data.Taos\bin\Release\Maikebing.Data.Taos.*.nupkg
-  name: Maikebing.Data.Taos
-- path: src\EFCore.Taos.Core\bin\Release\Maikebing.EntityFrameworkCore.Taos.*.nupkg
-  name: Maikebing.EntityFrameworkCore.Taos
-- path: src\Maikebing.HealthChecks.Taos\bin\Release\*.nupkg
-  name: Maikebing.HealthChecks.Taos
+- path: src\IoTSharp.Data.Taos\bin\Release\IoTSharp.Data.Taos.*.nupkg
+  name: IoTSharp.Data.Taos
+- path: src\EFCore.Taos.Core\bin\Release\IoTSharp.EntityFrameworkCore.Taos.*.nupkg
+  name: IoTSharp.EntityFrameworkCore.Taos
+- path: src\IoTSharp.HealthChecks.Taos\bin\Release\*.nupkg
+  name: IoTSharp.HealthChecks.Taos

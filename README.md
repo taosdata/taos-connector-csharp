@@ -1,4 +1,4 @@
-# Maikebing.EntityFrameworkCore.Taos
+# IoTSharp.EntityFrameworkCore.Taos
 
 ## 项目简介
 
@@ -6,25 +6,25 @@
 Entity, Framework, EF, Core, Data, O/RM, entity-framework-core,TDengine
 --
 
-Maikebing.Data.Taos  是一个采用TDengine的原生动态库构建的ADO.Net提供程序。 它将允许你通过.Net Core 访问TDengine 数据库。
+IoTSharp.Data.Taos  是一个采用TDengine的原生动态库构建的ADO.Net提供程序。 它将允许你通过.Net Core 访问TDengine 数据库。
 
 ---
 
-Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于Maikebing.Data.Taos实现。 
+IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于IoTSharp.Data.Taos实现。 
 
 
 ---
 
-[![Build status](https://ci.appveyor.com/api/projects/status/8krjmvsoiilo2r10?svg=true)](https://ci.appveyor.com/project/MaiKeBing/maikebing-entityframeworkcore-taos)
-[![License](https://img.shields.io/github/license/maikebing/Maikebing.EntityFrameworkCore.Taos.svg)](https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/blob/master/LICENSE)
+[![Build status](https://ci.appveyor.com/api/projects/status/8krjmvsoiilo2r10?svg=true)](https://ci.appveyor.com/project/iotsharp/entityframeworkcore-taos)
+[![License](https://img.shields.io/github/license/iotsharp/iotsharp.EntityFrameworkCore.Taos.svg)](https://github.com/maikebing/IoTSharp.EntityFrameworkCore.Taos/blob/master/LICENSE)
 
 
 
 | NuGet名称    | 版本|下载量| 说明                                                     |
 | ----------- | --------  | --------  | ------------------------------------------------------------ |
-| Maikebing.Data.Taos |[![Maikebing.Data.Taos](https://img.shields.io/nuget/v/Maikebing.Data.Taos.svg)](https://www.nuget.org/packages/Maikebing.Data.Taos/) |![Nuget](https://img.shields.io/nuget/dt/Maikebing.Data.Taos) |ADO.Net Core 基础组件
-| Maikebing.EntityFrameworkCore.Taos |[![Maikebing.EntityFrameworkCore.Taos](https://img.shields.io/nuget/v/Maikebing.EntityFrameworkCore.Taos.svg)](https://www.nuget.org/packages/Maikebing.EntityFrameworkCore.Taos/) |![Nuget](https://img.shields.io/nuget/dt/Maikebing.EntityFrameworkCore.Taos)     | 供EF Core使用的组件
-| Maikebing.HealthChecks.Taos |[![Maikebing.HealthChecks.Taos](https://img.shields.io/nuget/v/Maikebing.HealthChecks.Taos.svg)](https://www.nuget.org/packages/Maikebing.HealthChecks.Taos/)  |  ![Nuget](https://img.shields.io/nuget/dt/Maikebing.HealthChecks.Taos)| 供Asp.Net Core 使用的健康检查组件
+| IoTSharp.Data.Taos |[![Maikebing.Data.Taos](https://img.shields.io/nuget/v/iotsharp.Data.Taos.svg)](https://www.nuget.org/packages/IoTSharp.Data.Taos/) |![Nuget](https://img.shields.io/nuget/dt/IoTSharp.Data.Taos) |ADO.Net Core 基础组件
+| IoTSharp.EntityFrameworkCore.Taos |[![IoTSharp.EntityFrameworkCore.Taos](https://img.shields.io/nuget/v/iotsharp.EntityFrameworkCore.Taos.svg)](https://www.nuget.org/packages/IoTSharp.EntityFrameworkCore.Taos/) |![Nuget](https://img.shields.io/nuget/dt/IoTSharp.EntityFrameworkCore.Taos)     | 供EF Core使用的组件
+| IoTSharp.HealthChecks.Taos |[![IoTSharp.HealthChecks.Taos](https://img.shields.io/nuget/v/IoTSharp.HealthChecks.Taos.svg)](https://www.nuget.org/packages/IoTSharp.HealthChecks.Taos/)  |  ![Nuget](https://img.shields.io/nuget/dt/IoTSharp.HealthChecks.Taos)| 供Asp.Net Core 使用的健康检查组件
 
 
 ---
