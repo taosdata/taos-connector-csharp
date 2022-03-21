@@ -81,13 +81,22 @@ namespace TaosADODemo
                 connection.ChangeDatabase("IoTSharp");
                 connection.CreateCommand("CREATE STABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
                 //connection.CreateCommand($"CREATE TABLE dev_Thermometer USING telemetrydata TAGS (\"Temperature\")").ExecuteNonQuery();
-                var devid = $"{Guid.NewGuid():N}";
-                UploadTelemetryData(connection, devid, "Temperature", 999);
-                UploadTelemetryData(connection,devid,   "Humidity", 888);
+                var devid1 = $"{Guid.NewGuid():N}";
                 var devid2 = $"{Guid.NewGuid():N}";
-                UploadTelemetryData(connection, devid2, "Temperature", 777);
-                UploadTelemetryData(connection, devid2, "Humidity", 666);
+                UploadTelemetryData(connection, devid1, "1#air-compressor-two-level-discharge-temperature", 2000);
+                UploadTelemetryData(connection, devid2, "1#air-compressor-load-rate", 2000);
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
+                var reader3 = connection.CreateCommand("select * from telemetrydata").ExecuteReader();
+
+                List<string> list = new List<string>();
+                while (reader3.Read())
+                {
+                    list.Add(reader3.GetString("keyname"));
+                }
+
+                var k = list.GroupBy(e => e);
+                var dic = k.ToDictionary(en => en.Key, en => en.ToList());
+
                 ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
 
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
@@ -125,8 +134,12 @@ namespace TaosADODemo
 
         }
 
+
         static void UploadTelemetryData(  TaosConnection connection, string devid, string keyname, int count)
         {
+            for (int i = 0; i < count; i++)
+            {
+                connection.CreateCommand($"INSERT INTO device_{devid} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\")  (ts,value_type,value_long) values (now,2,{i});").ExecuteNonQuery();
             for (int i = 0; i < count; i++)
             {
                 connection.CreateCommand($"INSERT INTO device_{devid}_{keyname} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
