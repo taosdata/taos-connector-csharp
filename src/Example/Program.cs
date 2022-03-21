@@ -20,7 +20,7 @@ namespace TaosADODemo
             string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             var builder = new TaosConnectionStringBuilder()
             {
-                DataSource = "airleaderserver",
+                DataSource = "taos",
                 DataBase = database,
                 Username = "root",
                 Password = "taosdata",
