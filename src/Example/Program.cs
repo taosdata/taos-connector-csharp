@@ -139,9 +139,6 @@ namespace TaosADODemo
         {
             for (int i = 0; i < count; i++)
             {
-                connection.CreateCommand($"INSERT INTO device_{devid} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\")  (ts,value_type,value_long) values (now,2,{i});").ExecuteNonQuery();
-            for (int i = 0; i < count; i++)
-            {
                 connection.CreateCommand($"INSERT INTO device_{devid}_{keyname} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
             }
         }
