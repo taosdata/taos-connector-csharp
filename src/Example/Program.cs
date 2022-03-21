@@ -79,13 +79,13 @@ namespace TaosADODemo
                 connection.CreateCommand("DROP DATABASE IF EXISTS  IoTSharp").ExecuteNonQuery();
                 connection.CreateCommand("CREATE DATABASE IoTSharp KEEP 365 DAYS 10 BLOCKS 4;").ExecuteNonQuery();
                 connection.ChangeDatabase("IoTSharp");
-                connection.CreateCommand("CREATE STABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
-                //connection.CreateCommand($"CREATE TABLE dev_Thermometer USING telemetrydata TAGS (\"Temperature\")").ExecuteNonQuery();
+                connection.CreateCommand("CREATE TABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
                 var devid1 = $"{Guid.NewGuid():N}";
                 var devid2 = $"{Guid.NewGuid():N}";
                 UploadTelemetryData(connection, devid1, "1#air-compressor-two-level-discharge-temperature", 2000);
                 UploadTelemetryData(connection, devid2, "1#air-compressor-load-rate", 2000);
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
+                ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 var reader3 = connection.CreateCommand("select * from telemetrydata").ExecuteReader();
 
                 List<string> list = new List<string>();
@@ -96,9 +96,12 @@ namespace TaosADODemo
 
                 var k = list.GroupBy(e => e);
                 var dic = k.ToDictionary(en => en.Key, en => en.ToList());
-
-                ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
-
+                dic.Keys.ToList().ForEach(k =>
+               {
+                   Console.WriteLine(k);
+                   ConsoleTableBuilder.From(dic[k]).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine(TableAligntment.Center);
+               });
+            
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
 
                 connection.Close();
@@ -139,7 +142,7 @@ namespace TaosADODemo
         {
             for (int i = 0; i < count; i++)
             {
-                connection.CreateCommand($"INSERT INTO device_{devid}_{keyname} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
+                connection.CreateCommand($"INSERT INTO device_{devid} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
             }
         }
     }
