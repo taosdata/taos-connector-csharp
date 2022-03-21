@@ -16,7 +16,7 @@
 			Maikebing.Data.Taos.TaosParameter
 			Maikebing.Data.Taos.TaosTransaction
 		</Description>
-		<TargetFrameworks>net5;netstandard2.0;net45</TargetFrameworks>
+		<TargetFrameworks>net5;netstandard2.0</TargetFrameworks>
 
 		<PackageTags>Taos;Data;ADO.NET;Entity Framework,;EF; Core;Data O/RM,;entity-framework-core;TDengine</PackageTags>
 
