@@ -398,7 +398,7 @@ namespace IoTSharp.Data.Taos
                     {
                         TDengine.StopQuery(_taos);
                     }
-                    _affectRows = TDengine.AffectRows(_taos);
+                    _affectRows = TDengine.AffectRows(code.Result);
                 }
 
                 if (isok && code !=null && TDengine.ErrorNo(code.Result) == 0)
