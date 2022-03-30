@@ -32,7 +32,7 @@ namespace IoTSharp.Data.Taos
         private double _date_max_1970;
         private DateTime _dt1970;
 
-        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas, bool closeConnection, IntPtr res,int  recordsAffected,int fieldcount)
+        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas, bool closeConnection, IntPtr res, int recordsAffected, int fieldcount)
         {
             _taos = taosCommand.Connection._taos;
             _command = taosCommand;
@@ -84,7 +84,7 @@ namespace IoTSharp.Data.Taos
         {
             get
             {
-                return _recordsAffected;;
+                return _recordsAffected; ;
             }
         }
 
@@ -406,9 +406,9 @@ namespace IoTSharp.Data.Taos
         /// <returns>The value of the column.</returns>
         public override string GetString(int ordinal) => (string)GetValue(ordinal);
 
-        public  System.Text.Json.JsonDocument GetJsonDocument(int ordinal) => System.Text.Json.JsonDocument.Parse(GetString(ordinal));
-        public  Newtonsoft.Json.Linq.JToken GetJToken(int ordinal) => Newtonsoft.Json.Linq.JToken.Parse(GetString(ordinal));
-      
+        public System.Text.Json.JsonDocument GetJsonDocument(int ordinal) => System.Text.Json.JsonDocument.Parse(GetString(ordinal));
+        public Newtonsoft.Json.Linq.JToken GetJToken(int ordinal) => Newtonsoft.Json.Linq.JToken.Parse(GetString(ordinal));
+
         /// <summary>
         ///     Reads a stream of bytes from the specified column. Not supported.
         /// </summary>
@@ -503,7 +503,7 @@ namespace IoTSharp.Data.Taos
 
         }
 
-    
+
         private static bool IsUTF8Bytes(byte[] data)
         {
             int charByteCounter = 1; //计算当前正分析的字符应还有的字节数
@@ -543,6 +543,16 @@ namespace IoTSharp.Data.Taos
             }
             return true;
         }
+
+        private int GetContentLength(int ordinal)
+        {
+            IntPtr colLengthPrt = TDengine.FetchLengths(_taosResult);
+            int numOfFiled = TDengine.FieldCount(_taosResult);
+            int[] colLengthArr = new int[numOfFiled];
+            Marshal.Copy(colLengthPrt, colLengthArr, 0, numOfFiled);
+            return colLengthArr[ordinal];
+        }
+
         /// <summary>
         ///     Gets the value of the specified column.
         /// </summary>
@@ -604,7 +614,8 @@ namespace IoTSharp.Data.Taos
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_BINARY:
                         {
-                            result = Marshal.PtrToStringAnsi(data, meta.size)?.RemoveNull();
+                            string v8 = Marshal.PtrToStringUTF8(data, GetContentLength(ordinal));
+                            result = v8?.RemoveNull();
                         }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
@@ -616,11 +627,12 @@ namespace IoTSharp.Data.Taos
                     case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                         {
                             string v10 = string.Empty;
-                            if (meta.size > 0)// https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/issues/99
+                            int contentLength = GetContentLength(ordinal);
+                            if (contentLength > 0)// https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/issues/99
                             {
-                                byte[] bf = new byte[meta.size];
-                                Marshal.Copy(data, bf, 0, meta.size);
-                              
+                                byte[] bf = new byte[contentLength];
+                                Marshal.Copy(data, bf, 0, contentLength);
+
                                 if (IsUTF8Bytes(bf) || (bf[0] == 0xEF && bf[1] == 0xBB && bf[2] == 0xBF))
                                 {
                                     v10 = System.Text.Encoding.UTF8.GetString(bf)?.RemoveNull();
@@ -644,7 +656,7 @@ namespace IoTSharp.Data.Taos
             }
             return result;
         }
-    
+
         private DateTime GetDateTimeFrom(IntPtr data)
         {
             var val = Marshal.ReadInt64(data);
@@ -659,7 +671,7 @@ namespace IoTSharp.Data.Taos
                 * 1微秒us = 1000纳秒ns
                 * 因此， 1毫秒ms = 1000000纳秒ns = 10000ticks
                 */
-                case   TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
                     val /= 100;
                     break;
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
@@ -673,7 +685,7 @@ namespace IoTSharp.Data.Taos
             var v9 = _dt1970.AddTicks(val);
             return v9.ToLocalTime();
         }
-  
+
 
         /// <summary>
         ///     Gets the column values of the current row.
