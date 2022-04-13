@@ -255,7 +255,13 @@ namespace TDengineDriver
 
         public static List<TDengineMeta> FetchFields(IntPtr res)
         {
+            // const int fieldSize = 68;
+
             List<TDengineMeta> metas = new List<TDengineMeta>();
+            if (res == IntPtr.Zero)
+            {
+                return metas;
+            }
 
             int fieldCount = FieldCount(res);
             IntPtr fieldsPtr = taos_fetch_fields(res);
@@ -263,15 +269,14 @@ namespace TDengineDriver
             for (int i = 0; i < fieldCount; ++i)
             {
                 int offset = i * (int)TaosField.STRUCT_SIZE;
-#if NET45
-                taosField field = (taosField)Marshal.PtrToStructure(fieldsPtr + offset,typeof(taosField));
-#else 
-                taosField field = Marshal.PtrToStructure<taosField>(fieldsPtr + offset);
-#endif 
-                TDengineMeta meta = new TDengineMeta() { name = Encoding.Default.GetString(field.name)?.TrimEnd('\0'), size = field.bytes, type = field.type };
+                TDengineMeta meta = new TDengineMeta();
+                meta.name = Marshal.PtrToStringAnsi(fieldsPtr + offset);
+                meta.type = Marshal.ReadByte(fieldsPtr + offset + (int)TaosField.TYPE_OFFSET);
+                meta.size = Marshal.ReadInt16(fieldsPtr + offset + (int)TaosField.BYTES_OFFSET);
                 metas.Add(meta);
             }
             Marshal.FreeHGlobal(fieldsPtr);
+
             return metas;
         }
 
