@@ -238,10 +238,9 @@ namespace TDengineDriver
 
         static public IntPtr Query(IntPtr conn, string command)
         {
-            IntPtr res = IntPtr.Zero;
-
             IntPtr commandBuffer = Marshal.StringToCoTaskMemUTF8(command);
-            res = Query(conn, commandBuffer);
+            IntPtr res = Query(conn, commandBuffer);
+            Marshal.FreeCoTaskMem(commandBuffer);
             return res;
         }
 
@@ -272,7 +271,7 @@ namespace TDengineDriver
                 TDengineMeta meta = new TDengineMeta() { name = Encoding.Default.GetString(field.name)?.TrimEnd('\0'), size = field.bytes, type = field.type };
                 metas.Add(meta);
             }
-
+            Marshal.FreeHGlobal(fieldsPtr);
             return metas;
         }
 
@@ -486,7 +485,9 @@ namespace TDengineDriver
         static public string StmtErrorStr(IntPtr stmt)
         {
             IntPtr stmtErrPrt = StmtErrPtr(stmt);
-            return Marshal.PtrToStringAnsi(stmtErrPrt);
+            string result= Marshal.PtrToStringAnsi(stmtErrPrt);
+            Marshal.FreeHGlobal(stmtErrPrt);
+            return result;
         }
 
         [DllImport("taos", EntryPoint = "taos_fetch_lengths", CallingConvention = CallingConvention.Cdecl)]
