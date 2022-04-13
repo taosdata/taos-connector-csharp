@@ -275,8 +275,7 @@ namespace TDengineDriver
                 meta.size = Marshal.ReadInt16(fieldsPtr + offset + (int)TaosField.BYTES_OFFSET);
                 metas.Add(meta);
             }
-            Marshal.FreeHGlobal(fieldsPtr);
-
+            //Marshal.FreeHGlobal(fieldsPtr);//如果这里释放， 会导致 free(): double free detected in tcache 2， 可能是 涛思数据里释放这些资源了。 
             return metas;
         }
 
