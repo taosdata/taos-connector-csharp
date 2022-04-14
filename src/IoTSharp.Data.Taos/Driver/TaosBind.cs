@@ -248,7 +248,7 @@ namespace TDengineDriver
 
             TAOS_BIND bind = new TAOS_BIND();
             // IntPtr unmanagedBinary = Marshal.StringToHGlobalAnsi(val);
-            IntPtr c_str = Marshal.StringToCoTaskMemUTF8 (val);
+            IntPtr c_str = Marshal.StringToCoTaskMemUTF8(val);
 
             var strToBytes = System.Text.Encoding.UTF8.GetBytes(val);
             int length = strToBytes.Length;

@@ -41,19 +41,7 @@ namespace TDengineDriver
         TSDB_DATA_TYPE_UBIGINT = 14,   // 8 bytes
         TSDB_DATA_TYPE_JSONTAG = 15   //4096 bytes 
     }
- [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    public struct taosField
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 65)]
-        public byte[] name;
-
-        [MarshalAs(UnmanagedType.U1, SizeConst = 1)]
-        public byte type;
-
-        [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
-        public short bytes;
-    }
- public enum TSDB_TIME_PRECISION : int
+    public enum TSDB_TIME_PRECISION : int
     {
         TSDB_TIME_PRECISION_MILLI = 0,
         TSDB_TIME_PRECISION_MICRO = 1,
@@ -283,7 +271,7 @@ namespace TDengineDriver
         static extern public IntPtr FetchRows(IntPtr res);
 
         [DllImport("taos", EntryPoint = "taos_free_result", CallingConvention = CallingConvention.Cdecl)]
-        static extern public IntPtr FreeResult(IntPtr res);
+        static extern public void FreeResult(IntPtr res);
 
         [DllImport("taos", EntryPoint = "taos_close", CallingConvention = CallingConvention.Cdecl)]
         static extern public int Close(IntPtr taos);
