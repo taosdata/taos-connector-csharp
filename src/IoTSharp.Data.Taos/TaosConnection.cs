@@ -7,10 +7,12 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Extensions.ObjectPool;
 using TDengineDriver;
 
 namespace IoTSharp.Data.Taos
@@ -28,8 +30,10 @@ namespace IoTSharp.Data.Taos
         private ConnectionState _state;
         internal IntPtr _taos;
 
-        private static bool  _dll_isloaded=false;
-     
+        private  static volatile bool _dll_isloaded = false;
+
+        private TaosConnector _taosConnector;
+        private bool _disposed;
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosConnection" /> class.
         /// </summary>
@@ -90,6 +94,21 @@ namespace IoTSharp.Data.Taos
                 _connectionString = value;
                 ConnectionStringBuilder = new TaosConnectionStringBuilder(value);
                 TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CHARSET, ConnectionStringBuilder.Charset);
+                GetPoolAndSettings();
+            }
+        }
+
+        void GetPoolAndSettings()
+        {
+            if (ConnectionStringBuilder.Pooling)
+            {
+                if(!TaosPoolManager.TryGetValue(_connectionString, out TaosConnectorSource pool))
+                {
+                    pool = new TaosConnectorSource(new TaosPooledObjectPolicy(), ConnectionStringBuilder.MaximumPoolSize);
+                    TaosPoolManager.GetOrAdd(_connectionString, pool);
+                }
+
+                _taosConnector = pool.Get();
             }
         }
 
@@ -120,6 +139,7 @@ namespace IoTSharp.Data.Taos
 
 
         string _version = string.Empty;
+
         /// <summary>
         ///     Gets the version of Taos used by the connection.
         /// </summary>
@@ -128,17 +148,25 @@ namespace IoTSharp.Data.Taos
         {
             get
             {
-                if (_taos == IntPtr.Zero)
+                IntPtr taos = IntPtr.Zero;
+                if (ConnectionStringBuilder.Pooling)
                 {
-                    TaosException.ThrowExceptionForRC(-10005, "Connection is not open",null);
+                    taos = _taosConnector.TaosConnection._taos;
                 }
-               else  if (string.IsNullOrEmpty(_version))
+
+                if (taos == IntPtr.Zero)
                 {
-                    _version = Marshal.PtrToStringAnsi(TDengine.GetServerInfo(_taos));
+                    TaosException.ThrowExceptionForRC(-10005, "Connection is not open", null);
                 }
+                else if (string.IsNullOrEmpty(_version))
+                {
+                    _version = Marshal.PtrToStringAnsi(TDengine.GetServerInfo(taos));
+                }
+
                 return _version;
             }
         }
+
         public   string ClientVersion
         {
             get
@@ -185,25 +213,22 @@ namespace IoTSharp.Data.Taos
             }
         }
 
-        /// <summary>
-        ///     Opens a connection to the database using the value of <see cref="ConnectionString" />. If
-        ///     <c>Mode=ReadWriteCreate</c> is used (the default) the file is created, if it doesn't already exist.
-        /// </summary>
-        /// <exception cref="TaosException">A Taos error occurs while opening the connection.</exception>
-        public override void Open()
+        private void OpenAble()
         {
-       
+            Debug.Print($"open connection: {_taosConnector.Id}");
             if (State == ConnectionState.Open)
             {
                 return;
             }
+
             if (ConnectionString == null)
             {
                 throw new InvalidOperationException("Open Requires Set ConnectionString");
             }
 
-            this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password,"", (short)ConnectionStringBuilder.Port);
-           if (this._taos == IntPtr.Zero)
+            this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username,
+                ConnectionStringBuilder.Password, "", (short)ConnectionStringBuilder.Port);
+            if (this._taos == IntPtr.Zero)
             {
                 TaosException.ThrowExceptionForRC(_taos);
             }
@@ -213,29 +238,80 @@ namespace IoTSharp.Data.Taos
                 this.ChangeDatabase(ConnectionStringBuilder.DataBase);
             }
         }
-      
+
+        /// <summary>
+        ///     Opens a connection to the database using the value of <see cref="ConnectionString" />. If
+        ///     <c>Mode=ReadWriteCreate</c> is used (the default) the file is created, if it doesn't already exist.
+        /// </summary>
+        /// <exception cref="TaosException">A Taos error occurs while opening the connection.</exception>
+        public override void Open()
+        {
+            if (ConnectionStringBuilder.Pooling)
+            {
+                if (_taosConnector.TaosConnection == null)
+                {
+                    OpenAble();
+                    _taosConnector.TaosConnection = this;
+                }
+                else
+                {
+                    SetState(_taosConnector.TaosConnection.State);
+                }
+            }
+            else
+            {
+                OpenAble();
+            }
+            
+        }
+
         /// <summary>
         ///     Closes the connection to the database. Open transactions are rolled back.
         /// </summary>
         public override void Close()
         {
-            if (State != ConnectionState.Closed)
-                TDengine.Close(_taos);
-
-            Transaction?.Dispose();
-            _nowdatabase = string.Empty;
-            foreach (var reference in _commands)
+            if (_taosConnector != null)
             {
-                if (reference.TryGetTarget(out var command))
+                if (TaosPoolManager.TryGetValue(_connectionString, out TaosConnectorSource pool))
                 {
-                    command.Dispose();
+                    if (_taosConnector.TaosConnection != null)
+                    {
+                        _taosConnector.TaosConnection.Transaction?.Dispose();
+                        foreach (var reference in _taosConnector.TaosConnection._commands)
+                        {
+                            if (reference.TryGetTarget(out var command))
+                            {
+                                command.Dispose();
+                            }
+                        }
+
+                        _taosConnector.TaosConnection._commands.Clear();
+                    }
+                    pool.Return(_taosConnector);
                 }
             }
+            else
+            {
+                if (State != ConnectionState.Closed)
+                    TDengine.Close(_taos);
 
-            _commands.Clear();
+                Transaction?.Dispose();
+                _nowdatabase = string.Empty;
+                foreach (var reference in _commands)
+                {
+                    if (reference.TryGetTarget(out var command))
+                    {
+                        command.Dispose();
+                    }
+                }
+
+                _commands.Clear();
 
 
-            SetState(ConnectionState.Closed);
+                SetState(ConnectionState.Closed);
+            }
+
+            _disposed = true;
         }
 
         /// <summary>
@@ -246,11 +322,15 @@ namespace IoTSharp.Data.Taos
         /// </param>
         protected override void Dispose(bool disposing)
         {
+            base.Dispose(true);
+            if (_disposed)
+                return;
             if (disposing)
             {
                 Close();
             }
-            base.Dispose(disposing);
+            _disposed = true;
+            
         }
 
         /// <summary>
@@ -262,9 +342,27 @@ namespace IoTSharp.Data.Taos
         ///     transaction.
         /// </remarks>
         public new virtual TaosCommand CreateCommand()
-            => new TaosCommand { Connection = this, CommandTimeout = DefaultTimeout, Transaction = Transaction };
+        {
+            TaosConnection connection = this;
+            if (ConnectionStringBuilder.Pooling)
+            {
+                connection = _taosConnector.TaosConnection;
+            }
+            return new TaosCommand {Connection = connection, CommandTimeout = DefaultTimeout, Transaction = Transaction};
+        }
+
         public virtual TaosCommand CreateCommand(string commandtext)
-          => new TaosCommand { Connection = this, CommandText = commandtext, CommandTimeout = DefaultTimeout, Transaction = Transaction };
+        {
+            TaosConnection connection = this;
+            if (ConnectionStringBuilder.Pooling)
+            {
+                connection = _taosConnector.TaosConnection;
+            }
+            return new TaosCommand
+            {
+                Connection = connection, CommandText = commandtext, CommandTimeout = DefaultTimeout, Transaction = Transaction
+            };
+        }
 
         /// <summary>
         ///     Creates a new command associated with the connection.
@@ -354,15 +452,21 @@ namespace IoTSharp.Data.Taos
         internal string _nowdatabase = string.Empty;
 
         internal bool SelectedDataBase => _nowdatabase != string.Empty ;
+
         /// <summary>
         ///     Changes the current database.  
         /// </summary>
         /// <param name="databaseName">The name of the database to use.</param>
         public override void ChangeDatabase(string databaseName)
         {
-            if (!SelectedDataBase   ||   _nowdatabase!= databaseName)
+            IntPtr taos = this._taos;
+            if (ConnectionStringBuilder.Pooling && taos == IntPtr.Zero)
             {
-                int result = TDengine. SelectDatabase(_taos, databaseName);
+                taos = _taosConnector.TaosConnection._taos;
+            }
+            if (!SelectedDataBase || _nowdatabase != databaseName)
+            {
+                int result = TDengine.SelectDatabase(taos, databaseName);
                 if (result == 0)
                 {
                     _nowdatabase = databaseName;

@@ -25,6 +25,8 @@ namespace IoTSharp.Data.Taos
         private const string DataSourceNoSpaceKeyword = "DataSource";
         private const string DataBaseKeyword = "DataBase";
         private const string PortKeyword = "Port";
+        private const string PoolingKeyword = "Pooling";
+        private const string MaximumPoolSizeKeyword = "Maximum Pool Size";
 
         private enum Keywords
         {
@@ -33,8 +35,9 @@ namespace IoTSharp.Data.Taos
             Username,
             Password,
             Port,
-            Charset
-
+            Charset,
+            Pooling,
+            MaximumPoolSize
         }
 
         private static readonly IReadOnlyList<string> _validKeywords;
@@ -45,7 +48,9 @@ namespace IoTSharp.Data.Taos
         private string _userName = string.Empty;
         private string _charset = System.Text.Encoding.UTF8.EncodingName;
         private string _password = string.Empty;
-        private int  _port =6030;
+        private int _port = 6030;
+        private bool _pooling = true;
+        private int _maximumPoolSize = 10;
         static TaosConnectionStringBuilder()
         {
             var validKeywords = new string[6];
@@ -57,7 +62,7 @@ namespace IoTSharp.Data.Taos
             validKeywords[(int)Keywords.Port] = PortKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(6, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(9, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
                 [UserNameKeyword] = Keywords.Username,
@@ -65,7 +70,9 @@ namespace IoTSharp.Data.Taos
                 [DataBaseKeyword] = Keywords.DataBase,
                 [CharsetKeyword] = Keywords.Charset,
                 [DataSourceNoSpaceKeyword] = Keywords.DataSource,
-                [PortKeyword] = Keywords.Port
+                [PortKeyword] = Keywords.Port,
+                [PoolingKeyword] = Keywords.Pooling,
+                [MaximumPoolSizeKeyword] = Keywords.MaximumPoolSize
             };
         }
 
@@ -118,7 +125,17 @@ namespace IoTSharp.Data.Taos
             set => base[PortKeyword] = _port = value;
         }
 
+        public bool Pooling
+        {
+            get => _pooling;
+            set => base[PoolingKeyword] = _pooling = value;
+        }
 
+        public int MaximumPoolSize
+        {
+            get => _maximumPoolSize;
+            set => base[MaximumPoolSizeKeyword] = _maximumPoolSize = value;
+        }
 
         /// <summary>
         ///     Gets a collection containing the keys used by the connection string.
@@ -191,6 +208,12 @@ namespace IoTSharp.Data.Taos
                         return;
                     case Keywords.Charset:
                         Charset = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.Pooling:
+                        Pooling = Convert.ToBoolean(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.MaximumPoolSize:
+                        MaximumPoolSize = Convert.ToInt32(value, CultureInfo.InvariantCulture);
                         return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
