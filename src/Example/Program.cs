@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TaosADODemo
 {
@@ -20,20 +21,13 @@ namespace TaosADODemo
             string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             var builder = new TaosConnectionStringBuilder()
             {
-                DataSource = "airleaderserver",
+                DataSource = "taos",
                 DataBase = database,
                 Username = "root",
                 Password = "taosdata",
                 Port = 6030
 
             };
-
-            var connection1 = new TaosConnection(builder.ConnectionString);
-            var connection2 = new TaosConnection(builder.ConnectionString);
-            var connection3 = new TaosConnection(builder.ConnectionString);
-            var connection4 = new TaosConnection(builder.ConnectionString);
-            var connection5 = new TaosConnection(builder.ConnectionString);
-            var connection6 = new TaosConnection(builder.ConnectionString);
 
             //测试连接池
             using (var connection = new TaosConnection(builder.ConnectionString))
@@ -103,28 +97,15 @@ namespace TaosADODemo
                 connection.CreateCommand("CREATE TABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
                 var devid1 = $"{Guid.NewGuid():N}";
                 var devid2 = $"{Guid.NewGuid():N}";
-                UploadTelemetryData(connection, devid1, "1#air-compressor-two-level-discharge-temperature", 20);
-                UploadTelemetryData(connection, devid2, "1#air-compressor-load-rate", 20);
+                UploadTelemetryData(connection, devid1, "1#discharge-temperature", 10);
+                UploadTelemetryData(connection, devid2, "1#load-rate", 20);
+                ParallelUploadTelemetryData(connection, "parallel", "2#load-rate", 10);
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
                 ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 var reader3 = connection.CreateCommand("select * from telemetrydata").ExecuteReader();
-
-                List<string> list = new List<string>();
-                while (reader3.Read())
-                {
-                    list.Add(reader3.GetString("keyname"));
-                }
-
-                var k = list.GroupBy(e => e);
-                var dic = k.ToDictionary(en => en.Key, en => en.ToList());
-                dic.Keys.ToList().ForEach(k =>
-               {
-                   Console.WriteLine(k);
-                   ConsoleTableBuilder.From(dic[k]).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine(TableAligntment.Center);
-               });
-            
+                
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
-
+                
                 connection.Close();
 
 
@@ -166,6 +147,17 @@ namespace TaosADODemo
 
         }
 
+        static void ParallelUploadTelemetryData(TaosConnection connection, string devid, string keyname, int count)
+        {
+            Parallel.For(0, count, (i) =>
+            {
+                Task.Run(() =>
+                {
+                    connection.CreateCommand($"INSERT INTO device_{devid} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
+                });
+                
+            });
+        }
 
         static void UploadTelemetryData(  TaosConnection connection, string devid, string keyname, int count)
         {

@@ -106,6 +106,7 @@ namespace IoTSharp.Data.Taos
                 {
                     pool = new TaosConnectorSource(new TaosPooledObjectPolicy(), ConnectionStringBuilder.MaximumPoolSize);
                     TaosPoolManager.GetOrAdd(_connectionString, pool);
+                    Debug.Print($"add pool key: {_connectionString}");
                 }
 
                 _taosConnector = pool.Get();
@@ -230,6 +231,14 @@ namespace IoTSharp.Data.Taos
                 ConnectionStringBuilder.Password, "", (short)ConnectionStringBuilder.Port);
             if (this._taos == IntPtr.Zero)
             {
+                if (_taosConnector != null)
+                {
+                    if (TaosPoolManager.TryGetValue(_connectionString, out TaosConnectorSource pool))
+                    {
+                        _taosConnector.TaosConnection?.SetState(ConnectionState.Broken);
+                        pool.Return(_taosConnector);
+                    }
+                }
                 TaosException.ThrowExceptionForRC(_taos);
             }
             else

@@ -19,8 +19,12 @@ namespace IoTSharp.Data.Taos
 
         public override bool Return(TaosConnector obj)
         {
-            if (obj.TaosConnection.State == ConnectionState.Closed || obj.TaosConnection.State == ConnectionState.Broken)
+            if (obj.TaosConnection.State == ConnectionState.Closed ||
+                obj.TaosConnection.State == ConnectionState.Broken)
+            {
+                Debug.Print("drop taosConnector");
                 return false;
+            }
             return true;
         }
     }
