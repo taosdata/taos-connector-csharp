@@ -617,5 +617,4 @@ namespace TDengineDriver
             return strToBytes;
         }
     }
-
 }

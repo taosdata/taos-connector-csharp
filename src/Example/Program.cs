@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TaosADODemo
 {
@@ -27,6 +28,20 @@ namespace TaosADODemo
                 Port = 6030
 
             };
+
+            //测试连接池
+            using (var connection = new TaosConnection(builder.ConnectionString))
+            {
+                connection.Open();
+                connection.Close();
+            }
+
+            using (var connection = new TaosConnection(builder.ConnectionString))
+            {
+                connection.Open();
+                connection.Close();
+            }
+
             //Example for ADO.Net 
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
@@ -62,7 +77,7 @@ namespace TaosADODemo
 
                 Console.WriteLine("");
                 connection.CreateCommand($"CREATE TABLE datas ('reportTime' timestamp, type int, 'bufferedEnd' bool, address nchar(64), parameter nchar(64), value nchar(64)) TAGS ('boxCode' nchar(64), 'machineId' int);").ExecuteNonQuery();
-                connection.CreateCommand($"INSERT INTO  data_history_67 USING datas TAGS (mongo, 67) values ( 1608173534840 2 false 'Channel1.窑.烟囱温度' '烟囱温度' '122.00' );").ExecuteNonQuery();
+                connection.CreateCommand($"INSERT INTO  data_history_67 USING datas TAGS (mongo, 67) values ( 1608173534840 2 false 'Channel1.' 'abc' '122.00' );").ExecuteNonQuery();
                 var cmd_datas = connection.CreateCommand();
                 cmd_datas.CommandText = $"SELECT  reportTime,type,bufferedEnd,address,parameter,value FROM  {database}.data_history_67 LIMIT  100";
                 var readerdatas = cmd_datas.ExecuteReader();
@@ -82,32 +97,20 @@ namespace TaosADODemo
                 connection.CreateCommand("CREATE TABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
                 var devid1 = $"{Guid.NewGuid():N}";
                 var devid2 = $"{Guid.NewGuid():N}";
-                UploadTelemetryData(connection, devid1, "1#air-compressor-two-level-discharge-temperature", 2000);
-                UploadTelemetryData(connection, devid2, "1#air-compressor-load-rate", 2000);
+                UploadTelemetryData(connection, devid1, "1#discharge-temperature", 10);
+                UploadTelemetryData(connection, devid2, "1#load-rate", 20);
+                ParallelUploadTelemetryData(connection, "parallel", "2#load-rate", 10);
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
                 ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 var reader3 = connection.CreateCommand("select * from telemetrydata").ExecuteReader();
-
-                List<string> list = new List<string>();
-                while (reader3.Read())
-                {
-                    list.Add(reader3.GetString("keyname"));
-                }
-
-                var k = list.GroupBy(e => e);
-                var dic = k.ToDictionary(en => en.Key, en => en.ToList());
-                dic.Keys.ToList().ForEach(k =>
-               {
-                   Console.WriteLine(k);
-                   ConsoleTableBuilder.From(dic[k]).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine(TableAligntment.Center);
-               });
-            
+                
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
-
+                
                 connection.Close();
 
 
             }
+
             //Example for  Entity Framework Core  
             using (var context = new TaosContext(new DbContextOptionsBuilder()
                                                     .UseTaos(builder.ConnectionString).Options))
@@ -135,8 +138,26 @@ namespace TaosADODemo
             }
 
 
+            using (var connection = new TaosConnection(builder.ConnectionString))
+            {
+                connection.Open();
+                Console.WriteLine("ServerVersion:{0}", connection.ServerVersion);
+                connection.Close();
+            }
+
         }
 
+        static void ParallelUploadTelemetryData(TaosConnection connection, string devid, string keyname, int count)
+        {
+            Parallel.For(0, count, (i) =>
+            {
+                Task.Run(() =>
+                {
+                    connection.CreateCommand($"INSERT INTO device_{devid} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
+                });
+                
+            });
+        }
 
         static void UploadTelemetryData(  TaosConnection connection, string devid, string keyname, int count)
         {

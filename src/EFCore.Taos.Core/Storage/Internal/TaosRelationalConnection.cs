@@ -33,7 +33,7 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
     public class TaosRelationalConnection : RelationalConnection, ITaosRelationalConnection
     {
         private readonly IRawSqlCommandBuilder _rawSqlCommandBuilder;
-
+        private TaosConnectionStringBuilder _connectionStringBuilder;
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -66,11 +66,11 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
         protected override DbConnection CreateDbConnection()
         {
             var connection = new TaosConnection(ConnectionString);
+            _connectionStringBuilder = new TaosConnectionStringBuilder(ConnectionString);
             _connection = connection;
             return connection;
         }
         
-
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -79,8 +79,7 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
         /// </summary>
         public virtual ITaosRelationalConnection CreateReadOnlyConnection()
         {
-            var connectionStringBuilder = new TaosConnectionStringBuilder(ConnectionString);
-            var contextOptions = new DbContextOptionsBuilder().UseTaos(connectionStringBuilder.ToString()).Options;
+            var contextOptions = new DbContextOptionsBuilder().UseTaos(_connectionStringBuilder.ToString()).Options;
            // Dependencies.CurrentContext. = contextOptions;
             return new TaosRelationalConnection(Dependencies, _rawSqlCommandBuilder);
         }
@@ -92,13 +91,16 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
             _connection.ChangeDatabase(_connection.Database);
             return result;
         }
+
         public override bool Close()
         {
             bool result = false;
             try
             {
                 _connection.Close();
-                result = _connection.State== System.Data.ConnectionState.Closed;
+                if (_connectionStringBuilder.Pooling)
+                    return true;
+                result = _connection.State == System.Data.ConnectionState.Closed;
             }
             catch (Exception)
             {
