@@ -140,7 +140,6 @@ namespace TDengineDriver
         public IntPtr error;
         public Int64 u;
         public uint allocated;
-        public bool is_string;
     }
 
 
@@ -164,7 +163,6 @@ namespace TDengineDriver
 
         // line number, or the values number in buffer 
         public int num;
-        public bool is_string;
     }
 
     /// <summary>
