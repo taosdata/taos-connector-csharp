@@ -31,8 +31,9 @@ namespace IoTSharp.Data.Taos
         List<TDengineMeta> _metas = null;
         private double _date_max_1970;
         private DateTime _dt1970;
+        private TAOS_BIND[] _binds;
 
-        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas, bool closeConnection, IntPtr res, int recordsAffected, int fieldcount)
+        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas, bool closeConnection, IntPtr res, int recordsAffected, int fieldcount, TAOS_BIND[] binds)
         {
             _taos = taosCommand.Connection._taos;
             _command = taosCommand;
@@ -45,6 +46,7 @@ namespace IoTSharp.Data.Taos
             _metas = metas;
             _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             _date_max_1970 = DateTime.MaxValue.Subtract(_dt1970).TotalMilliseconds;
+            _binds = binds;
         }
 
         /// <summary>
@@ -165,6 +167,8 @@ namespace IoTSharp.Data.Taos
                 _command.Connection.Close();
             }
             TDengine.FreeResult(_taosResult);
+            if (_binds != null)
+                TaosBind.FreeTaosBind(_binds.ToArray());
         }
 
         /// <summary>

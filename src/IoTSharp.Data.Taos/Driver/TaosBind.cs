@@ -248,7 +248,7 @@ namespace TDengineDriver
 
             TAOS_BIND bind = new TAOS_BIND();
             // IntPtr unmanagedBinary = Marshal.StringToHGlobalAnsi(val);
-            IntPtr c_str = Marshal.StringToCoTaskMemUTF8 (val);
+            IntPtr c_str = Marshal.StringToCoTaskMemUTF8(val);
 
             var strToBytes = System.Text.Encoding.UTF8.GetBytes(val);
             int length = strToBytes.Length;
@@ -260,6 +260,7 @@ namespace TDengineDriver
             bind.buffer_length = length;
             bind.length = lenPtr;
             bind.is_null = IntPtr.Zero;
+            bind.is_string = true;
 
             return bind;
         }
@@ -280,6 +281,7 @@ namespace TDengineDriver
             bind.buffer_length = length;
             bind.length = lenPtr;
             bind.is_null = IntPtr.Zero;
+            bind.is_string = true;
 
             return bind;
         }
@@ -322,7 +324,10 @@ namespace TDengineDriver
         {
             foreach (TAOS_BIND bind in binds)
             {
-                Marshal.FreeHGlobal(bind.buffer);
+                if (bind.is_string)
+                    Marshal.FreeCoTaskMem(bind.buffer);
+                else
+                    Marshal.FreeHGlobal(bind.buffer);
                 Marshal.FreeHGlobal(bind.length);
                 if (bind.is_null != IntPtr.Zero)
                 {

@@ -140,6 +140,7 @@ namespace TDengineDriver
         public IntPtr error;
         public Int64 u;
         public uint allocated;
+        public bool is_string;
     }
 
 
