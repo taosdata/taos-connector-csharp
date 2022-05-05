@@ -18,6 +18,7 @@
 		</Description>
 		<TargetFrameworks>net5;net6</TargetFrameworks>
 
+    <LangVersion>10</LangVersion>
 		<PackageTags>Taos;Data;ADO.NET;Entity Framework,;EF; Core;Data O/RM,;entity-framework-core;TDengine;IoTSharp</PackageTags>
 
 		<Authors>Yanhong Ma</Authors>
@@ -64,6 +65,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="6.0.4" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 	</ItemGroup>
 </Project>

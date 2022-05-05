@@ -34,11 +34,11 @@ namespace IoTSharp.Data.Taos
                             string strKey = dataReader.GetName(i);
                             if (dataReader[i] != DBNull.Value)
                             {
-                                var pr = from p in pots where   p.Name == strKey &&  p.CanWrite select p;
+                                var pr = from p in pots where p.Name == strKey &&  p.CanWrite select p;
                                 if (pr.Any())
                                 {
                                     var pi = pr.FirstOrDefault();
-                                    pi.SetValue(jObject, Convert.ChangeType(dataReader[i],pi.PropertyType) );
+                                    pi.SetValue(jObject, Convert.ChangeType(dataReader[i], pi.PropertyType));
                                 }
                             }
                         }
@@ -101,5 +101,8 @@ namespace IoTSharp.Data.Taos
         {
             return str?.Trim('\0');
         }
+
+
+
     }
 }

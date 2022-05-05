@@ -33,6 +33,7 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
     public class TaosRelationalConnection : RelationalConnection, ITaosRelationalConnection
     {
         private readonly IRawSqlCommandBuilder _rawSqlCommandBuilder;
+        private TaosConnectionStringBuilder _connectionStringBuilder;
 
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -66,6 +67,7 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
         protected override DbConnection CreateDbConnection()
         {
             var connection = new TaosConnection(ConnectionString);
+            _connectionStringBuilder = new TaosConnectionStringBuilder(ConnectionString);
             _connection = connection;
             return connection;
         }
@@ -98,7 +100,9 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
             try
             {
                 _connection.Close();
-                result = _connection.State== System.Data.ConnectionState.Closed;
+                if (_connectionStringBuilder.Pooling)
+                    return true;
+                result = _connection.State == System.Data.ConnectionState.Closed;
             }
             catch (Exception)
             {
