@@ -404,15 +404,18 @@ namespace IoTSharp.Data.Taos
 
                 if (isok && code !=null && TDengine.ErrorNo(code.Result) == 0)
                 {
-                    List<TDengineMeta> metas = TDengine.FetchFields(code.Result);
-                    for (int j = 0; j < metas.Count; j++)
-                    {
-                        TDengineMeta meta = metas[j];
+                    taosField[] metas = TDengine.FetchFields(code.Result);
 #if DEBUG
-                        Debug.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName() + ", name:" + meta.name + ", size:" + meta.size);
-#endif
+                    if (Debugger.IsAttached)
+                    {
+                        for (int j = 0; j < metas?.Length; j++)
+                        {
+                            var meta = metas[j];
+                            Debug.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName + ", name:" + meta.Name + ", size:" + meta.size);
+                        }
                     }
-                    dataReader = new TaosDataReader(this, metas, closeConnection, code.Result, _affectRows, metas.Count, binds);
+#endif
+                    dataReader = new TaosDataReader(this, metas, closeConnection, code.Result, _affectRows,metas?.Length??0, binds);
                 }
                 else if (isok && TDengine.ErrorNo(code.Result) != 0)
                 {

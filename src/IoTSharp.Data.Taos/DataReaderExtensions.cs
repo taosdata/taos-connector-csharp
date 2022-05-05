@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using TDengineDriver;
 
 namespace IoTSharp.Data.Taos
 {
@@ -101,5 +102,8 @@ namespace IoTSharp.Data.Taos
         {
             return str?.Trim('\0');
         }
+
+       
+ 
     }
 }

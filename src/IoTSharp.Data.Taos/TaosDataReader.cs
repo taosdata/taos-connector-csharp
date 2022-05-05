@@ -28,12 +28,12 @@ namespace IoTSharp.Data.Taos
         private int _fieldCount;
         private IntPtr _taos = IntPtr.Zero;
         IntPtr rowdata;
-        List<TDengineMeta> _metas = null;
+        List<taosField> _metas = null;
         private double _date_max_1970;
         private DateTime _dt1970;
         private TAOS_BIND[] _binds;
 
-        internal TaosDataReader(TaosCommand taosCommand, List<TDengineMeta> metas, bool closeConnection, IntPtr res, int recordsAffected, int fieldcount, TAOS_BIND[] binds)
+        internal TaosDataReader(TaosCommand taosCommand, taosField[] metas, bool closeConnection, IntPtr res, int recordsAffected, int fieldcount, TAOS_BIND[] binds)
         {
             _taos = taosCommand.Connection._taos;
             _command = taosCommand;
@@ -43,7 +43,7 @@ namespace IoTSharp.Data.Taos
             _recordsAffected = recordsAffected;
             _closed = _closeConnection;
             _taosResult = res;
-            _metas = metas;
+            _metas =  metas?.ToList()??new List<taosField> ();
             _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             _date_max_1970 = DateTime.MaxValue.Subtract(_dt1970).TotalMilliseconds;
             _binds = binds;
@@ -157,18 +157,19 @@ namespace IoTSharp.Data.Taos
             {
                 return;
             }
-
             _command.DataReader = null;
-
-            _closed = true;
-
-            if (_closeConnection)
+            if (_closeConnection  )
             {
                 _command.Connection.Close();
+                _closed = true;
             }
+           
             TDengine.FreeResult(_taosResult);
             if (_binds != null)
+            {
                 TaosBind.FreeTaosBind(_binds.ToArray());
+                _binds=null;
+            }
         }
 
         /// <summary>
@@ -178,7 +179,7 @@ namespace IoTSharp.Data.Taos
         /// <returns>The name of the column.</returns>
         public override string GetName(int ordinal)
         {
-            return _metas[ordinal].name;
+            return _metas[ordinal].Name;
         }
 
         /// <summary>
@@ -187,7 +188,7 @@ namespace IoTSharp.Data.Taos
         /// <param name="name">The name of the column.</param>
         /// <returns>The zero-based column ordinal.</returns>
         public override int GetOrdinal(string name)
-            => _metas.IndexOf(_metas.FirstOrDefault(m => m.name == name));
+            => _metas.IndexOf(_metas.FirstOrDefault(m => m.Name == name));
 
         public override string GetDataTypeName(int ordinal)
         {
@@ -205,55 +206,7 @@ namespace IoTSharp.Data.Taos
             {
                 throw new InvalidOperationException($"DataReaderClosed{nameof(GetFieldType)}");
             }
-            TDengineMeta meta = _metas[ordinal];
-            Type type = typeof(DBNull);
-            switch ((TDengineDataType)meta.type)
-            {
-                case TDengineDataType.TSDB_DATA_TYPE_BOOL:
-                    type = typeof(bool);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
-                    type = typeof(sbyte);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
-                    type = typeof(byte);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
-                    type = typeof(short);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
-                    type = typeof(ushort);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_INT:
-                    type = typeof(int);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_UINT:
-                    type = typeof(uint);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
-                    type = typeof(long);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
-                    type = typeof(ulong);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
-                    type = typeof(float);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
-                    type = typeof(double);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_BINARY:
-                    type = typeof(string);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
-                    type = typeof(DateTime);
-                    break;
-                case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
-                    type = typeof(string);
-                    break;
-            }
-
-            return type;
+            return _metas[ordinal].CrlType;
         }
 
         /// <summary>
@@ -452,7 +405,7 @@ namespace IoTSharp.Data.Taos
         public override Stream GetStream(int ordinal)
         {
             MemoryStream result = null;
-            TDengineMeta meta = _metas[ordinal];
+             var meta = _metas[ordinal];
             int offset = IntPtr.Size * ordinal;
             IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
             if (data != IntPtr.Zero)
@@ -565,7 +518,7 @@ namespace IoTSharp.Data.Taos
         public override object GetValue(int ordinal)
         {
             object result = DBNull.Value;
-            TDengineMeta meta = _metas[ordinal];
+            var meta = _metas[ordinal];
             int offset = IntPtr.Size * ordinal;
             IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
             if (data != IntPtr.Zero)

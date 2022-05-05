@@ -41,19 +41,8 @@ namespace TDengineDriver
         TSDB_DATA_TYPE_UBIGINT = 14,   // 8 bytes
         TSDB_DATA_TYPE_JSONTAG = 15   //4096 bytes 
     }
- [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    public struct taosField
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 65)]
-        public byte[] name;
 
-        [MarshalAs(UnmanagedType.U1, SizeConst = 1)]
-        public byte type;
-
-        [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
-        public short bytes;
-    }
- public enum TSDB_TIME_PRECISION : int
+    public enum TSDB_TIME_PRECISION : int
     {
         TSDB_TIME_PRECISION_MILLI = 0,
         TSDB_TIME_PRECISION_MICRO = 1,
@@ -76,51 +65,7 @@ namespace TDengineDriver
         BYTES_OFFSET = 66,
 
     }
-    public class TDengineMeta
-    {
-        public string name;
-        public short size;
-        public byte type;
-        public string TypeName()
-        {
-            switch ((TDengineDataType)type)
-            {
-                case TDengineDataType.TSDB_DATA_TYPE_BOOL:
-                    return "BOOL";
-                case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
-                    return "TINYINT";
-                case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
-                    return "SMALLINT";
-                case TDengineDataType.TSDB_DATA_TYPE_INT:
-                    return "INT";
-                case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
-                    return "BIGINT";
-                case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
-                    return "TINYINT UNSIGNED";
-                case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
-                    return "SMALLINT UNSIGNED";
-                case TDengineDataType.TSDB_DATA_TYPE_UINT:
-                    return "INT UNSIGNED";
-                case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
-                    return "BIGINT UNSIGNED";
-                case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
-                    return "FLOAT";
-                case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
-                    return "DOUBLE";
-                case TDengineDataType.TSDB_DATA_TYPE_BINARY:
-                    return "BINARY";
-                case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
-                    return "TIMESTAMP";
-                case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
-                    return "NCHAR";
-                case TDengineDataType.TSDB_DATA_TYPE_JSONTAG:
-                    return "JSON";
-                default:
-                    return "undefine";
-            }
-        }
-    }
-
+    
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     public struct TAOS_BIND
     {
@@ -255,32 +200,31 @@ namespace TDengineDriver
         [DllImport("taos", EntryPoint = "taos_fetch_fields", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr taos_fetch_fields(IntPtr res);
 
-        public static List<TDengineMeta> FetchFields(IntPtr res)
+        public static taosField[] FetchFields(IntPtr res)
         {
-            // const int fieldSize = 68;
-
-            List<TDengineMeta> metas = new List<TDengineMeta>();
             if (res == IntPtr.Zero)
             {
-                return metas;
+                return null;
             }
-
+            taosField[] taosField=null;
             int fieldCount = FieldCount(res);
-            IntPtr fieldsPtr = taos_fetch_fields(res);
-
-            for (int i = 0; i < fieldCount; ++i)
+            if (fieldCount > 0)
             {
-                int offset = i * (int)TaosField.STRUCT_SIZE;
-                TDengineMeta meta = new TDengineMeta();
-                meta.name = Marshal.PtrToStringAnsi(fieldsPtr + offset);
-                meta.type = Marshal.ReadByte(fieldsPtr + offset + (int)TaosField.TYPE_OFFSET);
-                meta.size = Marshal.ReadInt16(fieldsPtr + offset + (int)TaosField.BYTES_OFFSET);
-                metas.Add(meta);
+                IntPtr fieldsPtr = taos_fetch_fields(res);//fieldsPtr是res的一部分， 这里不释放。 
+                taosField =   MarshalUnmananagedArray2Struct<taosField>(fieldsPtr, fieldCount);
             }
-            //Marshal.FreeHGlobal(fieldsPtr);//如果这里释放， 会导致 free(): double free detected in tcache 2， 可能是 涛思数据里释放这些资源了。 
-            return metas;
+            return taosField;
         }
-
+        public static   T[] MarshalUnmananagedArray2Struct<T>(IntPtr unmanagedArray, int length) where T : struct
+        {
+            var size = Marshal.SizeOf(typeof(T));
+            var mangagedArray = new T[length];
+            for (int i = 0; i < length; i++)
+            {
+                mangagedArray[i]=   Marshal.PtrToStructure<T>(new IntPtr(unmanagedArray.ToInt64() + i * size));
+            }
+            return mangagedArray;
+        }
         [DllImport("taos", EntryPoint = "taos_fetch_row", CallingConvention = CallingConvention.Cdecl)]
         static extern public IntPtr FetchRows(IntPtr res);
 
