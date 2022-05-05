@@ -164,6 +164,7 @@ namespace TDengineDriver
 
         // line number, or the values number in buffer 
         public int num;
+        public bool is_string;
     }
 
     /// <summary>
