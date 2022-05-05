@@ -78,19 +78,20 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
         /// </summary>
         public override bool Exists()
         {
-            var count = 0;
+            bool _exists = false;
             try
             {
                 using (var tc = new TaosConnection(Dependencies.Connection.ConnectionString))
                 {
                     tc.Open();
+                    _exists = tc.DatabaseExists(Dependencies.Connection.DbConnection.Database);
                     tc.Close();
                 }
             }
             catch (Exception)
             {
             }
-            return count != 0;
+            return _exists;
         }
 
         /// <summary>
@@ -107,6 +108,7 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
                 using (var tc = new TaosConnection(Dependencies.Connection.ConnectionString))
                 {
                     tc.Open();
+                    tc.ChangeDatabase(Dependencies.Connection.DbConnection.Database);
                     count = tc.CreateCommand("SHOW TABLES").ExecuteReader().ToJson().Count();
                     tc.Close();
                 }

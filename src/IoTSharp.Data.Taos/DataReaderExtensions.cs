@@ -5,7 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using TDengineDriver;
-
+using System.ComponentModel.DataAnnotations.Schema;
 namespace IoTSharp.Data.Taos
 {
     public static class DataReaderExtensions
@@ -35,11 +35,11 @@ namespace IoTSharp.Data.Taos
                             string strKey = dataReader.GetName(i);
                             if (dataReader[i] != DBNull.Value)
                             {
-                                var pr = from p in pots where   p.Name == strKey &&  p.CanWrite select p;
+                                var pr = from p in pots where (p.Name == strKey ||  p.ColumnNameIs(strKey)) && p.CanWrite select p;
                                 if (pr.Any())
                                 {
                                     var pi = pr.FirstOrDefault();
-                                    pi.SetValue(jObject, Convert.ChangeType(dataReader[i],pi.PropertyType) );
+                                    pi.SetValue(jObject, Convert.ChangeType(dataReader[i], pi.PropertyType));
                                 }
                             }
                         }
@@ -56,6 +56,11 @@ namespace IoTSharp.Data.Taos
                 TaosException.ThrowExceptionForRC(-10002, $"ToObject<{nameof(T)}>  Error", ex);
             }
             return jArray;
+        }
+
+        internal static bool ColumnNameIs(this System.Reflection.PropertyInfo p, string strKey)
+        {
+            return (p.IsDefined(typeof(ColumnAttribute), true) && (p.GetCustomAttributes(typeof(ColumnAttribute), true) as ColumnAttribute[])?.FirstOrDefault().Name == strKey);
         }
 
         public static JArray ToJson(this IDataReader dataReader)

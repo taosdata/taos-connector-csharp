@@ -264,7 +264,7 @@ namespace TDengineDriver
         public static extern IntPtr GetServerInfo(IntPtr taos);
 
         [DllImport("taos", EntryPoint = "taos_select_db", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int SelectDatabase(IntPtr taos, string db);
+        public static extern int  SelectDatabase(IntPtr taos, string db);
 
         //stmt APIs:
         /// <summary>

@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using TDengineDriver;
 using System.Linq;
+using IoTSharp.Data.Taos.Driver;
 
 namespace IoTSharp.Data.Taos
 {
@@ -362,19 +363,17 @@ namespace IoTSharp.Data.Taos
         /// <param name="databaseName">The name of the database to use.</param>
         public override void ChangeDatabase(string databaseName)
         {
-            if (!SelectedDataBase   ||   _nowdatabase!= databaseName)
+            if (!SelectedDataBase || _nowdatabase != databaseName)
             {
-                int result = TDengine. SelectDatabase(_taos, databaseName);
-                if (result == 0)
-                {
-                    _nowdatabase = databaseName;
-                }
-                else
-                {
-                    Debug.WriteLine($"Select Database {databaseName} ,result is {result}");
-                }
-
+                TDengine.SelectDatabase(_taos, databaseName);
+                _nowdatabase = databaseName;
             }
+        }
+
+        public bool DatabaseExists(string databaseName)
+        {
+            var ds = this.CreateCommand("SHOW DATABASES").ExecuteReader().ToObject<DatabaseSchema>();
+            return (bool)(ds?.Any(d => d.name == databaseName));
         }
         /// <summary>
         /// 

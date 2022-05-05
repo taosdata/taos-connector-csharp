@@ -33,6 +33,7 @@ namespace TaosADODemo
             {
                 connection.Open();
                 Console.WriteLine("ServerVersion:{0}", connection.ServerVersion);
+                connection.DatabaseExists(database);
                 Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
                 Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table {database}.t (ts timestamp, cdata binary(255));").ExecuteNonQuery());
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
@@ -186,7 +187,7 @@ namespace TaosADODemo
                 AddTag(tags, "t8", 22.1234567890, "double");
                 AddTag(tags, "t9", "binary_val", "binary");
                 AddTag(tags, "t10", "你好", "nchar");
-                payload.Add("tags", tags1);
+                payload.Add("tags", tags);
 
                 int resultjson3 = connection.ExecuteBulkInsert(new JObject[] { payload });
                 Console.WriteLine($"行插入{ result}");
