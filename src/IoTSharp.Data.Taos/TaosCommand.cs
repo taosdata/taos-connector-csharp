@@ -27,7 +27,7 @@ namespace IoTSharp.Data.Taos
         private readonly DateTime _dt1970;
         private TaosConnection _connection;
         private string _commandText;
-        private IntPtr _taos =>_connection._taos;
+        private IntPtr _taos => _connection._taos;
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosCommand" /> class.
         /// </summary>
@@ -234,7 +234,7 @@ namespace IoTSharp.Data.Taos
             {
                 throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(Prepare)}");
             }
- 
+
         }
 
         /// <summary>
@@ -246,7 +246,7 @@ namespace IoTSharp.Data.Taos
             => ExecuteReader(CommandBehavior.Default);
 
 
-        internal long GetDateTimeFrom(DateTime dt,IntPtr _taos)
+        internal long GetDateTimeFrom(DateTime dt, IntPtr _taos)
         {
             var val = dt.ToUniversalTime().Ticks - _dt1970.Ticks;
             //double tsp;
@@ -402,7 +402,7 @@ namespace IoTSharp.Data.Taos
                     _affectRows = TDengine.AffectRows(code.Result);
                 }
 
-                if (isok && code !=null && TDengine.ErrorNo(code.Result) == 0)
+                if (isok && code != null && TDengine.ErrorNo(code.Result) == 0)
                 {
                     taosField[] metas = TDengine.FetchFields(code.Result);
 #if DEBUG
@@ -415,7 +415,7 @@ namespace IoTSharp.Data.Taos
                         }
                     }
 #endif
-                    dataReader = new TaosDataReader(this, metas, closeConnection, code.Result, _affectRows,metas?.Length??0, binds);
+                    dataReader = new TaosDataReader(this, metas, closeConnection, code.Result, _affectRows, metas?.Length ?? 0, binds);
                 }
                 else if (isok && TDengine.ErrorNo(code.Result) != 0)
                 {
@@ -503,7 +503,7 @@ namespace IoTSharp.Data.Taos
                         binds[i] = TaosBind.BindUInt((tp.Value as uint?).GetValueOrDefault());
                         break;
                     case TypeCode.UInt64:
-                        binds[i] =  TaosBind.BindUBigInt((tp.Value as ulong?).GetValueOrDefault());
+                        binds[i] = TaosBind.BindUBigInt((tp.Value as ulong?).GetValueOrDefault());
                         break;
                     case TypeCode.String:
                     default:
@@ -632,7 +632,7 @@ namespace IoTSharp.Data.Taos
                     : null;
             }
         }
-
+      
         /// <summary>
         ///     Attempts to cancel the execution of the command. Does nothing.
         /// </summary>

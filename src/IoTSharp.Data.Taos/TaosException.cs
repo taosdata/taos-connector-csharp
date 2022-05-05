@@ -46,6 +46,11 @@ namespace IoTSharp.Data.Taos
             te.Data.Add("commandText", _commandText);
             throw te;
         }
+        public static void ThrowExceptionForRC( TaosErrorResult taosError)
+        {
+            var te = new TaosException(taosError);
+            throw te;
+        }
         public static void ThrowExceptionForRC(IntPtr _taos)
         {
             var te = new TaosException(new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = TDengine.Error(_taos) });

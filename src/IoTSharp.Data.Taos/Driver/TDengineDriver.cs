@@ -22,6 +22,26 @@ using System.Threading.Tasks;
 
 namespace TDengineDriver
 {
+
+
+    enum TDengineSchemalessProtocol
+    {
+        TSDB_SML_UNKNOWN_PROTOCOL = 0,
+        TSDB_SML_LINE_PROTOCOL = 1,
+        TSDB_SML_TELNET_PROTOCOL = 2,
+        TSDB_SML_JSON_PROTOCOL = 3
+
+    }
+    public enum TDengineSchemalessPrecision
+    {
+        TSDB_SML_TIMESTAMP_NOT_CONFIGURED = 0,
+        TSDB_SML_TIMESTAMP_HOURS = 1,
+        TSDB_SML_TIMESTAMP_MINUTES = 2,
+        TSDB_SML_TIMESTAMP_SECONDS = 3,
+        TSDB_SML_TIMESTAMP_MILLI_SECONDS = 4,
+        TSDB_SML_TIMESTAMP_MICRO_SECONDS = 5,
+        TSDB_SML_TIMESTAMP_NANO_SECONDS = 6
+    }
     public enum TDengineDataType
     {
         TSDB_DATA_TYPE_NULL = 0,     // 1 bytes
@@ -590,6 +610,7 @@ namespace TDengineDriver
         [DllImport("taos", EntryPoint = "taos_open_stream", CallingConvention = CallingConvention.Cdecl)]
         static extern public IntPtr OpenStream(IntPtr taos, string sql, StreamOpenCallback fp, Int64 stime, IntPtr param, StreamOpenCallback2 callback2);
 
+
         /// <summary>
         /// Used too stop data flow.
         /// Remember to stop data flow when you stopped steam computing.
@@ -597,6 +618,16 @@ namespace TDengineDriver
         /// <param name="stream"> Value returned by <see cref = "OpenStream"></param>
         [DllImport("taos", EntryPoint = "taos_close_stream", CallingConvention = CallingConvention.Cdecl)]
         static extern public void CloseStream(IntPtr stream);
+
+
+
+        //schemaless API 
+        [DllImport("taos", SetLastError = true, EntryPoint = "taos_schemaless_insert", CallingConvention = CallingConvention.Cdecl)]
+        static extern internal IntPtr SchemalessInsert(IntPtr taos, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] string[] lines, int numLines, int protocol, int precision);
+   
+
+       
+        
 
     }
 }

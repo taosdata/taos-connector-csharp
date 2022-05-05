@@ -1,6 +1,7 @@
 ﻿using ConsoleTableExt;
 using IoTSharp.Data.Taos;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -38,18 +39,18 @@ namespace TaosADODemo
                 var pmcmd = connection.CreateCommand($"insert into {database}.t values (@ts, @v);");
                 Thread.Sleep(TimeSpan.FromSeconds(1));
                 pmcmd.Parameters.AddWithValue("@ts", DateTime.Now);//(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds));
-                pmcmd.Parameters.AddWithValue("@v","1111");
+                pmcmd.Parameters.AddWithValue("@v", "1111");
                 pmcmd.ExecuteNonQuery();
                 Console.WriteLine("单表插入一行数据  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
                 Thread.Sleep(100);
-                Console.WriteLine("单表插入多行数据 {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 101) ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds+1)}, 992);").ExecuteNonQuery());
+                Console.WriteLine("单表插入多行数据 {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 101) ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds + 1)}, 992);").ExecuteNonQuery());
 
                 //Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.AddMonths(1).Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 20);").ExecuteNonQuery());
                 var cmd_select = connection.CreateCommand();
                 cmd_select.CommandText = $"select * from {database}.t;";
                 var reader = cmd_select.ExecuteReader();
 
-                int index =reader.GetOrdinal("cdata");
+                int index = reader.GetOrdinal("cdata");
                 if (reader.Read())
                 {
                     var ts = reader.GetDateTime("ts");
@@ -97,17 +98,115 @@ namespace TaosADODemo
                 var k = list.GroupBy(e => e);
                 var dic = k.ToDictionary(en => en.Key, en => en.ToList());
                 dic.Keys.ToList().ForEach(k =>
-               {
-                   Console.WriteLine(k);
-                   ConsoleTableBuilder.From(dic[k]).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine(TableAligntment.Center);
-               });
-            
+                {
+                    Console.WriteLine(k);
+                    ConsoleTableBuilder.From(dic[k]).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine(TableAligntment.Center);
+                });
+
+                string[] lines = {
+                    "meters,location=Beijing.Haidian,groupid=2 current=11.8,voltage=221,phase=0.28 1648432611249",
+                    "meters,location=Beijing.Haidian,groupid=2 current=13.4,voltage=223,phase=0.29 1648432611250",
+                    "meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249",
+                    "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
+                };
+                int result = connection.ExecuteBulkInsert(lines);
+                Console.WriteLine($"行插入{ result}");
+                if (result != lines.Length)
+                {
+                    throw new Exception("ExecuteBulkInsert");
+                }
+
+                string[] jsonStr = {
+                "{"
+                   +"\"metric\": \"stb0_0\","
+                   +"\"timestamp\": 1626006833,"
+                   +"\"value\": 10,"
+                   +"\"tags\": {"
+                       +" \"t1\": true,"
+                       +"\"t2\": false,"
+                       +"\"t3\": 10,"
+                       +"\"t4\": \"123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>\""
+                    +"}"
+                +"}"
+            };
+                int resultjson = connection.ExecuteBulkInsert(JArray.FromObject(jsonStr.Select(j => JObject.Parse(j)).ToArray()));
+                Console.WriteLine($"Json插入{ result}");
+                if (result != lines.Length)
+                {
+                    throw new Exception("ExecuteBulkInsert");
+                }
+
+
+                var jo = new JObject();
+                jo.Add("metric", "stb0_0");
+                jo.Add("timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());// 1626006833610);
+                jo.Add("value", 10);
+                var tags1 = new JObject();
+                tags1.Add("t1", true);
+                tags1.Add("t2", false);
+                tags1.Add("t3", 10);
+                tags1.Add("t4", "123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>");
+                jo.Add("tags", tags1);
+                int resultjson2 = connection.ExecuteBulkInsert(new JObject[] { jo },  TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED );
+                Console.WriteLine($"行插入{ result}");
+                if (result != lines.Length)
+                {
+                    throw new Exception("ExecuteBulkInsert");
+                }
+
+                static JObject AddTag(JObject tags, string name, object value, string type)
+                {
+                    var tag = new JObject();
+                    tag.Add("value", true);
+                    tag.Add("type", "bool");
+                    tags.Add(name, tag);
+                    return tag;
+                }
+
+                var payload = new JObject();
+                var tags = new JObject();
+                payload.Add("metric", "stb3_0");
+
+                var timestamp = new JObject();
+                timestamp.Add("value", 1626006833);
+                timestamp.Add("type", "s");
+                payload.Add("timestamp", timestamp);
+
+                var metric_val = new JObject();
+                metric_val.Add("value", "hello");
+                metric_val.Add("type", "nchar");
+                payload.Add("value", metric_val);
+                AddTag(tags, "t1", true, "bool");
+                AddTag(tags, "t2", false, "bool");
+                AddTag(tags, "t3", 127, "tinyint");
+                AddTag(tags, "t4", 32767, "smallint");
+                AddTag(tags, "t5", 127, "2147483647");
+                AddTag(tags, "t6", (double)9223372036854775807, "bigint");
+                AddTag(tags, "t7", 11.12345, "float");
+                AddTag(tags, "t8", 22.1234567890, "double");
+                AddTag(tags, "t9", "binary_val", "binary");
+                AddTag(tags, "t10", "你好", "nchar");
+                payload.Add("tags", tags1);
+
+                int resultjson3 = connection.ExecuteBulkInsert(new JObject[] { payload });
+                Console.WriteLine($"行插入{ result}");
+                if (resultjson3 != 1)
+                {
+                    throw new Exception("ExecuteBulkInsert");
+                }
+
+
+
+
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
+
+           
 
                 connection.Close();
 
+       
 
-            }
+        }
             //Example for  Entity Framework Core  
             using (var context = new TaosContext(new DbContextOptionsBuilder()
                                                     .UseTaos(builder.ConnectionString).Options))

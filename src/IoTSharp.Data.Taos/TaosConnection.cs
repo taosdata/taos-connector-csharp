@@ -1,6 +1,7 @@
 ﻿// Copyright (c)  maikebing All rights reserved.
 //// Licensed under the MIT License, See License.txt in the project root for license information.
 
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,6 +13,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using TDengineDriver;
+using System.Linq;
 
 namespace IoTSharp.Data.Taos
 {
@@ -374,7 +376,50 @@ namespace IoTSharp.Data.Taos
 
             }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lines">
+        /// 示例:
+        ///     "meters,location=Beijing.Haidian,groupid=2 current=11.8,voltage=221,phase=0.28 1648432611249",
+        ///     "meters,location=Beijing.Haidian,groupid=2 current=13.4,voltage=223,phase=0.29 1648432611250",
+        ///     "meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249",
+        ///     "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
+        /// </param>
+        /// <param name="precision"></param>
+        /// <returns></returns>
+        public int ExecuteBulkInsert(string[] lines, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS) =>
+            ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
 
+
+        public int ExecuteBulkInsert<T>(IEnumerable<T> array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
+        {
+            var lines = array.Select(x => Newtonsoft.Json.JsonConvert.SerializeObject(x)).ToArray();
+            return ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
+        }
+
+        public int ExecuteBulkInsert(JArray array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
+        {
+            var lines = array.Children().Select(x => x.ToString()).ToArray();
+            return ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
+        }
+   
+
+        private int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision precision)
+        {
+            int affectedRows = 0;
+            IntPtr res = TDengine.SchemalessInsert(_taos, lines, lines.Length, (int)protocol, (int)precision);
+            if (TDengine.ErrorNo(res) != 0)
+            {
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = TDengine.ErrorNo(res), Error = TDengine.Error(res) });
+            }
+            else
+            {
+                affectedRows = TDengine.AffectRows(res);
+            }
+            TDengine.FreeResult(res);
+            return affectedRows;
+        }
         private class AggregateContext<T>
         {
             public AggregateContext(T seed)
