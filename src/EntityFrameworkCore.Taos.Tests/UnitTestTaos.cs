@@ -174,15 +174,19 @@ namespace EntityFrameworkCore.Taos.Tests
         [TestMethod]
         public void TestExecuteBulkInsert_Memory()
         {
+            long start = GC.GetTotalMemory(false);
+            Console.WriteLine($"{GC.GetTotalMemory(false)}");
+            long allinc = 0;
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
                 connection.Open();
                 connection.ChangeDatabase(database);
+           
                 using var cmd = connection.CreateCommand("create table test4(ts timestamp,c1 int,c2 int,c3 int,c4 int,c5 int,c6 int,c7 binary(10),c8 binary(10),c9 binary(10));");
                 cmd.ExecuteScalar();
-                var m = System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64;
-                for (int i = 0; i < 10000; i++)
+                for (int i = 0; i < 100000; i++)
                 {
+                      var  total = GC.GetTotalMemory(false);
                     using var command = connection.CreateCommand();
                     try
                     {
@@ -193,11 +197,15 @@ namespace EntityFrameworkCore.Taos.Tests
                     {
                         Assert.Fail(ex.Message);
                     }
+                    var _inc = GC.GetTotalMemory(false) - total;
+                    allinc += _inc;
+                    Console.WriteLine($"INC:{_inc}");
                 }
-                var m1 = System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64;
-
                 connection.Close();
             }
+            Console.WriteLine($"开始之前内存:{start},总计新增:{allinc}，当前内存:{GC.GetTotalMemory(false)}");
+            GC.Collect();
+            Console.WriteLine($"回收后:{GC.GetTotalMemory(false)}");
         }
 
         [TestMethod]
