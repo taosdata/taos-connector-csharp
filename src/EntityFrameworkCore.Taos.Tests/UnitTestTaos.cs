@@ -172,6 +172,35 @@ namespace EntityFrameworkCore.Taos.Tests
         }
 
         [TestMethod]
+        public void TestExecuteBulkInsert_Memory()
+        {
+            using (var connection = new TaosConnection(builder.ConnectionString))
+            {
+                connection.Open();
+                connection.ChangeDatabase(database);
+                using var cmd = connection.CreateCommand("create table test4(ts timestamp,c1 int,c2 int,c3 int,c4 int,c5 int,c6 int,c7 binary(10),c8 binary(10),c9 binary(10));");
+                cmd.ExecuteScalar();
+                var m = System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64;
+                for (int i = 0; i < 10000; i++)
+                {
+                    using var command = connection.CreateCommand();
+                    try
+                    {
+                        command.CommandText = "insert into test4 values(now,1,2,3,4,5,6,'111111111','222222222','333333333');";
+                        command.ExecuteNonQuery();
+                    }
+                    catch (Exception ex)
+                    {
+                        Assert.Fail(ex.Message);
+                    }
+                }
+                var m1 = System.Diagnostics.Process.GetCurrentProcess().VirtualMemorySize64;
+
+                connection.Close();
+            }
+        }
+
+        [TestMethod]
         public void TestEntityFrameworkCore()
         {
           var efbuilder = new TaosConnectionStringBuilder()
