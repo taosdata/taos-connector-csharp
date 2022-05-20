@@ -27,7 +27,7 @@ namespace IoTSharp.Data.Taos
         private IntPtr _taosResult;
         private int _fieldCount;
         private IntPtr _taos = IntPtr.Zero;
-        IntPtr rowdata;
+        IntPtr rowdata=IntPtr.Zero;
         List<taosField> _metas = null;
         private double _date_max_1970;
         private DateTime _dt1970;
@@ -169,6 +169,10 @@ namespace IoTSharp.Data.Taos
             {
                 TaosBind.FreeTaosBind(_binds.ToArray());
                 _binds=null;
+            }
+            if (rowdata != IntPtr.Zero)
+            {
+                TDengine.FreeResult(rowdata);
             }
         }
 
