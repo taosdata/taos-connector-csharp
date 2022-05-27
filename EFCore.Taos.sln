@@ -28,7 +28,7 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkCore.Taos.Tests", "src\EntityFrameworkCore.Taos.Tests\EntityFrameworkCore.Taos.Tests.csproj", "{7F5F12D6-CA82-4499-AF3E-6CA7E61579CB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaosOrm", "..\TaosOrm\TaosOrm.csproj", "{7F9F4104-3AFF-4D1E-8AD4-154957159ADC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaosOrm", "TaosOrm\TaosOrm.csproj", "{7F9F4104-3AFF-4D1E-8AD4-154957159ADC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

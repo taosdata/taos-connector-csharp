@@ -8,7 +8,7 @@ namespace TaosOrm
         static void Main(string[] args)
         {
             TaosSugar taosSugar = new TaosSugar();
-            taosSugar.TaosAddAsync(
+            _ = taosSugar.TaosAddAsync(
                 new EntityDemo()
                 {
                     Current = 2,
