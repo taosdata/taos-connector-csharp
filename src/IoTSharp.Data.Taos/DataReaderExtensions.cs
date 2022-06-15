@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using TDengineDriver;
-using System.ComponentModel.DataAnnotations.Schema;
 namespace IoTSharp.Data.Taos
 {
     public static class DataReaderExtensions
@@ -108,7 +109,42 @@ namespace IoTSharp.Data.Taos
             return str?.Trim('\0');
         }
 
-       
- 
+        public static IntPtr  ToIntPtr(this long val)
+        {
+            IntPtr lenPtr = Marshal.AllocHGlobal(sizeof(long));
+            Marshal.WriteInt64(lenPtr, val);
+            return lenPtr;
+        }
+        public static IntPtr ToIntPtr(this int  val)
+        {
+            IntPtr lenPtr = Marshal.AllocHGlobal(sizeof(int ));
+            Marshal.WriteInt32(lenPtr, val);
+            return lenPtr;
+        }
+        public static (IntPtr ptr, int len) ToUTF8IntPtr(this string command)
+        {
+
+#if NET5_0_OR_GREATER
+                    IntPtr commandBuffer = Marshal.StringToCoTaskMemUTF8(command);
+                    int bufferlen = Encoding.UTF8.GetByteCount(command);
+#else
+            var bytes = Encoding.UTF8.GetBytes(command);
+            int bufferlen = bytes.Length;
+            IntPtr commandBuffer = Marshal.AllocHGlobal(bufferlen);
+            Marshal.Copy(bytes, 0, commandBuffer, bufferlen);
+#endif
+            return (commandBuffer, bufferlen);
+        }
+
+        public static void FreeUtf8IntPtr(this IntPtr ptr)
+        {
+#if NET5_0_OR_GREATER
+            Marshal.FreeCoTaskMem(ptr);
+#else
+            Marshal.FreeHGlobal(ptr);
+#endif
+        }
+
+
     }
 }

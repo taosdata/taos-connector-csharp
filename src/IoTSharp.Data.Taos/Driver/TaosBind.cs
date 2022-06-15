@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using IoTSharp.Data.Taos;
 
 namespace TDengineDriver
 {
@@ -247,16 +248,14 @@ namespace TDengineDriver
         {
 
             TAOS_BIND bind = new TAOS_BIND();
-            // IntPtr unmanagedBinary = Marshal.StringToHGlobalAnsi(val);
-            IntPtr c_str = Marshal.StringToCoTaskMemUTF8(val);
+           var strToBytes= val. ToUTF8IntPtr();
 
-            var strToBytes = System.Text.Encoding.UTF8.GetBytes(val);
-            int length = strToBytes.Length;
+            int length = strToBytes.len;
             IntPtr lenPtr = Marshal.AllocHGlobal(sizeof(ulong));
             Marshal.WriteInt64(lenPtr, length);
 
             bind.buffer_type = (int)TDengineDataType.TSDB_DATA_TYPE_BINARY;
-            bind.buffer = c_str;
+            bind.buffer = strToBytes.ptr;
             bind.buffer_length = length;
             bind.length = lenPtr;
             bind.is_null = IntPtr.Zero;
@@ -266,19 +265,16 @@ namespace TDengineDriver
         public static TAOS_BIND BindNchar(String val)
         {
             TAOS_BIND bind = new TAOS_BIND();
-            var strToBytes = System.Text.Encoding.UTF8.GetBytes(val);
+
             // IntPtr unmanagedNchar = (IntPtr)Marshal.StringToHGlobalAnsi(val);
-            IntPtr c_str = (IntPtr)Marshal.StringToCoTaskMemUTF8(val);
-
-
-            int length = strToBytes.Length;
-            IntPtr lenPtr = Marshal.AllocHGlobal(sizeof(ulong));
-            Marshal.WriteInt64(lenPtr, length);
+            var strToBytes = val.ToUTF8IntPtr();
+            long  length = strToBytes.len;
+         
 
             bind.buffer_type = (int)TDengineDataType.TSDB_DATA_TYPE_NCHAR;
-            bind.buffer = c_str;
-            bind.buffer_length = length;
-            bind.length = lenPtr;
+            bind.buffer = strToBytes.ptr;
+            bind.buffer_length = (int)length;
+            bind.length = length.ToIntPtr();
             bind.is_null = IntPtr.Zero;
 
             return bind;
@@ -322,10 +318,15 @@ namespace TDengineDriver
         {
             foreach (TAOS_BIND bind in binds)
             {
+#if NET5_0_OR_GREATER
                 if (bind.buffer_type == (int)TDengineDataType.TSDB_DATA_TYPE_NCHAR || bind.buffer_type == (int)TDengineDataType.TSDB_DATA_TYPE_BINARY)
                     Marshal.FreeCoTaskMem(bind.buffer);
                 else
-                    Marshal.FreeHGlobal(bind.buffer);
+                       Marshal.FreeHGlobal(bind.buffer);
+#else
+                Marshal.FreeHGlobal(bind.buffer);
+#endif
+
                 Marshal.FreeHGlobal(bind.length);
                 if (bind.is_null != IntPtr.Zero)
                 {

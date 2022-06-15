@@ -40,11 +40,7 @@ namespace IoTSharp.Data.Taos
         {
             if (_dll_isloaded == false)
             {
-#if NET45
-
-                configDir = "C:/TDengine/cfg";
-#else 
-
+#if NET5_0_OR_GREATER
                 if (  RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
                     configDir = "/etc/taos";
@@ -54,6 +50,8 @@ namespace IoTSharp.Data.Taos
                 {
                     configDir = "C:/TDengine/cfg";
                 }
+#else
+                configDir = "C:/TDengine/cfg";
 #endif
                 TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR , this.configDir);
                 TDengine.Options((int)TDengineInitOption.TSDB_OPTION_SHELL_ACTIVITY_TIMER  , "60");

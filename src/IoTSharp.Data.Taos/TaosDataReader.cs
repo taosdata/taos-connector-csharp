@@ -366,8 +366,9 @@ namespace IoTSharp.Data.Taos
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the column.</returns>
         public override string GetString(int ordinal) => (string)GetValue(ordinal);
-
+#if NET5_0_OR_GREATER
         public System.Text.Json.JsonDocument GetJsonDocument(int ordinal) => System.Text.Json.JsonDocument.Parse(GetString(ordinal));
+#endif 
         public Newtonsoft.Json.Linq.JToken GetJToken(int ordinal) => Newtonsoft.Json.Linq.JToken.Parse(GetString(ordinal));
 
         /// <summary>
@@ -575,8 +576,15 @@ namespace IoTSharp.Data.Taos
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_BINARY:
                         {
+#if NET5_0_OR_GREATER
                             string v8 = Marshal.PtrToStringUTF8(data, GetContentLength(ordinal));
                             result = v8?.RemoveNull();
+#else
+                            byte[] buffer = new byte[GetContentLength(ordinal)];
+                            Marshal.Copy(data, buffer, 0, buffer.Length);
+                            string v8 = Encoding.UTF8.GetString(buffer);
+                            result = v8?.RemoveNull();
+#endif
                         }
                         break;
                     case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:

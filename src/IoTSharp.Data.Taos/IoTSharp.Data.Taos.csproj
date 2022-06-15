@@ -16,7 +16,7 @@
 			IoTSharp.Data.Taos.TaosParameter
 			IoTSharp.Data.Taos.TaosTransaction
 		</Description>
-		<TargetFrameworks>net5;net6</TargetFrameworks>
+		<TargetFrameworks>net5;net6;net4.6</TargetFrameworks>
 		<LangVersion>10</LangVersion>
 		<PackageTags>Taos;Data;ADO.NET;Entity Framework,;EF; Core;Data O/RM,;entity-framework-core;TDengine;IoTSharp</PackageTags>
 
@@ -62,8 +62,12 @@
 			<PackagePath></PackagePath>
 		</None>
 	</ItemGroup>
-
-	<ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)' == 'net4.6'">
+		<Reference Include="System.ComponentModel.DataAnnotations" />
+		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
+	</ItemGroup>
+	<ItemGroup >
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	 
 	</ItemGroup>
 </Project>

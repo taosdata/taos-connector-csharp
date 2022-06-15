@@ -20,9 +20,11 @@ namespace TDengineDriver
         public byte type;
         [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
         public short size;
-
+#if NET5_0_OR_GREATER
         public string Name => Encoding.UTF8.GetString(_name,0,_name.AsSpan().IndexOf((byte)0));
-
+#else
+        public string Name => Encoding.UTF8.GetString(_name, 0, Array.IndexOf( _name,(byte)0));
+#endif
         public TDengineDataType DataType => (TDengineDataType)type;
         public Type CrlType
         {

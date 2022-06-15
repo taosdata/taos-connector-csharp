@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using IoTSharp.Data.Taos;
 namespace TDengineDriver
 {
 
@@ -203,11 +203,14 @@ namespace TDengineDriver
 
         static public IntPtr Query(IntPtr conn, string command)
         {
-            IntPtr commandBuffer = Marshal.StringToCoTaskMemUTF8(command);
-            IntPtr res = Query(conn, commandBuffer);
-            Marshal.FreeCoTaskMem(commandBuffer);
+             var  var = command.ToUTF8IntPtr();
+            IntPtr res = Query(conn, var.ptr);
+             var.ptr.FreeUtf8IntPtr();
             return res;
         }
+
+
+
 
         [DllImport("taos", EntryPoint = "taos_affected_rows", CallingConvention = CallingConvention.Cdecl)]
         static extern public int AffectRows(IntPtr res);
