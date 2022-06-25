@@ -121,19 +121,27 @@ namespace IoTSharp.Data.Taos
             Marshal.WriteInt32(lenPtr, val);
             return lenPtr;
         }
-        public static (IntPtr ptr, int len) ToUTF8IntPtr(this string command)
+       internal  struct UTF8IntPtrStruct
         {
+         public   IntPtr ptr;
+     public       int len;
+        }
 
+        internal static UTF8IntPtrStruct ToUTF8IntPtr(this string command)
+        {
+            UTF8IntPtrStruct result;
 #if NET5_0_OR_GREATER
-                    IntPtr commandBuffer = Marshal.StringToCoTaskMemUTF8(command);
-                    int bufferlen = Encoding.UTF8.GetByteCount(command);
+            IntPtr commandBuffer = Marshal.StringToCoTaskMemUTF8(command);
+            int bufferlen = Encoding.UTF8.GetByteCount(command);
 #else
             var bytes = Encoding.UTF8.GetBytes(command);
             int bufferlen = bytes.Length;
             IntPtr commandBuffer = Marshal.AllocHGlobal(bufferlen);
             Marshal.Copy(bytes, 0, commandBuffer, bufferlen);
 #endif
-            return (commandBuffer, bufferlen);
+            result.ptr = commandBuffer;
+            result.len = bufferlen;
+            return result;
         }
 
         public static void FreeUtf8IntPtr(this IntPtr ptr)

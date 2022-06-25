@@ -35,7 +35,7 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Scaffolding.Internal
             string connectionString,
             MethodCallCodeFragment providerOptions)
             => new MethodCallCodeFragment(
-                nameof(TaosDbContextOptionsBuilderExtensions.UseTaos),
+                 typeof(TaosDbContextOptionsBuilderExtensions).GetMethod("UseTaos", System.Reflection.BindingFlags.Static),
                 providerOptions == null
                     ? new object[] { connectionString }
                     : new object[] { connectionString, new NestedClosureCodeFragment("x", providerOptions) });

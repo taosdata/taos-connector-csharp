@@ -7,18 +7,23 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TaosOrm
+namespace IoTSharp.ORM.Taos
 {
     /// <summary>
     /// 时序数据库Orm 查询未实现
     /// </summary>
-    public class TaosSugar
+    public class TaosOrm
     {
         private readonly TaosConnection _taos;
-        private static readonly ConcurrentDictionary<string, TaosStructure> _tableStructure = new();// 表名缓存
-        public TaosSugar()
+        private static readonly ConcurrentDictionary<string, TaosStructure> _tableStructure =    new ConcurrentDictionary<string, TaosStructure> ();// 表名缓存
+  
+        public TaosOrm(string connectionString)
         {
-            _taos = new TaosConnection("连接地址");
+            _taos = new TaosConnection(connectionString);
+            if (_taos.State != System.Data.ConnectionState.Open) _taos.Open();
+        }
+        public TaosOrm(TaosConnection _taos)
+        {
             if (_taos.State != System.Data.ConnectionState.Open) _taos.Open();
         }
         /// <summary>
@@ -83,7 +88,7 @@ namespace TaosOrm
                 }
             }
             if (st.TableName == null) throw new Exception("未设备表名特性");
-            string strInsertSQL = @$"INSERT INTO D_{st.TableName} USING  
+            string strInsertSQL = $@"INSERT INTO D_{st.TableName} USING  
            {st.SuperTableName}
             ({string.Join(",", st.TagNames)}) TAGS({tagValue})
             (ts,{string.Join(",", st.ColumnNames)}) VALUES(now,{columnValue})";

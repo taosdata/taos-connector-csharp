@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\IoTSharp.Data.Taos\IoTSharp.Data.Taos.csproj" />
+    <ProjectReference Include="..\IoTSharp.ORM.Taos\IoTSharp.ORM.Taos.csproj" />
   </ItemGroup>
 
 </Project>

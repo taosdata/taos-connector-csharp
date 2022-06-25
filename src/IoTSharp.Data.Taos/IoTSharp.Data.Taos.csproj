@@ -16,7 +16,7 @@
 			IoTSharp.Data.Taos.TaosParameter
 			IoTSharp.Data.Taos.TaosTransaction
 		</Description>
-		<TargetFrameworks>net5;net6;net4.6</TargetFrameworks>
+		<TargetFrameworks>net5;net6;net4.6;netstandard2.0</TargetFrameworks>
 		<LangVersion>10</LangVersion>
 		<PackageTags>Taos;Data;ADO.NET;Entity Framework,;EF; Core;Data O/RM,;entity-framework-core;TDengine;IoTSharp</PackageTags>
 
@@ -31,8 +31,7 @@
 		<RepositoryUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</RepositoryUrl>
 
 		<PackageReleaseNotes>
-			IoTSharp.Data.Taos  是一个基于TDengine 的RESTful Connector构建的ADO.Net 提供器。 这将允许你通过.Net Core 访问TDengine数据库。
-			IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于IoTSharp.Data.Taos构建。
+			IoTSharp.Data.Taos  是一个TDengine 的ADO.Net 提供器。 这将允许你通过.Net Core 访问TDengine数据库。
 		</PackageReleaseNotes>
 
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -64,10 +63,12 @@
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' == 'net4.6'">
 		<Reference Include="System.ComponentModel.DataAnnotations" />
-		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
 	</ItemGroup>
-	<ItemGroup >
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' ">
+		<PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-	 
+
 	</ItemGroup>
 </Project>

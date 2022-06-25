@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<PackageTags>Taos;Data;ADO.NET;Entity Framework,;EF; Core;Data O/RM,;entity-framework-core;TDengine;IoTSharp;ORM</PackageTags>
+		<Authors>Yanhong Ma</Authors>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</PackageProjectUrl>
+
+		<PackageIconUrl></PackageIconUrl>
+
+		<RepositoryUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</RepositoryUrl>
+
+		<PackageReleaseNotes>
+			IoTSharp.ORM.Taos   访问TDengine数据库的便捷ORM。
+
+		</PackageReleaseNotes>
+
+		<Copyright>Copyright © 2019-2022 IoTSharp All rights reserved.</Copyright>
+
+		<Version>1.0.1</Version>
+
+		<Platforms>AnyCPU;x64;x86</Platforms>
+
+		<PackageIcon>48876650.jpg</PackageIcon>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\docs\48876650.jpg" Link="48876650.jpg">
+			<PackagePath></PackagePath>
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\IoTSharp.Data.Taos\IoTSharp.Data.Taos.csproj" />
+	</ItemGroup>
+
+</Project>

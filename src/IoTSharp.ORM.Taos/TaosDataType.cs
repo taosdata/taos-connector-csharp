@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TaosOrm
+namespace IoTSharp.ORM.Taos
 {
     /// <summary>
     /// 涛思时序数据库10种数据类型

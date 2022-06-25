@@ -477,11 +477,15 @@ namespace TDengineDriver
         /// <param name="param">the parameter for callback</param>       
         [DllImport("taos", EntryPoint = "taos_query_a", CallingConvention = CallingConvention.Cdecl)]
         static extern private void QueryAsync(IntPtr taos, string sql, QueryAsyncCallback fq, IntPtr param);
-
-        public static Task<(IntPtr taoRes, int code)>  QueryAsync(IntPtr taos, string sql, IntPtr param)
+        public struct _TaosRes
+        {
+            public IntPtr taoRes;
+            public int code;
+        }
+        public static Task<_TaosRes>  QueryAsync(IntPtr taos, string sql, IntPtr param)
         {
             Semaphore sema = new Semaphore(1, 1);
-            (IntPtr taoRes, int code) result=new();
+            _TaosRes result =new();
             QueryAsync(taos, sql, delegate (IntPtr param, IntPtr taoRes, int code)
              {
                  sema.Release();
@@ -490,7 +494,7 @@ namespace TDengineDriver
               
              }, param);
             sema.WaitOne();
-            return  Task.FromResult( result);
+            return  Task.FromResult(result);
         }
 
         /// <summary>
