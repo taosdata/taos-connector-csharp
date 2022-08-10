@@ -24,20 +24,20 @@ namespace IoTSharp.Data.Taos
         private readonly int _recordsAffected;
         private bool _closed;
         private bool _closeConnection;
+        private readonly IntPtr _taos;
         private IntPtr _taosResult;
         private int _fieldCount;
-        private IntPtr _taos = IntPtr.Zero;
         IntPtr rowdata=IntPtr.Zero;
         List<taosField> _metas = null;
         private double _date_max_1970;
         private DateTime _dt1970;
         private TAOS_BIND[] _binds;
 
-        internal TaosDataReader(TaosCommand taosCommand, taosField[] metas, bool closeConnection, IntPtr res, int recordsAffected, int fieldcount, TAOS_BIND[] binds)
+        internal TaosDataReader(TaosCommand taosCommand, taosField[] metas, bool closeConnection, IntPtr taos, IntPtr res, int recordsAffected, int fieldcount, TAOS_BIND[] binds)
         {
-            _taos = taosCommand.Connection._taos;
             _command = taosCommand;
             _closeConnection = closeConnection;
+           _taos = taos;
             _fieldCount = fieldcount;
             _hasRows = recordsAffected > 0;
             _recordsAffected = recordsAffected;
@@ -158,11 +158,9 @@ namespace IoTSharp.Data.Taos
                 return;
             }
             _command.DataReader = null;
-            if (_closeConnection  )
-            {
-                _command.Connection.Close();
-                _closed = true;
-            }
+       
+            _closed = true;
+         
            
             TDengine.FreeResult(_taosResult);
             if (_binds != null)
@@ -174,6 +172,7 @@ namespace IoTSharp.Data.Taos
             {
                 TDengine.FreeResult(rowdata);
             }
+            _command.Connection.ReturnClient(_taos);
         }
 
         /// <summary>

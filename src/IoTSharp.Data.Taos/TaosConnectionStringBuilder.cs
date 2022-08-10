@@ -25,7 +25,8 @@ namespace IoTSharp.Data.Taos
         private const string DataSourceNoSpaceKeyword = "DataSource";
         private const string DataBaseKeyword = "DataBase";
         private const string PortKeyword = "Port";
-
+        private const string PoolSizeKeyword = "PoolSize";
+        
         private enum Keywords
         {
             DataSource,
@@ -33,7 +34,8 @@ namespace IoTSharp.Data.Taos
             Username,
             Password,
             Port,
-            Charset
+            Charset,
+            PoolSize
 
         }
 
@@ -46,18 +48,21 @@ namespace IoTSharp.Data.Taos
         private string _charset = System.Text.Encoding.UTF8.EncodingName;
         private string _password = string.Empty;
         private int  _port =6030;
+        private int _PoolSize=8;
+
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[6];
+            var validKeywords = new string[7];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
             validKeywords[(int)Keywords.Password] = PasswordKeyword;
             validKeywords[(int)Keywords.Charset] =CharsetKeyword;
             validKeywords[(int)Keywords.Port] = PortKeyword;
+            validKeywords[(int)Keywords.PoolSize] = PoolSizeKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(6, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(7, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
                 [UserNameKeyword] = Keywords.Username,
@@ -65,7 +70,8 @@ namespace IoTSharp.Data.Taos
                 [DataBaseKeyword] = Keywords.DataBase,
                 [CharsetKeyword] = Keywords.Charset,
                 [DataSourceNoSpaceKeyword] = Keywords.DataSource,
-                [PortKeyword] = Keywords.Port
+                [PortKeyword] = Keywords.Port,
+                [PoolSizeKeyword] = Keywords.PoolSize
             };
         }
 
@@ -118,6 +124,11 @@ namespace IoTSharp.Data.Taos
             set => base[PortKeyword] = _port = value;
         }
 
+        public virtual int PoolSize
+        {
+            get => _PoolSize;
+            set => base[PoolSizeKeyword] = _PoolSize = value;
+        }
 
 
         /// <summary>
@@ -191,6 +202,9 @@ namespace IoTSharp.Data.Taos
                         return;
                     case Keywords.Charset:
                         Charset = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.PoolSize:
+                        PoolSize = Convert.ToInt32(value, CultureInfo.InvariantCulture);
                         return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
@@ -314,6 +328,8 @@ namespace IoTSharp.Data.Taos
                     return Port;
                 case Keywords.Charset:
                     return Charset;
+                case Keywords.PoolSize:
+                    return PoolSize;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -346,6 +362,9 @@ namespace IoTSharp.Data.Taos
                     return;
                 case Keywords.Charset:
                     _charset = System.Text.Encoding.UTF8.EncodingName;
+                    return;
+                case Keywords.PoolSize:
+                    _PoolSize = 8;
                     return;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);

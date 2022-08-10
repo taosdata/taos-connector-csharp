@@ -196,8 +196,8 @@ namespace TDengineDriver
         static extern public int ErrorNo(IntPtr res);
 
         [DllImport("taos", EntryPoint = "taos_query", CallingConvention = CallingConvention.Cdecl)]
-        // static extern public IntPtr Query(IntPtr conn, string sqlstr);
         static extern private IntPtr Query(IntPtr conn, IntPtr byteArr);
+
         [DllImport("taos", EntryPoint = "taos_stop_query", CallingConvention = CallingConvention.Cdecl)]
         public static extern void StopQuery(IntPtr taos);
 

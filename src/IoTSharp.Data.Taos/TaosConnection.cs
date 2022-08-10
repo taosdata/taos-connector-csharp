@@ -24,12 +24,11 @@ namespace IoTSharp.Data.Taos
     public partial class TaosConnection : DbConnection
     {
         private string configDir = "C:/TDengine/cfg";
-
         private readonly IList<WeakReference<TaosCommand>> _commands = new List<WeakReference<TaosCommand>>();
-
+        private static Dictionary<string, ConcurrentTaosQueue> g_pool = new Dictionary<string, ConcurrentTaosQueue>();
+        private ConcurrentTaosQueue _queue=null;
         private string _connectionString;
         private ConnectionState _state;
-        internal IntPtr _taos;
 
         private static bool  _dll_isloaded=false;
      
@@ -63,8 +62,14 @@ namespace IoTSharp.Data.Taos
                 _dll_isloaded = true;
             }
         }
-
-       
+        internal IntPtr TakeClient()
+        {
+            return _queue.Take();
+        }
+        internal  void ReturnClient(IntPtr  _taos)
+        {
+             _queue.Return(_taos);
+        }
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosConnection" /> class.
         /// </summary>
@@ -129,13 +134,16 @@ namespace IoTSharp.Data.Taos
         {
             get
             {
+                var _taos = _queue.Take();
                 if (_taos == IntPtr.Zero)
                 {
-                    TaosException.ThrowExceptionForRC(-10005, "Connection is not open",null);
+                    _queue.Return(_taos);
+                    TaosException.ThrowExceptionForRC(-10005, "Connection is not open", null);
                 }
-               else  if (string.IsNullOrEmpty(_version))
+                else if (string.IsNullOrEmpty(_version))
                 {
                     _version = Marshal.PtrToStringAnsi(TDengine.GetServerInfo(_taos));
+                    _queue.Return(_taos);
                 }
                 return _version;
             }
@@ -172,8 +180,7 @@ namespace IoTSharp.Data.Taos
         protected internal virtual TaosTransaction Transaction { get; set; }
 
         public override string Database => ConnectionStringBuilder.DataBase;
-
-
+        public  int  PoolSize => ConnectionStringBuilder.PoolSize;
 
 
         private void SetState(ConnectionState value)
@@ -198,15 +205,28 @@ namespace IoTSharp.Data.Taos
             {
                 return;
             }
+            if (!g_pool.ContainsKey(_connectionString))
+            {
+                g_pool.Add(_connectionString, new ConcurrentTaosQueue());
+            }
+            _queue = g_pool[_connectionString];
+            _queue.AddRef();
             if (ConnectionString == null)
             {
                 throw new InvalidOperationException("Open Requires Set ConnectionString");
             }
-
-            this._taos = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password,"", (short)ConnectionStringBuilder.Port);
-           if (this._taos == IntPtr.Zero)
+            for (int i = 0; i < ConnectionStringBuilder.PoolSize; i++)
             {
-                TaosException.ThrowExceptionForRC(_taos);
+                var c = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password, "", (short)ConnectionStringBuilder.Port);
+                if (c != null && c!=IntPtr.Zero)
+                {
+                    _queue.Return(c);
+                }
+            }
+       
+           if (_queue.TaosQueue.Count==0)
+            {
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() {  Code=-1, Error= "Can't open  connection." });
             }
             else
             {
@@ -221,8 +241,19 @@ namespace IoTSharp.Data.Taos
         public override void Close()
         {
             if (State != ConnectionState.Closed)
-                TDengine.Close(_taos);
-
+            {
+                _queue.RemoveRef();
+                if (_queue.GetRef() == 0)
+                {
+                    _queue.TaosQueue.ToList().ForEach(c =>
+                    {
+                        TDengine.Close(c);
+                        }
+                    );
+                    _queue = null;
+                    g_pool.Remove(_connectionString);
+                }
+            }
             Transaction?.Dispose();
             _nowdatabase = string.Empty;
             foreach (var reference in _commands)
@@ -232,10 +263,7 @@ namespace IoTSharp.Data.Taos
                     command.Dispose();
                 }
             }
-
             _commands.Clear();
-
-
             SetState(ConnectionState.Closed);
         }
 
@@ -361,11 +389,11 @@ namespace IoTSharp.Data.Taos
         /// <param name="databaseName">The name of the database to use.</param>
         public override void ChangeDatabase(string databaseName)
         {
-            if (!SelectedDataBase || _nowdatabase != databaseName)
+            _queue.TaosQueue.ToList().ForEach(_taos =>
             {
                 TDengine.SelectDatabase(_taos, databaseName);
-                _nowdatabase = databaseName;
-            }
+            });
+            _nowdatabase = databaseName;
         }
 
         public bool DatabaseExists(string databaseName)
@@ -405,16 +433,21 @@ namespace IoTSharp.Data.Taos
         private int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision precision)
         {
             int affectedRows = 0;
+            var _taos= _queue.Take();
             IntPtr res = TDengine.SchemalessInsert(_taos, lines, lines.Length, (int)protocol, (int)precision);
+         
             if (TDengine.ErrorNo(res) != 0)
             {
-                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = TDengine.ErrorNo(res), Error = TDengine.Error(res) });
+                var tdr = new TaosErrorResult() { Code = TDengine.ErrorNo(res), Error = TDengine.Error(res) };
+                _queue.Return(_taos);
+                TaosException.ThrowExceptionForRC(tdr);
             }
             else
             {
                 affectedRows = TDengine.AffectRows(res);
+                TDengine.FreeResult(res);
+                _queue.Return(_taos);
             }
-            TDengine.FreeResult(res);
             return affectedRows;
         }
         private class AggregateContext<T>

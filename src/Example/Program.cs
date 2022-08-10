@@ -8,6 +8,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TaosADODemo
 {
@@ -21,7 +22,7 @@ namespace TaosADODemo
             string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             var builder = new TaosConnectionStringBuilder()
             {
-                DataSource = "airleaderserver",
+                DataSource = "taos",
                 DataBase = database,
                 Username = "root",
                 Password = "taosdata",
@@ -61,7 +62,7 @@ namespace TaosADODemo
                 Console.WriteLine("");
                 ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
 
-
+                connection.ChangeDatabase(database);
                 Console.WriteLine("");
                 connection.CreateCommand($"CREATE TABLE datas ('reportTime' timestamp, type int, 'bufferedEnd' bool, address nchar(64), parameter nchar(64), value nchar(64)) TAGS ('boxCode' nchar(64), 'machineId' int);").ExecuteNonQuery();
                 connection.CreateCommand($"INSERT INTO  data_history_67 USING datas TAGS (mongo, 67) values ( 1608173534840 2 false 'Channel1.窑.烟囱温度' '烟囱温度' '122.00' );").ExecuteNonQuery();
@@ -84,8 +85,15 @@ namespace TaosADODemo
                 connection.CreateCommand("CREATE TABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
                 var devid1 = $"{Guid.NewGuid():N}";
                 var devid2 = $"{Guid.NewGuid():N}";
-                UploadTelemetryData(connection, devid1, "1#air-compressor-two-level-discharge-temperature", 2000);
-                UploadTelemetryData(connection, devid2, "1#air-compressor-load-rate", 2000);
+                DateTime dt = DateTime.Now;
+                UploadTelemetryData(connection, devid1, "1#air-compressor-two-level-discharge-temperature", 4000);
+                UploadTelemetryData(connection, devid2, "1#air-compressor-load-rate", 4000);
+
+                DateTime dt2 = DateTime.Now;
+                UploadTelemetryDataPool(connection, devid1, "1#air-compressor-two-level-discharge-temperature1", 4000);
+                UploadTelemetryDataPool(connection, devid2, "1#air-compressor-load-rate1", 4000);
+                Console.WriteLine($"UploadTelemetryData 耗时:{DateTime.Now.Subtract(dt).TotalSeconds}");
+                Console.WriteLine($"UploadTelemetryDataPool 耗时:{DateTime.Now.Subtract(dt2).TotalSeconds}");
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
                 ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 var reader3 = connection.CreateCommand("select * from telemetrydata").ExecuteReader();
@@ -120,7 +128,7 @@ namespace TaosADODemo
                 string[] jsonStr = {
                 "{"
                    +"\"metric\": \"stb0_0\","
-                   +"\"timestamp\": 1626006833,"
+                   +$"\"timestamp\": {DateTimeOffset.Now.ToUnixTimeSeconds()},"
                    +"\"value\": 10,"
                    +"\"tags\": {"
                        +" \"t1\": true,"
@@ -169,7 +177,7 @@ namespace TaosADODemo
                 payload.Add("metric", "stb3_0");
 
                 var timestamp = new JObject();
-                timestamp.Add("value", 1626006833);
+                timestamp.Add("value",  DateTimeOffset.Now.ToUnixTimeSeconds() );
                 timestamp.Add("type", "s");
                 payload.Add("timestamp", timestamp);
 
@@ -244,6 +252,14 @@ namespace TaosADODemo
             {
                 connection.CreateCommand($"INSERT INTO device_{devid} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
             }
+        }
+
+        static void UploadTelemetryDataPool(TaosConnection connection, string devid, string keyname, int count)
+        {
+            Parallel.For(0, count,new ParallelOptions() { MaxDegreeOfParallelism=connection.PoolSize }, i =>
+            {
+                connection.CreateCommand($"INSERT INTO device_{devid} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
+            });
         }
     }
 }

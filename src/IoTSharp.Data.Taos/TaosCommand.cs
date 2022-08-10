@@ -27,7 +27,7 @@ namespace IoTSharp.Data.Taos
         private readonly DateTime _dt1970;
         private TaosConnection _connection;
         private string _commandText;
-        private IntPtr _taos => _connection._taos;
+ 
         /// <summary>
         ///     Initializes a new instance of the <see cref="TaosCommand" /> class.
         /// </summary>
@@ -116,10 +116,9 @@ namespace IoTSharp.Data.Taos
                 {
                     throw new InvalidOperationException($"SetRequiresNoOpenReader{nameof(Connection)}");
                 }
-
+              
                 if (value != _connection)
                 {
-
                     _connection?.RemoveCommand(this);
                     _connection = value;
                     value?.AddCommand(this);
@@ -136,6 +135,7 @@ namespace IoTSharp.Data.Taos
             get => Connection;
             set => Connection = (TaosConnection)value;
         }
+
 
         /// <summary>
         ///     Gets or sets the transaction within which the command executes.
@@ -317,12 +317,12 @@ namespace IoTSharp.Data.Taos
             {
                 throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(ExecuteReader)}");
             }
-
             var unprepared = false;
             TaosDataReader dataReader = null;
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
             try
             {
+                var _taos = _connection.TakeClient();
 #if DEBUG
                 Debug.WriteLine($"_commandText:{_commandText}");
 #endif
@@ -336,7 +336,7 @@ namespace IoTSharp.Data.Taos
                     if (stmt != IntPtr.Zero)
                     {
                         var pms = _parameters.Value;
-                        binds = BindParamters(pms);
+                        binds = BindParamters(pms,_taos);
                         int res = TDengine.StmtPrepare(stmt, _commandText);
                         if (res == 0)
                         {
@@ -415,31 +415,33 @@ namespace IoTSharp.Data.Taos
                         }
                     }
 #endif
-                    dataReader = new TaosDataReader(this, metas, closeConnection, code.Result, _affectRows, metas?.Length ?? 0, binds);
+                    dataReader = new TaosDataReader(this, metas, closeConnection, _taos, code.Result, _affectRows, metas?.Length ?? 0, binds);
                 }
-                else if (isok && TDengine.ErrorNo(code.Result) != 0)
+                else if (isok &&  TDengine.ErrorNo(code.Result) != 0)
                 {
-                    TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = TDengine.ErrorNo(code.Result), Error = TDengine.Error(code.Result) });
-                }
-                else if (isok && code.Result == IntPtr.Zero)
-                {
-                    TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = TDengine.ErrorNo(_taos), Error = TDengine.Error(_taos) });
-                }
-                else if (code.Status == TaskStatus.Running || !isok)
-                {
-                    TaosException.ThrowExceptionForRC(-10006, "Execute sql command timeout", null);
-                }
-                else if (code.IsCanceled)
-                {
-                    TaosException.ThrowExceptionForRC(-10003, "Command is Canceled", null);
-                }
-                else if (code.IsFaulted)
-                {
-                    TaosException.ThrowExceptionForRC(-10004, code.Exception.Message, code.Exception?.InnerException);
+                    var ter = new TaosErrorResult() { Code = TDengine.ErrorNo(code.Result), Error = TDengine.Error(code.Result) };
+                    _connection.ReturnClient(_taos);
+                    TaosException.ThrowExceptionForRC(_commandText, ter);
                 }
                 else
                 {
-                    TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = -10007, Error = $"Unknow Exception" });
+                    _connection.ReturnClient(_taos);
+                    if (code.Status == TaskStatus.Running || !isok)
+                    {
+                        TaosException.ThrowExceptionForRC(-10006, "Execute sql command timeout", null);
+                    }
+                    else if (code.IsCanceled)
+                    {
+                        TaosException.ThrowExceptionForRC(-10003, "Command is Canceled", null);
+                    }
+                    else if (code.IsFaulted)
+                    {
+                        TaosException.ThrowExceptionForRC(-10004, code.Exception.Message, code.Exception?.InnerException);
+                    }
+                    else
+                    {
+                        TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = -10007, Error = $"Unknow Exception" });
+                    }
                 }
             }
             catch when (unprepared)
@@ -449,7 +451,7 @@ namespace IoTSharp.Data.Taos
             return dataReader;
         }
 
-        private TAOS_BIND[] BindParamters(TaosParameterCollection pms)
+        private TAOS_BIND[] BindParamters(TaosParameterCollection pms,IntPtr _taos)
         {
             TAOS_BIND[] binds = new TAOS_BIND[pms.Count];
             for (int i = 0; i < pms.Count; i++)
