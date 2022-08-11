@@ -85,19 +85,27 @@ namespace TaosADODemo
                 connection.CreateCommand("CREATE TABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
                 var devid1 = $"{Guid.NewGuid():N}";
                 var devid2 = $"{Guid.NewGuid():N}";
+                var devid3 = $"{Guid.NewGuid():N}";
+                var devid4 = $"{Guid.NewGuid():N}";
                 DateTime dt = DateTime.Now;
-                UploadTelemetryData(connection, devid1, "1#air-compressor-two-level-discharge-temperature", 4000);
-                UploadTelemetryData(connection, devid2, "1#air-compressor-load-rate", 4000);
-
+                UploadTelemetryData(connection, devid1, "1#air-compressor-two-level-discharge-temperature", 5000);
+                UploadTelemetryData(connection, devid2, "1#air-compressor-load-rate", 5000);
+                Console.WriteLine("");
+                Console.WriteLine("");
+                Console.WriteLine("");
                 DateTime dt2 = DateTime.Now;
-                UploadTelemetryDataPool(connection, devid1, "1#air-compressor-two-level-discharge-temperature1", 4000);
-                UploadTelemetryDataPool(connection, devid2, "1#air-compressor-load-rate1", 4000);
-                Console.WriteLine($"UploadTelemetryData 耗时:{DateTime.Now.Subtract(dt).TotalSeconds}");
-                Console.WriteLine($"UploadTelemetryDataPool 耗时:{DateTime.Now.Subtract(dt2).TotalSeconds}");
+                UploadTelemetryDataPool(connection, devid3, "1#air-compressor-two-level-discharge-temperature1", 5000);
+                UploadTelemetryDataPool(connection, devid4, "1#air-compressor-load-rate1", 5000);
+                var t1 = DateTime.Now.Subtract(dt).TotalSeconds;
+                var t2 = DateTime.Now.Subtract(dt2).TotalSeconds;
+                Console.WriteLine("Done");
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+                Console.WriteLine($"UploadTelemetryData 耗时:{t1}");
+                Console.WriteLine($"UploadTelemetryDataPool 耗时:{t2}");
+                Thread.Sleep(TimeSpan.FromSeconds(2));
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
                 ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 var reader3 = connection.CreateCommand("select * from telemetrydata").ExecuteReader();
-
                 List<string> list = new List<string>();
                 while (reader3.Read())
                 {
@@ -258,7 +266,15 @@ namespace TaosADODemo
         {
             Parallel.For(0, count,new ParallelOptions() { MaxDegreeOfParallelism=connection.PoolSize }, i =>
             {
-                connection.CreateCommand($"INSERT INTO device_{devid} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
+                try
+                {
+                    connection.CreateCommand($"INSERT INTO device_{devid} USING telemetrydata TAGS(\"{devid}\",\"{keyname}\") values (now,2,true,'{i}',{i},now,{i});").ExecuteNonQuery();
+                    Console.WriteLine($"线程:{Thread.CurrentThread.ManagedThreadId} 第{i}条数据, OK");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"线程:{Thread.CurrentThread.ManagedThreadId} 第{i}条数据, {ex.Message}");
+                }
             });
         }
     }

@@ -101,6 +101,8 @@ namespace IoTSharp.Data.Taos
 
         internal TaosConnectionStringBuilder ConnectionStringBuilder { get; set; }
 
+        public override int ConnectionTimeout => ConnectionStringBuilder.ConnectionTimeout;
+
 
         /// <summary>
         ///     Gets the path to the database file. Will be absolute for open connections.
@@ -207,7 +209,7 @@ namespace IoTSharp.Data.Taos
             }
             if (!g_pool.ContainsKey(_connectionString))
             {
-                g_pool.Add(_connectionString, new ConcurrentTaosQueue());
+                g_pool.Add(_connectionString, new ConcurrentTaosQueue() {  Timeout= ConnectionTimeout});
             }
             _queue = g_pool[_connectionString];
             _queue.AddRef();
@@ -215,10 +217,10 @@ namespace IoTSharp.Data.Taos
             {
                 throw new InvalidOperationException("Open Requires Set ConnectionString");
             }
-            for (int i = 0; i < ConnectionStringBuilder.PoolSize; i++)
+            for (int i = 0; i < ConnectionStringBuilder.PoolSize+1; i++)
             {
                 var c = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password, "", (short)ConnectionStringBuilder.Port);
-                if (c != null && c!=IntPtr.Zero)
+                if (c!=IntPtr.Zero)
                 {
                     _queue.Return(c);
                 }

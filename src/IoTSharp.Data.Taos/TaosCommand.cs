@@ -289,6 +289,14 @@ namespace IoTSharp.Data.Taos
         /// <exception cref="TaosException">A Taos error occurs during execution.</exception>
         public new virtual TaosDataReader ExecuteReader(CommandBehavior behavior)
         {
+            var _taos = _connection.TakeClient();
+            var dr= ExecuteReader(behavior, _taos);
+            dr.OnDispose += (object sender, EventArgs e)=>_connection.ReturnClient(_taos);
+            return dr;
+        }
+        
+        private TaosDataReader ExecuteReader(CommandBehavior behavior,IntPtr _taos)
+        { 
             if ((behavior & ~(CommandBehavior.Default | CommandBehavior.SequentialAccess | CommandBehavior.SingleResult
                               | CommandBehavior.SingleRow | CommandBehavior.CloseConnection)) != 0)
             {
@@ -322,7 +330,7 @@ namespace IoTSharp.Data.Taos
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
             try
             {
-                var _taos = _connection.TakeClient();
+     
 #if DEBUG
                 Debug.WriteLine($"_commandText:{_commandText}");
 #endif
@@ -605,10 +613,14 @@ namespace IoTSharp.Data.Taos
             {
                 throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(ExecuteNonQuery)}");
             }
-            using (var reader = ExecuteReader())
+            var _taos= _connection.TakeClient();
+            int result = -1;
+            using (var reader = ExecuteReader( CommandBehavior.Default,_taos))
             {
-                return reader.RecordsAffected;
+                result= reader.RecordsAffected;
             }
+            _connection.ReturnClient(_taos);
+            return result;
         }
 
         /// <summary>
@@ -626,13 +638,16 @@ namespace IoTSharp.Data.Taos
             {
                 throw new InvalidOperationException($"CallRequiresSetCommandText{nameof(ExecuteScalar)}");
             }
-
+            var _taos = _connection.TakeClient();
+            object result =null;
             using (var reader = ExecuteReader())
             {
-                return reader.Read()
+                result= reader.Read()
                     ? reader.GetValue(0)
                     : null;
             }
+            _connection.ReturnClient(_taos);
+            return result;
         }
       
         /// <summary>

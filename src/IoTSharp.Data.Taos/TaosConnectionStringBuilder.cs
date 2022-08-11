@@ -26,7 +26,7 @@ namespace IoTSharp.Data.Taos
         private const string DataBaseKeyword = "DataBase";
         private const string PortKeyword = "Port";
         private const string PoolSizeKeyword = "PoolSize";
-        
+        private const string TimeOutKeyword = "TimeOut";
         private enum Keywords
         {
             DataSource,
@@ -35,7 +35,9 @@ namespace IoTSharp.Data.Taos
             Password,
             Port,
             Charset,
-            PoolSize
+            PoolSize,
+            TimeOut
+
 
         }
 
@@ -48,11 +50,12 @@ namespace IoTSharp.Data.Taos
         private string _charset = System.Text.Encoding.UTF8.EncodingName;
         private string _password = string.Empty;
         private int  _port =6030;
-        private int _PoolSize=8;
+        private int _PoolSize=Environment.ProcessorCount;
+        private int _timeout = 30;
 
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[7];
+            var validKeywords = new string[8];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
@@ -60,9 +63,10 @@ namespace IoTSharp.Data.Taos
             validKeywords[(int)Keywords.Charset] =CharsetKeyword;
             validKeywords[(int)Keywords.Port] = PortKeyword;
             validKeywords[(int)Keywords.PoolSize] = PoolSizeKeyword;
+            validKeywords[(int)Keywords.TimeOut] = TimeOutKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(7, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(8, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
                 [UserNameKeyword] = Keywords.Username,
@@ -71,7 +75,8 @@ namespace IoTSharp.Data.Taos
                 [CharsetKeyword] = Keywords.Charset,
                 [DataSourceNoSpaceKeyword] = Keywords.DataSource,
                 [PortKeyword] = Keywords.Port,
-                [PoolSizeKeyword] = Keywords.PoolSize
+                [PoolSizeKeyword] = Keywords.PoolSize,
+                [TimeOutKeyword] = Keywords.TimeOut
             };
         }
 
@@ -100,6 +105,8 @@ namespace IoTSharp.Data.Taos
             get => _dataSource;
             set => base[DataSourceKeyword] = _dataSource = value;
         }
+
+     
         public virtual string Username
         {
             get => _userName;
@@ -164,7 +171,13 @@ namespace IoTSharp.Data.Taos
         }
         internal bool ForceDatabaseName { get; set; } = false;
 
+      
 
+        public int ConnectionTimeout
+        {
+            get => _timeout;
+            set => base[TimeOutKeyword] = _timeout = value;
+        }
 
         /// <summary>
         ///     Gets or sets the value associated with the specified key.
@@ -205,6 +218,9 @@ namespace IoTSharp.Data.Taos
                         return;
                     case Keywords.PoolSize:
                         PoolSize = Convert.ToInt32(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.TimeOut:
+                        ConnectionTimeout = Convert.ToInt32(value, CultureInfo.InvariantCulture);
                         return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
@@ -330,6 +346,8 @@ namespace IoTSharp.Data.Taos
                     return Charset;
                 case Keywords.PoolSize:
                     return PoolSize;
+                case Keywords.TimeOut:
+                    return ConnectionTimeout;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -358,13 +376,16 @@ namespace IoTSharp.Data.Taos
                     _dataBase = string.Empty;
                     return;
                 case Keywords.Port:
-                    _port=6060;
+                    _port=6030;
                     return;
                 case Keywords.Charset:
                     _charset = System.Text.Encoding.UTF8.EncodingName;
                     return;
                 case Keywords.PoolSize:
-                    _PoolSize = 8;
+                    _PoolSize = Environment.ProcessorCount;
+                    return;
+                case Keywords.TimeOut   :
+                    _timeout = 30;
                     return;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);

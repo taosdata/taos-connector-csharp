@@ -24,7 +24,6 @@ namespace IoTSharp.Data.Taos
         private readonly int _recordsAffected;
         private bool _closed;
         private bool _closeConnection;
-        private readonly IntPtr _taos;
         private IntPtr _taosResult;
         private int _fieldCount;
         IntPtr rowdata=IntPtr.Zero;
@@ -33,11 +32,12 @@ namespace IoTSharp.Data.Taos
         private DateTime _dt1970;
         private TAOS_BIND[] _binds;
 
+
+
         internal TaosDataReader(TaosCommand taosCommand, taosField[] metas, bool closeConnection, IntPtr taos, IntPtr res, int recordsAffected, int fieldcount, TAOS_BIND[] binds)
         {
             _command = taosCommand;
             _closeConnection = closeConnection;
-           _taos = taos;
             _fieldCount = fieldcount;
             _hasRows = recordsAffected > 0;
             _recordsAffected = recordsAffected;
@@ -145,6 +145,8 @@ namespace IoTSharp.Data.Taos
         public override void Close()
             => Dispose(true);
 
+
+        internal event EventHandler OnDispose;
         /// <summary>
         ///     Releases any resources used by the data reader and closes it.
         /// </summary>
@@ -160,8 +162,7 @@ namespace IoTSharp.Data.Taos
             _command.DataReader = null;
        
             _closed = true;
-         
-           
+      
             TDengine.FreeResult(_taosResult);
             if (_binds != null)
             {
@@ -172,7 +173,7 @@ namespace IoTSharp.Data.Taos
             {
                 TDengine.FreeResult(rowdata);
             }
-            _command.Connection.ReturnClient(_taos);
+            OnDispose?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>

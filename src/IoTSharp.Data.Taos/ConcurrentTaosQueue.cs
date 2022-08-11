@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -26,10 +27,10 @@ namespace IoTSharp.Data.Taos
         {
             Monitor.Enter(TaosQueue);
             TaosQueue.Enqueue(client);
-            System.Diagnostics.Debug.WriteLine($"TaosQueue Return:{client}");
+            Debug.WriteLine($"线程{Thread.CurrentThread.ManagedThreadId} 归还 {client}");
             Monitor.Pulse(TaosQueue);
             Monitor.Exit(TaosQueue);
-           
+            Thread.Sleep(0);
         }
         int _ref = 0;
         public void AddRef()
@@ -50,16 +51,29 @@ namespace IoTSharp.Data.Taos
                 _ref--;
             }
         }
+        public int Timeout { get; set; }
         public IntPtr Take()
         {
+            IntPtr client = IntPtr.Zero;
             Monitor.Enter(TaosQueue);
             if (TaosQueue.IsEmpty)
             {
-                Monitor.Wait(TaosQueue);
+                Debug.WriteLine($"线程{Thread.CurrentThread.ManagedThreadId} 连接池已空,请等待 超时时长:{Timeout}");
+                Monitor.Wait(TaosQueue, TimeSpan.FromSeconds(Timeout));
             }
-            TaosQueue.TryDequeue(out var client);
-            System.Diagnostics.Debug.WriteLine($"TaosQueue Take:{client}");
+            if (!TaosQueue.TryDequeue(out client))
+            {
+                Debug.WriteLine($"线程{Thread.CurrentThread.ManagedThreadId} 从连接池获取连接失败，等待并重试");
+            }
+            else
+            {
+                Debug.WriteLine($"线程{Thread.CurrentThread.ManagedThreadId} 拿走 {client}");
+            }
             Monitor.Exit(TaosQueue);
+            if (client == IntPtr.Zero)
+            {
+                throw new TimeoutException($"Connection pool is empty and wait time out({Timeout}s)!");
+            }
             return client;
         }
     }
