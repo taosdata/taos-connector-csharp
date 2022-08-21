@@ -22,26 +22,6 @@ using System.Threading.Tasks;
 using IoTSharp.Data.Taos;
 namespace TDengineDriver
 {
-
-
-    enum TDengineSchemalessProtocol
-    {
-        TSDB_SML_UNKNOWN_PROTOCOL = 0,
-        TSDB_SML_LINE_PROTOCOL = 1,
-        TSDB_SML_TELNET_PROTOCOL = 2,
-        TSDB_SML_JSON_PROTOCOL = 3
-
-    }
-    public enum TDengineSchemalessPrecision
-    {
-        TSDB_SML_TIMESTAMP_NOT_CONFIGURED = 0,
-        TSDB_SML_TIMESTAMP_HOURS = 1,
-        TSDB_SML_TIMESTAMP_MINUTES = 2,
-        TSDB_SML_TIMESTAMP_SECONDS = 3,
-        TSDB_SML_TIMESTAMP_MILLI_SECONDS = 4,
-        TSDB_SML_TIMESTAMP_MICRO_SECONDS = 5,
-        TSDB_SML_TIMESTAMP_NANO_SECONDS = 6
-    }
     public enum TDengineDataType
     {
         TSDB_DATA_TYPE_NULL = 0,     // 1 bytes
@@ -76,6 +56,24 @@ namespace TDengineDriver
         TSDB_OPTION_TIMEZONE = 2,
         TSDB_OPTION_CONFIGDIR = 3,
         TSDB_OPTION_SHELL_ACTIVITY_TIMER = 4
+    }
+    public enum TDengineSchemalessProtocol
+    {
+        TSDB_SML_UNKNOWN_PROTOCOL = 0,
+        TSDB_SML_LINE_PROTOCOL = 1,
+        TSDB_SML_TELNET_PROTOCOL = 2,
+        TSDB_SML_JSON_PROTOCOL = 3
+
+    }
+    public enum TDengineSchemalessPrecision
+    {
+        TSDB_SML_TIMESTAMP_NOT_CONFIGURED = 0,
+        TSDB_SML_TIMESTAMP_HOURS = 1,
+        TSDB_SML_TIMESTAMP_MINUTES = 2,
+        TSDB_SML_TIMESTAMP_SECONDS = 3,
+        TSDB_SML_TIMESTAMP_MILLI_SECONDS = 4,
+        TSDB_SML_TIMESTAMP_MICRO_SECONDS = 5,
+        TSDB_SML_TIMESTAMP_NANO_SECONDS = 6
     }
     enum TaosField : int
     {
@@ -231,7 +229,7 @@ namespace TDengineDriver
             int fieldCount = FieldCount(res);
             if (fieldCount > 0)
             {
-                IntPtr fieldsPtr = taos_fetch_fields(res);//fieldsPtr «resµƒ“ª≤ø∑÷£¨ ’‚¿Ô≤ª Õ∑≈°£ 
+                IntPtr fieldsPtr = taos_fetch_fields(res);//fieldsPtrÊòØresÁöÑ‰∏ÄÈÉ®ÂàÜÔºå ËøôÈáå‰∏çÈáäÊîæ„ÄÇ 
                 taosField =   MarshalUnmananagedArray2Struct<taosField>(fieldsPtr, fieldCount);
             }
             return taosField;
@@ -250,10 +248,10 @@ namespace TDengineDriver
         static extern public IntPtr FetchRows(IntPtr res);
 
         [DllImport("taos", EntryPoint = "taos_free_result", CallingConvention = CallingConvention.Cdecl)]
-        static extern public IntPtr FreeResult(IntPtr res);
+        static extern public void FreeResult(IntPtr res);
 
         [DllImport("taos", EntryPoint = "taos_close", CallingConvention = CallingConvention.Cdecl)]
-        static extern public int Close(IntPtr taos);
+        static extern public void Close(IntPtr taos);
 
         //get precision of restultset
         [DllImport("taos", EntryPoint = "taos_get_client_info", CallingConvention = CallingConvention.Cdecl)]
@@ -279,7 +277,7 @@ namespace TDengineDriver
         static extern public IntPtr StmtInit(IntPtr taos);
 
         /// <summary>
-        /// prepare a sql statement£¨'sql' should be a valid INSERT/SELECT statement.
+        /// prepare a sql statementÔºå'sql' should be a valid INSERT/SELECT statement.
         /// </summary>
         /// <param name="stmt">could be the value returned by 'StmtInit', that may be a valid object or NULL.</param>
         /// <param name="sql">sql string,used to bind parameters with</param>
@@ -457,7 +455,7 @@ namespace TDengineDriver
         {
             IntPtr stmtErrPrt = StmtErrPtr(stmt);
             string result= Marshal.PtrToStringAnsi(stmtErrPrt);
-            Marshal.FreeHGlobal(stmtErrPrt);
+           // Marshal.FreeHGlobal(stmtErrPrt);
             return result;
         }
 
@@ -476,7 +474,7 @@ namespace TDengineDriver
         /// <param name="fq">User-defined callback function. <see cref="QueryAsyncCallback"/></param>
         /// <param name="param">the parameter for callback</param>       
         [DllImport("taos", EntryPoint = "taos_query_a", CallingConvention = CallingConvention.Cdecl)]
-        static extern private void QueryAsync(IntPtr taos, string sql, QueryAsyncCallback fq, IntPtr param);
+        static extern private void QueryAsync(IntPtr taos, IntPtr sql, QueryAsyncCallback fq, IntPtr param);
         public struct _TaosRes
         {
             public IntPtr taoRes;
@@ -486,14 +484,17 @@ namespace TDengineDriver
         {
             Semaphore sema = new Semaphore(1, 1);
             _TaosRes result =new();
-            QueryAsync(taos, sql, delegate (IntPtr param, IntPtr taoRes, int code)
+            var ptrsql = sql.ToUTF8IntPtr();
+            QueryAsync(taos, ptrsql.ptr, delegate (IntPtr param, IntPtr taoRes, int code)
              {
                  sema.Release();
                  result.taoRes = taoRes;
                  result.code = code;
               
              }, param);
+            
             sema.WaitOne();
+            ptrsql.ptr.FreeUtf8IntPtr();
             return  Task.FromResult(result);
         }
 
