@@ -83,7 +83,7 @@ namespace TDengineDriver
         BYTES_OFFSET = 66,
 
     }
-    
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     public struct TAOS_BIND
     {
@@ -127,6 +127,7 @@ namespace TDengineDriver
         // line number, or the values number in buffer 
         public int num;
     }
+
 
     /// <summary>
     /// User defined callback function for interface "QueryAsync()"
@@ -216,21 +217,24 @@ namespace TDengineDriver
         [DllImport("taos", EntryPoint = "taos_field_count", CallingConvention = CallingConvention.Cdecl)]
         static extern public int FieldCount(IntPtr res);
 
+
         [DllImport("taos", EntryPoint = "taos_fetch_fields", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr taos_fetch_fields(IntPtr res);
 
-        public static taosField[] FetchFields(IntPtr res)
+        public static taosField_E[] FetchFields(IntPtr res)
         {
             if (res == IntPtr.Zero)
             {
                 return null;
             }
-            taosField[] taosField=null;
+            taosField_E[] taosField=null;
             int fieldCount = FieldCount(res);
             if (fieldCount > 0)
             {
+                //https://github.com/taosdata/TDengine/issues/17057
                 IntPtr fieldsPtr = taos_fetch_fields(res);//fieldsPtr是res的一部分， 这里不释放。 
-                taosField =   MarshalUnmananagedArray2Struct<taosField>(fieldsPtr, fieldCount);
+                taosField =   MarshalUnmananagedArray2Struct<taosField_E>(fieldsPtr, fieldCount);
+             //   var  taosFieldf = MarshalUnmananagedArray2Struct<taosField>(fieldsPtr, fieldCount);
             }
             return taosField;
         }
@@ -240,7 +244,8 @@ namespace TDengineDriver
             var mangagedArray = new T[length];
             for (int i = 0; i < length; i++)
             {
-                mangagedArray[i]=   Marshal.PtrToStructure<T>(new IntPtr(unmanagedArray.ToInt64() + i * size));
+                var value = IntPtr.Add(unmanagedArray,  i * size);
+                mangagedArray[i]=   Marshal.PtrToStructure<T>(value);
             }
             return mangagedArray;
         }
@@ -319,7 +324,7 @@ namespace TDengineDriver
         /// </param>
         /// <returns>0 for success, non-zero for failure.</returns>
         [DllImport("taos", EntryPoint = "taos_stmt_set_tbname_tags", CallingConvention = CallingConvention.Cdecl)]
-        static extern public int StmtSetTbnameTags(IntPtr stmt, string name, TAOS_BIND[] tags);
+        static extern public int StmtSetTbnameTags(IntPtr stmt, string name, TAOS_MULTI_BIND[] tags);
 
         /// <summary>
         /// For both INSERT and SELECT.

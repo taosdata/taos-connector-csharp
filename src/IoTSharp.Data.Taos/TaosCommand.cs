@@ -344,19 +344,30 @@ namespace IoTSharp.Data.Taos
                     if (stmt != IntPtr.Zero)
                     {
                         var pms = _parameters.Value;
-                        binds = BindParamters(pms,_taos);
                         int res = TDengine.StmtPrepare(stmt, _commandText);
-                        if (res == 0)
+                        var isinsert = TDengine.StmtIsInsert(stmt);
+                        if (res == 0 && isinsert)
                         {
-                            int ret = TDengine.StmtBindParam(stmt, binds);
-                            if (ret == 0)
+                            var tablename = (string)pms["@"].Value;
+                            pms.RemoveAt("@");
+                            TDengine.StmtSetTbname(stmt, tablename);
+                            binds = BindParamters(pms, _taos);
+                            // binds = TaosBind.GetNTableCNRow();
+                        }
+                        else
+                        {
+
+                            binds = BindParamters(pms, _taos);
+                        }
+                        int ret = TDengine.StmtBindParam(stmt, binds);
+                        if (ret == 0)
+                        {
+                            if (isinsert)
                             {
-                                if (TDengine.StmtIsInsert(stmt))
-                                {
-                                    int addbech = TDengine.StmtAddBatch(stmt);
-                                }
-                                code = Task.Run(() =>
-                                {
+                                int addbech = TDengine.StmtAddBatch(stmt);
+                            }
+                            code = Task.Run(() =>
+                            {
                                     IntPtr ptr = IntPtr.Zero;
                                     int re = TDengine.StmtExecute(stmt);
                                     if (re == 0)
@@ -391,7 +402,7 @@ namespace IoTSharp.Data.Taos
                                 TaosException.ThrowExceptionForRC(-10008, $"stmt prepare failed,{ TDengine.StmtErrorStr(stmt)}", null);
                             }
 
-                        }
+                      
 
                     }
                     else
@@ -412,14 +423,14 @@ namespace IoTSharp.Data.Taos
 
                 if (isok && code != null && TDengine.ErrorNo(code.Result) == 0)
                 {
-                    taosField[] metas = TDengine.FetchFields(code.Result);
+                    taosField_E[] metas = TDengine.FetchFields(code.Result);
 #if DEBUG
                     if (Debugger.IsAttached)
                     {
                         for (int j = 0; j < metas?.Length; j++)
                         {
                             var meta = metas[j];
-                            Debug.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName + ", name:" + meta.Name + ", size:" + meta.size);
+                            Debug.WriteLine("index:" + j + ", type:" + meta.type + ", typename:" + meta.TypeName + ", name:" + meta.Name + ", size:" + meta.Size);
                         }
                     }
 #endif
@@ -476,8 +487,10 @@ namespace IoTSharp.Data.Taos
                         binds[i] = TaosBind.BindNchar(tp.Value as string);
                         break;
                     case TypeCode.Byte:
-                    case TypeCode.SByte:
                         binds[i] = TaosBind.BindUTinyInt((tp.Value as byte?).GetValueOrDefault());
+                        break;
+                    case TypeCode.SByte:
+                        binds[i] = TaosBind.BindTinyInt((tp.Value as sbyte?).GetValueOrDefault());
                         break;
                     case TypeCode.DateTime:
                         var t0 = tp.Value as DateTime?;
@@ -507,7 +520,7 @@ namespace IoTSharp.Data.Taos
                         binds[i] = TaosBind.BindBigInt((tp.Value as long?).GetValueOrDefault());
                         break;
                     case TypeCode.UInt16:
-                        binds[i] = TaosBind.BindSmallInt((tp.Value as short?).GetValueOrDefault());
+                        binds[i] = TaosBind.BindUSmallInt((tp.Value as ushort?).GetValueOrDefault());
                         break;
                     case TypeCode.UInt32:
                         binds[i] = TaosBind.BindUInt((tp.Value as uint?).GetValueOrDefault());

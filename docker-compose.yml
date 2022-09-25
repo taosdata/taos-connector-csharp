@@ -15,7 +15,7 @@ services:
       - taos-network
 
   taos:
-    image: tdengine/tdengine:3.0.0.0
+    image: tdengine/tdengine:3.0.1.2
     restart: always
     container_name: taos
     hostname: taos

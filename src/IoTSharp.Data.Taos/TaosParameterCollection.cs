@@ -161,6 +161,9 @@ namespace IoTSharp.Data.Taos
 
             return parameter;
         }
+
+
+       private int   _param_index=0;
         /// <summary>
         ///     Adds a parameter to the collection.
         /// </summary>
@@ -169,7 +172,8 @@ namespace IoTSharp.Data.Taos
         /// <returns>The parameter that was added.</returns>
         public virtual TaosParameter AddWithValue( object value)
         {
-            var parameter = new TaosParameter(Guid.NewGuid().ToString(), value);
+            _param_index++;
+            var parameter = new TaosParameter($"{_param_index:0000}", value);
             Add(parameter);
             return parameter;
         }

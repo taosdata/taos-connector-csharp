@@ -27,14 +27,14 @@ namespace IoTSharp.Data.Taos
         private IntPtr _taosResult;
         private int _fieldCount;
         IntPtr rowdata=IntPtr.Zero;
-        List<taosField> _metas = null;
+        List<taosField_E> _metas = null;
         private double _date_max_1970;
         private DateTime _dt1970;
         private TAOS_BIND[] _binds;
 
 
 
-        internal TaosDataReader(TaosCommand taosCommand, taosField[] metas, bool closeConnection, IntPtr taos, IntPtr res, int recordsAffected, int fieldcount, TAOS_BIND[] binds)
+        internal TaosDataReader(TaosCommand taosCommand, taosField_E[] metas, bool closeConnection, IntPtr taos, IntPtr res, int recordsAffected, int fieldcount, TAOS_BIND[] binds)
         {
             _command = taosCommand;
             _closeConnection = closeConnection;
@@ -43,7 +43,7 @@ namespace IoTSharp.Data.Taos
             _recordsAffected = recordsAffected;
             _closed = _closeConnection;
             _taosResult = res;
-            _metas =  metas?.ToList()??new List<taosField> ();
+            _metas =  metas?.ToList()??new List<taosField_E> ();
             _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             _date_max_1970 = DateTime.MaxValue.Subtract(_dt1970).TotalMilliseconds;
             _binds = binds;
@@ -415,8 +415,8 @@ namespace IoTSharp.Data.Taos
             IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
             if (data != IntPtr.Zero)
             {
-                byte[] bf = new byte[meta.size];
-                Marshal.Copy(data, bf, 0, meta.size);
+                byte[] bf = new byte[meta.Size];
+                Marshal.Copy(data, bf, 0, meta.Size);
                 result = new MemoryStream(bf);
             }
             return result;
@@ -522,106 +522,109 @@ namespace IoTSharp.Data.Taos
         /// <returns>The value of the column.</returns>
         public override object GetValue(int ordinal)
         {
-            object result = DBNull.Value;
-            var meta = _metas[ordinal];
-            int offset = IntPtr.Size * ordinal;
-            IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
-            if (data != IntPtr.Zero)
+            object result = null;
+            if (ordinal >= 0 && ordinal < _metas.Count)
             {
-                switch ((TDengineDataType)meta.type)
+                var meta = _metas[ordinal];
+                int offset = IntPtr.Size * ordinal;
+                IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
+                if (data != IntPtr.Zero)
                 {
-                    case TDengineDataType.TSDB_DATA_TYPE_BOOL:
-                        bool v1 = Marshal.ReadByte(data) == 0 ? false : true;
-                        result = v1;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
-                        sbyte v2s = (sbyte)Marshal.ReadByte(data);
-                        result = v2s;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
-                        byte v2 = Marshal.ReadByte(data);
-                        result = v2;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
-                        short v3 = Marshal.ReadInt16(data);
-                        result = v3;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
-                        ushort v12 = (ushort)Marshal.ReadInt16(data);
-                        result = v12;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_INT:
-                        int v4 = Marshal.ReadInt32(data);
-                        result = v4;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_UINT:
-                        uint v13 = (uint)Marshal.ReadInt32(data);
-                        result = v13;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
-                        long v5 = Marshal.ReadInt64(data);
-                        result = v5;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
-                        ulong v14 = (ulong)Marshal.ReadInt64(data);
-                        result = v14;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
-                        float v6 = (float)Marshal.PtrToStructure(data, typeof(float));
-                        result = v6;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
-                        double v7 = (double)Marshal.PtrToStructure(data, typeof(double));
-                        result = v7;
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_BINARY:
-                        {
+                    switch ((TDengineDataType)meta.type)
+                    {
+                        case TDengineDataType.TSDB_DATA_TYPE_BOOL:
+                            bool v1 = Marshal.ReadByte(data) == 0 ? false : true;
+                            result = v1;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
+                            sbyte v2s = (sbyte)Marshal.ReadByte(data);
+                            result = v2s;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
+                            byte v2 = Marshal.ReadByte(data);
+                            result = v2;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
+                            short v3 = Marshal.ReadInt16(data);
+                            result = v3;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
+                            ushort v12 = (ushort)Marshal.ReadInt16(data);
+                            result = v12;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_INT:
+                            int v4 = Marshal.ReadInt32(data);
+                            result = v4;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_UINT:
+                            uint v13 = (uint)Marshal.ReadInt32(data);
+                            result = v13;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
+                            long v5 = Marshal.ReadInt64(data);
+                            result = v5;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
+                            ulong v14 = (ulong)Marshal.ReadInt64(data);
+                            result = v14;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
+                            float v6 = (float)Marshal.PtrToStructure(data, typeof(float));
+                            result = v6;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
+                            double v7 = (double)Marshal.PtrToStructure(data, typeof(double));
+                            result = v7;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_BINARY:
+                            {
 #if NET5_0_OR_GREATER
-                            string v8 = Marshal.PtrToStringUTF8(data, GetContentLength(ordinal));
-                            result = v8?.RemoveNull();
+                                string v8 = Marshal.PtrToStringUTF8(data, GetContentLength(ordinal));
+                                result = v8?.RemoveNull();
 #else
                             byte[] buffer = new byte[GetContentLength(ordinal)];
                             Marshal.Copy(data, buffer, 0, buffer.Length);
                             string v8 = Encoding.UTF8.GetString(buffer);
                             result = v8?.RemoveNull();
 #endif
-                        }
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
-                        {
-                            result = GetDateTimeFrom(data);
-                        }
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_JSONTAG:
-                    case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
-                        {
-                            string v10 = string.Empty;
-                            int contentLength = GetContentLength(ordinal);
-                            if (contentLength > 0)// https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/issues/99
-                            {
-                                byte[] bf = new byte[contentLength];
-                                Marshal.Copy(data, bf, 0, contentLength);
-
-                                if (IsUTF8Bytes(bf) || (bf[0] == 0xEF && bf[1] == 0xBB && bf[2] == 0xBF))
-                                {
-                                    v10 = System.Text.Encoding.UTF8.GetString(bf)?.RemoveNull();
-                                }
-                                else
-                                {
-                                    v10 = System.Text.Encoding.GetEncoding(936).GetString(bf)?.RemoveNull();
-                                }
                             }
-                            result = v10;
-                        }
-                        break;
-                    case TDengineDataType.TSDB_DATA_TYPE_NULL:
-                        result = DBNull.Value;
-                        break;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
+                            {
+                                result = GetDateTimeFrom(data);
+                            }
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_JSONTAG:
+                        case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
+                            {
+                                string v10 = string.Empty;
+                                int contentLength = GetContentLength(ordinal);
+                                if (contentLength > 0)// https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/issues/99
+                                {
+                                    byte[] bf = new byte[contentLength];
+                                    Marshal.Copy(data, bf, 0, contentLength);
+
+                                    if (IsUTF8Bytes(bf) || (bf[0] == 0xEF && bf[1] == 0xBB && bf[2] == 0xBF))
+                                    {
+                                        v10 = System.Text.Encoding.UTF8.GetString(bf)?.RemoveNull();
+                                    }
+                                    else
+                                    {
+                                        v10 = System.Text.Encoding.GetEncoding(936).GetString(bf)?.RemoveNull();
+                                    }
+                                }
+                                result = v10;
+                            }
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_NULL:
+                            result = null;
+                            break;
+                    }
                 }
-            }
-            else
-            {
-                result = DBNull.Value;
+                else
+                {
+                    result =  null;
+                }
             }
             return result;
         }
@@ -739,7 +742,7 @@ namespace IoTSharp.Data.Taos
 
                     schemaRow[ColumnName] = GetName(i);
                     schemaRow[ColumnOrdinal] = i;
-                    schemaRow[ColumnSize] = _metas[i].size;
+                    schemaRow[ColumnSize] = _metas[i].Size;
                     schemaRow[NumericPrecision] = DBNull.Value;
                     schemaRow[NumericScale] = DBNull.Value;
                     schemaRow[BaseServerName] = _command.Connection.DataSource;
