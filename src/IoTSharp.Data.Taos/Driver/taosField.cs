@@ -9,7 +9,7 @@ using System.Text;
 namespace TDengineDriver
 {
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1, Size = 72)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4, Size = 72)]
     public struct taosField_E
     {
 
@@ -33,10 +33,9 @@ namespace TDengineDriver
         public string TypeName => DataType.ToTypeName();
         public int Size => bytes;
     }
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1, Size = 68)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4, Size = 72)]
     public struct taosField
     {
-
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 65)]
         public byte[] _name;
         [MarshalAs(UnmanagedType.U1, SizeConst = 1)]

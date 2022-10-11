@@ -121,10 +121,10 @@ namespace IoTSharp.Data.Taos
             Marshal.WriteInt32(lenPtr, val);
             return lenPtr;
         }
-       internal  struct UTF8IntPtrStruct
+        internal struct UTF8IntPtrStruct
         {
-         public   IntPtr ptr;
-     public       int len;
+            public IntPtr ptr;
+            public int len;
         }
 
         internal static UTF8IntPtrStruct ToUTF8IntPtr(this string command)

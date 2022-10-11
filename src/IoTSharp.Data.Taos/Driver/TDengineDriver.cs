@@ -84,7 +84,7 @@ namespace TDengineDriver
 
     }
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
     public struct TAOS_BIND
     {
         // column type
@@ -106,7 +106,7 @@ namespace TDengineDriver
     }
 
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi,Pack =4)]
     public struct TAOS_MULTI_BIND
     {
         // column type
@@ -195,7 +195,7 @@ namespace TDengineDriver
         static extern public int ErrorNo(IntPtr res);
 
         [DllImport("taos", EntryPoint = "taos_query", CallingConvention = CallingConvention.Cdecl)]
-        static extern private IntPtr Query(IntPtr conn, IntPtr byteArr);
+        static extern public IntPtr Query(IntPtr conn, IntPtr byteArr);
 
         [DllImport("taos", EntryPoint = "taos_stop_query", CallingConvention = CallingConvention.Cdecl)]
         public static extern void StopQuery(IntPtr taos);
@@ -221,19 +221,19 @@ namespace TDengineDriver
         [DllImport("taos", EntryPoint = "taos_fetch_fields", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr taos_fetch_fields(IntPtr res);
 
-        public static taosField_E[] FetchFields(IntPtr res)
+        public static taosField[] FetchFields(IntPtr res)
         {
             if (res == IntPtr.Zero)
             {
                 return null;
             }
-            taosField_E[] taosField=null;
+            taosField[] taosField=null;
             int fieldCount = FieldCount(res);
             if (fieldCount > 0)
             {
                 //https://github.com/taosdata/TDengine/issues/17057
                 IntPtr fieldsPtr = taos_fetch_fields(res);//fieldsPtr是res的一部分， 这里不释放。 
-                taosField =   MarshalUnmananagedArray2Struct<taosField_E>(fieldsPtr, fieldCount);
+                taosField =   MarshalUnmananagedArray2Struct<taosField>(fieldsPtr, fieldCount);
              //   var  taosFieldf = MarshalUnmananagedArray2Struct<taosField>(fieldsPtr, fieldCount);
             }
             return taosField;
@@ -245,7 +245,13 @@ namespace TDengineDriver
             for (int i = 0; i < length; i++)
             {
                 var value = IntPtr.Add(unmanagedArray,  i * size);
+                 byte[] buffer = new byte[size];
+                Marshal.Copy(value, buffer,0, size);
+#if DEBUG
+                Console.WriteLine($"{i}:"+BitConverter.ToString(buffer, 0).Replace("-", string.Empty).ToLower());
+#endif
                 mangagedArray[i]=   Marshal.PtrToStructure<T>(value);
+          
             }
             return mangagedArray;
         }
@@ -268,8 +274,15 @@ namespace TDengineDriver
         public static extern IntPtr GetServerInfo(IntPtr taos);
 
         [DllImport("taos", EntryPoint = "taos_select_db", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int  SelectDatabase(IntPtr taos, string db);
+        private static extern int taos_select_db(IntPtr taos, IntPtr db);
 
+        public static int SelectDatabase(IntPtr taos, string db)
+        {
+            var var = db.ToUTF8IntPtr();
+            int result = taos_select_db(taos, var.ptr);
+            var.ptr.FreeUtf8IntPtr();
+            return result;
+        }
         //stmt APIs:
         /// <summary>
         /// init a TAOS_STMT object for later use.
@@ -289,7 +302,16 @@ namespace TDengineDriver
         /// <param name="length">no used</param>
         /// <returns>0 for success, non-zero for failure.</returns>
         [DllImport("taos", EntryPoint = "taos_stmt_prepare", CallingConvention = CallingConvention.Cdecl)]
-        static extern public int StmtPrepare(IntPtr stmt, string sql);
+        static extern private int _StmtPrepare(IntPtr stmt, IntPtr sql, ulong length);
+
+        static public int StmtPrepare(IntPtr stmt, string sql)
+        {
+            var var = sql.ToUTF8IntPtr();
+            int result = _StmtPrepare(stmt, var.ptr,(ulong)var.len);
+            var.ptr.FreeUtf8IntPtr();
+            return result;
+        }
+
 
         /// <summary>
         /// For INSERT only. Used to bind table name as a parmeter for the input stmt object.
@@ -298,8 +320,14 @@ namespace TDengineDriver
         /// <param name="name">table name you want to  bind</param>
         /// <returns>0 for success, non-zero for failure.</returns>
         [DllImport("taos", EntryPoint = "taos_stmt_set_tbname", CallingConvention = CallingConvention.Cdecl)]
-        static extern public int StmtSetTbname(IntPtr stmt, string name);
-
+        static extern internal int  StmtSetTbname(IntPtr stmt, string name);
+        public static int __StmtSetTbname(IntPtr stmt, string name)
+        {
+            var ptrsql = Marshal.StringToHGlobalAnsi(name);
+            int result = 0;// = _StmtSetTbname(stmt, ptrsql);
+            Marshal.FreeHGlobal(ptrsql);
+            return result;
+        }
         /// <summary>
         /// For INSERT only. 
         /// Set a table name for binding table name as parameter. Only used for binding all tables 
@@ -338,7 +366,7 @@ namespace TDengineDriver
         /// </param>
         /// <returns>0 for success, non-zero for failure.</returns>
         [DllImport("taos", EntryPoint = "taos_stmt_bind_param", CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
-        static extern public int StmtBindParam(IntPtr stmt, TAOS_BIND[] bind);
+        static extern public int StmtBindParam(IntPtr stmt, TAOS_MULTI_BIND[] bind);
 
         /// <summary>
         /// bind a single column's data, INTERNAL used and for INSERT only. 
@@ -361,7 +389,7 @@ namespace TDengineDriver
         /// </param>
         /// <returns>0 for success, non-zero for failure.</returns>
         [DllImport("taos", EntryPoint = "taos_stmt_bind_param_batch", CallingConvention = CallingConvention.Cdecl)]
-        static extern public int StmtBindParamBatch(IntPtr stmt, [In, Out] TAOS_MULTI_BIND[] bind);
+        static extern public int StmtBindParamBatch(IntPtr stmt, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStruct)] TAOS_MULTI_BIND[] bind);
 
         /// <summary>
         /// For INSERT only.
@@ -390,9 +418,16 @@ namespace TDengineDriver
             Marshal.FreeHGlobal(ptr);
             return result;
         }
-
+        [DllImport("taos", EntryPoint = "taos_is_update_query", CallingConvention = CallingConvention.Cdecl)]
+        static extern public bool IsUpdateQuery(IntPtr res);
+        [DllImport("taos", EntryPoint = "taos_validate_sql", CallingConvention = CallingConvention.Cdecl)]
+        static extern public int ValidateSQL(IntPtr taos, string sql);
         [DllImport("taos", EntryPoint = "taos_stmt_affected_rows", CallingConvention = CallingConvention.Cdecl)]
         static extern public int StmtAffected_rows(IntPtr stmt);
+        [DllImport("taos", EntryPoint = "taos_reset_current_db", CallingConvention = CallingConvention.Cdecl)]
+        static extern public void ResetCurrentDatabase(IntPtr taos);
+        [DllImport("taos", EntryPoint = "taos_stmt_affected_rows_once", CallingConvention = CallingConvention.Cdecl)]
+        static extern public int StmtAffetcedRowsOnce(IntPtr stmt);
         /// <summary>
         /// actually execute the INSERT/SELECT sql statement. 
         /// User application can continue to bind new data after calling to this API.
@@ -401,7 +436,7 @@ namespace TDengineDriver
         /// <returns></returns>
         [DllImport("taos", EntryPoint = "taos_stmt_execute", CallingConvention = CallingConvention.Cdecl)]
         static extern public int StmtExecute(IntPtr stmt);
-
+        
         /// <summary>
         /// For SELECT only,getting the query result. User application should free it with API 'FreeResult' at the end.
         /// </summary>

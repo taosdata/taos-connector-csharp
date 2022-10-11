@@ -617,11 +617,11 @@ namespace TDengineDriver
                 Byte[] strToBytes = null;
                 if (String.IsNullOrEmpty(str))
                 {
-                    strToBytes = System.Text.Encoding.Default.GetBytes(String.Empty);
+                    strToBytes = System.Text.Encoding.UTF8.GetBytes(String.Empty);
                 }
                 else
                 {
-                    strToBytes = System.Text.Encoding.Default.GetBytes(str);
+                    strToBytes = System.Text.Encoding.UTF8.GetBytes(str);
                 }
                 return strToBytes;
             }

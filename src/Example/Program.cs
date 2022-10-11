@@ -60,17 +60,16 @@ namespace TaosADODemo
                                     "dd double," +
                                     "bb binary(200)," +
                                     "nc nchar(200)," +
-                                    "bo bool," +
-                                    "nullval int" +
+                                    "bo bool" +
                                     ");";
-                string insertSql = $"insert into ? values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+                string insertSql = $"insert into {tableName} values(?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
               //  string insertSql = "insert into ? values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
                 string dropSql = $"drop table if exists {tableName}";
                 string querySql = "select * from " + tableName;
                 Console.WriteLine($"{dropSql} {0}", connection.CreateCommand(dropSql).ExecuteNonQuery());
                 Console.WriteLine($"{createTb} {0}",  connection.CreateCommand(createTb).ExecuteNonQuery());
                 var _insertcmd= connection.CreateCommand(insertSql);
-                _insertcmd.Parameters.AddWithValue("@",tableName);  
+               // _insertcmd.Parameters.AddWithValue("@",tableName);  
                 _insertcmd.Parameters.AddWithValue(DateTime.Now);// TaosBind.BindTimestamp(1637064040000);
                 _insertcmd.Parameters.AddWithValue((sbyte)-2);//TaosBind.BindTinyInt(-2);
                 _insertcmd.Parameters.AddWithValue(short.MaxValue);// TaosBind.BindSmallInt(short.MaxValue);
@@ -85,8 +84,8 @@ namespace TaosADODemo
                 _insertcmd.Parameters.AddWithValue("TDengine数据");// TaosBind.BindBinary("TDengine数据");
                 _insertcmd.Parameters.AddWithValue("taosdata涛思数据");//TaosBind.BindNchar("taosdata涛思数据");
                 _insertcmd.Parameters.AddWithValue(true);//TaosBind.BindBool(true);
-                _insertcmd.Parameters.AddWithValue(DBNull.Value);//TaosBind.BindNil();
-                Console.WriteLine($"{insertSql}{0}",    _insertcmd.ExecuteNonQuery());
+              //  _insertcmd.Parameters.AddWithValue(DBNull.Value);//TaosBind.BindNil();
+                 Console.WriteLine($"{insertSql}{0}",    _insertcmd.ExecuteNonQuery());
 
                 var _qreader = connection.CreateCommand(querySql).ExecuteReader();
                 ConsoleTableBuilder.From(_qreader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
