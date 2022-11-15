@@ -19,7 +19,7 @@ namespace TaosADODemo
         static void Main(string[] args)
         {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-            DbProviderFactories.RegisterFactory("TDengine",  TaosFactory .Instance);
+            DbProviderFactories.RegisterFactory("TDengine", TaosFactory.Instance);
             ///Specify the name of the database
             string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             var builder = new TaosConnectionStringBuilder()
@@ -41,99 +41,13 @@ namespace TaosADODemo
                 Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table {database}.t (ts timestamp, cdata binary(255));").ExecuteNonQuery());
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
                 Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"use {database};").ExecuteNonQuery());
-                
+
                 Console.WriteLine("单表插入一行数据  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
                 Thread.Sleep(100);
                 Console.WriteLine("单表插入多行数据 {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 101) ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds + 1)}, 992);").ExecuteNonQuery());
                 connection.ChangeDatabase(database);
-                var stable = "bind_param_batch";
-                    string createTable = $"create stable if not exists {stable} (ts timestamp "
-                                + ",b bool"
-                                + ",v1 tinyint"
-                                + ",v2 smallint"
-                                + ",v4 int"
-                                + ",v8 bigint"
-                                + ",f4 float"
-                                + ",f8 double"
-                                + ",u1 tinyint unsigned"
-                                + ",u2 smallint unsigned"
-                                + ",u4 int unsigned"
-                                + ",u8 bigint unsigned"
-                                + ",vcr varchar(200)"
-                                + ",ncr nchar(200)"
-                                + ")tags("
-                                + "bo bool"
-                                 + ",tt tinyint"
-                                 + ",si smallint"
-                                 + ",ii int"
-                                 + ",bi bigint"
-                                 + ",tu tinyint unsigned"
-                                 + ",su smallint unsigned"
-                                 + ",iu int unsigned"
-                                 + ",bu bigint unsigned"
-                                 + ",ff float "
-                                 + ",dd double "
-                                 + ",vrc_tag varchar(200)"
-                                 + ",ncr_tag nchar(200)"
-                                + ")";
-                string insertSql = $"insert into ? using {stable} tags(?,?,?,?,?,?,?,?,?,?,?,?,?) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-                Console.WriteLine($"{createTable} {0}",  connection.CreateCommand(createTable).ExecuteNonQuery());
-                var _insertcmd= connection.CreateCommand(insertSql);
-                string subTable = stable + "_s01";
-                _insertcmd.Parameters.SubTableName = subTable;
-                _insertcmd.Parameters.AddTagsValue(true);// mBinds[0] = TaosMultiBind.MultiBindBool(new bool?[] { true });
-                _insertcmd.Parameters.AddTagsValue((sbyte)1);//    mBinds[1] = TaosMultiBind.MultiBindTinyInt(new sbyte?[] { 1 });
-                _insertcmd.Parameters.AddTagsValue((short)2);//      mBinds[2] = TaosMultiBind.MultiBindSmallInt(new short?[] { 2 });
-                _insertcmd.Parameters.AddTagsValue(3);//     mBinds[3] = TaosMultiBind.MultiBindInt(new int?[] { 3 });
-                _insertcmd.Parameters.AddTagsValue(4L);//      mBinds[4] = TaosMultiBind.MultiBindBigint(new long?[] { 4 });
-                _insertcmd.Parameters.AddTagsValue((byte)1);//   mBinds[5] = TaosMultiBind.MultiBindUTinyInt(new byte?[] { 1 });
-                _insertcmd.Parameters.AddTagsValue((ushort)2);//   mBinds[6] = TaosMultiBind.MultiBindUSmallInt(new ushort?[] { 2 });
-                _insertcmd.Parameters.AddTagsValue((uint)3);//  mBinds[7] = TaosMultiBind.MultiBindUInt(new uint?[] { 3 });
-                _insertcmd.Parameters.AddTagsValue((ulong)4);// mBinds[8] = TaosMultiBind.MultiBindUBigInt(new ulong?[] { 4 });
-                _insertcmd.Parameters.AddTagsValue((float)18.58f);// mBinds[9] = TaosMultiBind.MultiBindFloat(new float?[] { 18.58f });
-                _insertcmd.Parameters.AddTagsValue(2020.05071858d);// mBinds[10] = TaosMultiBind.MultiBindDouble(new double?[] { 2020.05071858d });
-                _insertcmd.Parameters.AddTagsValue("taosdata");//   mBinds[11] = TaosMultiBind.MultiBindBinary(new string?[] { "taosdata" });
-                _insertcmd.Parameters.AddTagsValue("TDenginge".ToCharArray());//    mBinds[12] = TaosMultiBind.MultiBindNchar(new string?[] { "TDenginge" });
+                BindParamBatch(connection);
 
-
-
-                    long[] tsArr = new long[5] { 1656677700000, 1656677710000, 1656677720000, 1656677730000, 1656677700000 };
-                    bool?[] boolArr = new bool?[5] { true, false, null, true, true };
-                    sbyte?[] tinyIntArr = new sbyte?[5] { -127, 0, null, 8, 127 };
-                    short?[] shortArr = new short?[5] { short.MinValue + 1, -200, null, 100, short.MaxValue };
-                    int?[] intArr = new int?[5] { -200, -100, null, 0, 300 };
-                    long?[] longArr = new long?[5] { long.MinValue + 1, -2000, null, 1000, long.MaxValue };
-                    float?[] floatArr = new float?[5] { float.MinValue + 1, -12.1F, null, 0F, float.MaxValue };
-                    double?[] doubleArr = new double?[5] { double.MinValue + 1, -19.112D, null, 0D, double.MaxValue };
-                    byte?[] uTinyIntArr = new byte?[5] { byte.MinValue, 12, null, 89, byte.MaxValue - 1 };
-                    ushort?[] uShortArr = new ushort?[5] { ushort.MinValue, 200, null, 400, ushort.MaxValue - 1 };
-                    uint?[] uIntArr = new uint?[5] { uint.MinValue, 100, null, 2, uint.MaxValue - 1 };
-                    ulong?[] uLongArr = new ulong?[5] { ulong.MinValue, 2000, null, 1000, long.MaxValue - 1 };
-                    string?[] binaryArr = new string?[5] { "1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", String.Empty, null, "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM", "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890~!@#$%^&*()_+=-`[]{}:,./<>?" };
-                    string?[] ncharArr = new string?[5] { "1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", null, "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM", "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", string.Empty };
-
-
-
-                _insertcmd.Parameters.AddWithValue(DateTime.UnixEpoch.AddMilliseconds(tsArr[0]));// mBinds[0] = TaosMultiBind.MultiBindTimestamp(tsArr);
-                _insertcmd.Parameters.AddWithValue(boolArr[0]);// mBinds[1] = TaosMultiBind.MultiBindBool(boolArr);
-                _insertcmd.Parameters.AddWithValue(tinyIntArr[0]);//  mBinds[2] = TaosMultiBind.MultiBindTinyInt(tinyIntArr);
-                _insertcmd.Parameters.AddWithValue(shortArr[0]);//  mBinds[3] = TaosMultiBind.MultiBindSmallInt(shortArr);
-                _insertcmd.Parameters.AddWithValue(intArr[0]);//  mBinds[4] = TaosMultiBind.MultiBindInt(intArr);
-                _insertcmd.Parameters.AddWithValue(longArr[0]);// mBinds[5] = TaosMultiBind.MultiBindBigint(longArr);
-                _insertcmd.Parameters.AddWithValue(floatArr[0]);// mBinds[6] = TaosMultiBind.MultiBindFloat(floatArr);
-                _insertcmd.Parameters.AddWithValue(doubleArr[0]);//mBinds[7] = TaosMultiBind.MultiBindDouble(doubleArr);
-                _insertcmd.Parameters.AddWithValue(uTinyIntArr[0]);//      mBinds[8] = TaosMultiBind.MultiBindUTinyInt(uTinyIntArr);
-                _insertcmd.Parameters.AddWithValue(uShortArr[0]);//  mBinds[9] = TaosMultiBind.MultiBindUSmallInt(uShortArr);
-                _insertcmd.Parameters.AddWithValue(uIntArr[0]);// mBinds[10] = TaosMultiBind.MultiBindUInt(uIntArr);
-                _insertcmd.Parameters.AddWithValue(uLongArr[0]);//  mBinds[11] = TaosMultiBind.MultiBindUBigInt(uLongArr);
-                _insertcmd.Parameters.AddWithValue(binaryArr[0]);// mBinds[12] = TaosMultiBind.MultiBindBinary(binaryArr);
-                _insertcmd.Parameters.AddWithValue(ncharArr[0].ToCharArray());//mBinds[13] = TaosMultiBind.MultiBindNchar(ncharArr);
-
-                Console.WriteLine($"{insertSql}{0}",    _insertcmd.ExecuteNonQuery());
-                string querySql = $"select * from {stable}";
-                var _qreader = connection.CreateCommand(querySql).ExecuteReader();
-                ConsoleTableBuilder.From(_qreader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
-                
                 Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.AddMonths(-1).Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 20);").ExecuteNonQuery());
                 var cmd_select = connection.CreateCommand();
                 cmd_select.CommandText = $"select * from {database}.t;";
@@ -191,7 +105,7 @@ namespace TaosADODemo
                 Console.WriteLine($"UploadTelemetryDataPool 耗时:{t2}");
                 Thread.Sleep(TimeSpan.FromSeconds(2));
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
-               ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 var reader3 = connection.CreateCommand("select * from telemetrydata;").ExecuteReader();
                 List<string> list = new List<string>();
                 while (reader3.Read())
@@ -207,110 +121,31 @@ namespace TaosADODemo
                     ConsoleTableBuilder.From(dic[k]).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine(TableAligntment.Center);
                 });
 
-                string[] lines = {
-                    "meters,location=Beijing.Haidian,groupid=2 current=11.8,voltage=221,phase=0.28 1648432611249",
-                    "meters,location=Beijing.Haidian,groupid=2 current=13.4,voltage=223,phase=0.29 1648432611250",
-                    "meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249",
-                    "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
-                };
-                int result = connection.ExecuteBulkInsert(lines);
-                Console.WriteLine($"行插入{ result}");
-                if (result != lines.Length)
-                {
-                    throw new Exception("ExecuteBulkInsert");
-                }
-
-                string[] jsonStr = {
-                "{"
-                   +"\"metric\": \"stb0_0\","
-                   +$"\"timestamp\": {DateTimeOffset.Now.ToUnixTimeSeconds()},"
-                   +"\"value\": 10,"
-                   +"\"tags\": {"
-                       +" \"t1\": true,"
-                       +"\"t2\": false,"
-                       +"\"t3\": 10,"
-                       +"\"t4\": \"123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>\""
-                    +"}"
-                +"}"
-            };
-                int resultjson = connection.ExecuteBulkInsert(JArray.FromObject(jsonStr.Select(j => JObject.Parse(j)).ToArray()));
-                Console.WriteLine($"Json插入{ result}");
-                if (result != lines.Length)
-                {
-                    throw new Exception("ExecuteBulkInsert");
-                }
 
 
-                var jo = new JObject();
-                jo.Add("metric", "stb0_0");
-                jo.Add("timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());// 1626006833610);
-                jo.Add("value", 10);
-                var tags1 = new JObject();
-                tags1.Add("t1", true);
-                tags1.Add("t2", false);
-                tags1.Add("t3", 10);
-                tags1.Add("t4", "123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>");
-                jo.Add("tags", tags1);
-                int resultjson2 = connection.ExecuteBulkInsert(new JObject[] { jo },  TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED );
-                Console.WriteLine($"行插入{ result}");
-                if (result != lines.Length)
-                {
-                    throw new Exception("ExecuteBulkInsert");
-                }
+                BulkInsertLines(connection);
 
-                static JObject AddTag(JObject tags, string name, object value, string type)
-                {
-                    var tag = new JObject();
-                    tag.Add("value", true);
-                    tag.Add("type", "bool");
-                    tags.Add(name, tag);
-                    return tag;
-                }
+                BulkInsertJsonString(connection);
 
-                var payload = new JObject();
-                var tags = new JObject();
-                payload.Add("metric", "stb3_0");
+                BulkInsertByJsonAndTags(connection);
 
-                var timestamp = new JObject();
-                timestamp.Add("value",  DateTimeOffset.Now.ToUnixTimeSeconds() );
-                timestamp.Add("type", "s");
-                payload.Add("timestamp", timestamp);
-
-                var metric_val = new JObject();
-                metric_val.Add("value", "hello");
-                metric_val.Add("type", "nchar");
-                payload.Add("value", metric_val);
-                AddTag(tags, "t1", true, "bool");
-                AddTag(tags, "t2", false, "bool");
-                AddTag(tags, "t3", 127, "tinyint");
-                AddTag(tags, "t4", 32767, "smallint");
-                AddTag(tags, "t5", 127, "2147483647");
-                AddTag(tags, "t6", (double)9223372036854775807, "bigint");
-                AddTag(tags, "t7", 11.12345, "float");
-                AddTag(tags, "t8", 22.1234567890, "double");
-                AddTag(tags, "t9", "binary_val", "binary");
-                AddTag(tags, "t10", "你好", "nchar");
-                payload.Add("tags", tags);
-
-                int resultjson3 = connection.ExecuteBulkInsert(new JObject[] { payload });
-                Console.WriteLine($"行插入{ result}");
-                if (resultjson3 != 1)
-                {
-                    throw new Exception("ExecuteBulkInsert");
-                }
-
-
-
+                BulkInsertWithJson_BuildJson(connection);
 
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
 
-           
+
 
                 connection.Close();
 
-       
+
+
+            }
+            UseTaosEFCore(builder);
 
         }
+
+        private static void UseTaosEFCore(TaosConnectionStringBuilder builder)
+        {
             //Example for  Entity Framework Core  
             using (var context = new TaosContext(new DbContextOptionsBuilder()
                                                     .UseTaos(builder.ConnectionString).Options))
@@ -336,10 +171,204 @@ namespace TaosADODemo
                 }
                 context.Database.EnsureDeleted();
             }
-
-
         }
 
+        private static void BulkInsertWithJson_BuildJson(TaosConnection connection)
+        {
+            var payload = new JObject();
+            var tags = new JObject();
+            payload.Add("metric", "stb3_0");
+
+            var timestamp = new JObject
+                {
+                    { "value", DateTimeOffset.Now.ToUnixTimeSeconds() },
+                    { "type", "s" }
+                };
+            payload.Add("timestamp", timestamp);
+
+            var metric_val = new JObject
+                {
+                    { "value", "hello" },
+                    { "type", "nchar" }
+                };
+            payload.Add("value", metric_val);
+            AddTag(tags, "t1", true, "bool");
+            AddTag(tags, "t2", false, "bool");
+            AddTag(tags, "t3", 127, "tinyint");
+            AddTag(tags, "t4", 32767, "smallint");
+            AddTag(tags, "t5", 127, "2147483647");
+            AddTag(tags, "t6", (double)9223372036854775807, "bigint");
+            AddTag(tags, "t7", 11.12345, "float");
+            AddTag(tags, "t8", 22.1234567890, "double");
+            AddTag(tags, "t9", "binary_val", "binary");
+            AddTag(tags, "t10", "你好", "nchar");
+            payload.Add("tags", tags);
+
+            int resultjson3 = connection.ExecuteBulkInsert(new JObject[] { payload });
+            Console.WriteLine($"行插入{resultjson3}");
+            if (resultjson3 != 1)
+            {
+                throw new Exception("ExecuteBulkInsert");
+            }
+        }
+
+        private static JObject AddTag(JObject tags, string name, object value, string type)
+        {
+            var tag = new JObject
+                    {
+                        { "value", true },
+                        { "type", "bool" }
+                    };
+            tags.Add(name, tag);
+            return tag;
+        }
+
+        private static void BulkInsertByJsonAndTags(TaosConnection connection)
+        {
+            var jo = new JObject
+                {
+                    { "metric", "stb0_0" },
+                    { "timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() },// 1626006833610);
+                    { "value", 10 }
+                };
+            var tags1 = new JObject
+                {
+                    { "t1", true },
+                    { "t2", false },
+                    { "t3", 10 },
+                    { "t4", "123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>" }
+                };
+            jo.Add("tags", tags1);
+            int resultjson2 = connection.ExecuteBulkInsert(new JObject[] { jo }, TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
+            Console.WriteLine($"行插入{resultjson2}");
+        }
+
+        private static void BulkInsertJsonString(TaosConnection connection)
+        {
+            string[] jsonStr = {
+                "{"
+                   +"\"metric\": \"stb0_0\","
+                   +$"\"timestamp\": {DateTimeOffset.Now.ToUnixTimeSeconds()},"
+                   +"\"value\": 10,"
+                   +"\"tags\": {"
+                       +" \"t1\": true,"
+                       +"\"t2\": false,"
+                       +"\"t3\": 10,"
+                       +"\"t4\": \"123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>\""
+                    +"}"
+                +"}"
+            };
+            int resultjson = connection.ExecuteBulkInsert(JArray.FromObject(jsonStr.Select(j => JObject.Parse(j)).ToArray()));
+            Console.WriteLine($"Json插入{resultjson}");
+        }
+
+        private static void BulkInsertLines(TaosConnection connection)
+        {
+          
+           var lines =new string[] {
+                "meters,location=Beijing.Haidian,groupid=2 current=11.8,voltage=221,phase=0.28 1648432611249",
+                "meters,location=Beijing.Haidian,groupid=2 current=13.4,voltage=223,phase=0.29 1648432611250",
+                "meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249",
+                "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
+            };
+            int  result = connection.ExecuteBulkInsert(lines);
+            Console.WriteLine($"行插入{result}");
+            if (result != lines.Length)
+            {
+                throw new Exception("ExecuteBulkInsert");
+            }
+        }
+
+        private static void BindParamBatch(TaosConnection connection)
+        {
+            var stable = "bind_param_batch";
+            string createTable = $"create stable if not exists {stable} (ts timestamp "
+                        + ",b bool"
+                        + ",v1 tinyint"
+                        + ",v2 smallint"
+                        + ",v4 int"
+                        + ",v8 bigint"
+                        + ",f4 float"
+                        + ",f8 double"
+                        + ",u1 tinyint unsigned"
+                        + ",u2 smallint unsigned"
+                        + ",u4 int unsigned"
+                        + ",u8 bigint unsigned"
+                        + ",vcr varchar(200)"
+                        + ",ncr nchar(200)"
+                        + ")tags("
+                        + "bo bool"
+                         + ",tt tinyint"
+                         + ",si smallint"
+                         + ",ii int"
+                         + ",bi bigint"
+                         + ",tu tinyint unsigned"
+                         + ",su smallint unsigned"
+                         + ",iu int unsigned"
+                         + ",bu bigint unsigned"
+                         + ",ff float "
+                         + ",dd double "
+                         + ",vrc_tag varchar(200)"
+                         + ",ncr_tag nchar(200)"
+                        + ")";
+            string insertSql = $"insert into ? using {stable} tags(?,?,?,?,?,?,?,?,?,?,?,?,?) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            Console.WriteLine($"{createTable} {0}", connection.CreateCommand(createTable).ExecuteNonQuery());
+            var _insertcmd = connection.CreateCommand(insertSql);
+            string subTable = stable + "_s01";
+            _insertcmd.Parameters.SubTableName = subTable;
+            _insertcmd.Parameters.AddTagsValue(true);// mBinds[0] = TaosMultiBind.MultiBindBool(new bool?[] { true });
+            _insertcmd.Parameters.AddTagsValue((sbyte)1);//    mBinds[1] = TaosMultiBind.MultiBindTinyInt(new sbyte?[] { 1 });
+            _insertcmd.Parameters.AddTagsValue((short)2);//      mBinds[2] = TaosMultiBind.MultiBindSmallInt(new short?[] { 2 });
+            _insertcmd.Parameters.AddTagsValue(3);//     mBinds[3] = TaosMultiBind.MultiBindInt(new int?[] { 3 });
+            _insertcmd.Parameters.AddTagsValue(4L);//      mBinds[4] = TaosMultiBind.MultiBindBigint(new long?[] { 4 });
+            _insertcmd.Parameters.AddTagsValue((byte)1);//   mBinds[5] = TaosMultiBind.MultiBindUTinyInt(new byte?[] { 1 });
+            _insertcmd.Parameters.AddTagsValue((ushort)2);//   mBinds[6] = TaosMultiBind.MultiBindUSmallInt(new ushort?[] { 2 });
+            _insertcmd.Parameters.AddTagsValue((uint)3);//  mBinds[7] = TaosMultiBind.MultiBindUInt(new uint?[] { 3 });
+            _insertcmd.Parameters.AddTagsValue((ulong)4);// mBinds[8] = TaosMultiBind.MultiBindUBigInt(new ulong?[] { 4 });
+            _insertcmd.Parameters.AddTagsValue((float)18.58f);// mBinds[9] = TaosMultiBind.MultiBindFloat(new float?[] { 18.58f });
+            _insertcmd.Parameters.AddTagsValue(2020.05071858d);// mBinds[10] = TaosMultiBind.MultiBindDouble(new double?[] { 2020.05071858d });
+            _insertcmd.Parameters.AddTagsValue("taosdata");//   mBinds[11] = TaosMultiBind.MultiBindBinary(new string?[] { "taosdata" });
+            _insertcmd.Parameters.AddTagsValue("TDenginge".ToCharArray());//    mBinds[12] = TaosMultiBind.MultiBindNchar(new string?[] { "TDenginge" });
+
+
+
+            long[] tsArr = new long[5] { 1656677700000, 1656677710000, 1656677720000, 1656677730000, 1656677700000 };
+            bool?[] boolArr = new bool?[5] { true, false, null, true, true };
+            sbyte?[] tinyIntArr = new sbyte?[5] { -127, 0, null, 8, 127 };
+            short?[] shortArr = new short?[5] { short.MinValue + 1, -200, null, 100, short.MaxValue };
+            int?[] intArr = new int?[5] { -200, -100, null, 0, 300 };
+            long?[] longArr = new long?[5] { long.MinValue + 1, -2000, null, 1000, long.MaxValue };
+            float?[] floatArr = new float?[5] { float.MinValue + 1, -12.1F, null, 0F, float.MaxValue };
+            double?[] doubleArr = new double?[5] { double.MinValue + 1, -19.112D, null, 0D, double.MaxValue };
+            byte?[] uTinyIntArr = new byte?[5] { byte.MinValue, 12, null, 89, byte.MaxValue - 1 };
+            ushort?[] uShortArr = new ushort?[5] { ushort.MinValue, 200, null, 400, ushort.MaxValue - 1 };
+            uint?[] uIntArr = new uint?[5] { uint.MinValue, 100, null, 2, uint.MaxValue - 1 };
+            ulong?[] uLongArr = new ulong?[5] { ulong.MinValue, 2000, null, 1000, long.MaxValue - 1 };
+            string?[] binaryArr = new string?[5] { "1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", String.Empty, null, "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM", "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890~!@#$%^&*()_+=-`[]{}:,./<>?" };
+            string?[] ncharArr = new string?[5] { "1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", null, "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM", "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", string.Empty };
+
+
+
+            _insertcmd.Parameters.AddWithValue(DateTime.UnixEpoch.AddMilliseconds(tsArr[0]));// mBinds[0] = TaosMultiBind.MultiBindTimestamp(tsArr);
+            _insertcmd.Parameters.AddWithValue(boolArr[0]);// mBinds[1] = TaosMultiBind.MultiBindBool(boolArr);
+            _insertcmd.Parameters.AddWithValue(tinyIntArr[0]);//  mBinds[2] = TaosMultiBind.MultiBindTinyInt(tinyIntArr);
+            _insertcmd.Parameters.AddWithValue(shortArr[0]);//  mBinds[3] = TaosMultiBind.MultiBindSmallInt(shortArr);
+            _insertcmd.Parameters.AddWithValue(intArr[0]);//  mBinds[4] = TaosMultiBind.MultiBindInt(intArr);
+            _insertcmd.Parameters.AddWithValue(longArr[0]);// mBinds[5] = TaosMultiBind.MultiBindBigint(longArr);
+            _insertcmd.Parameters.AddWithValue(floatArr[0]);// mBinds[6] = TaosMultiBind.MultiBindFloat(floatArr);
+            _insertcmd.Parameters.AddWithValue(doubleArr[0]);//mBinds[7] = TaosMultiBind.MultiBindDouble(doubleArr);
+            _insertcmd.Parameters.AddWithValue(uTinyIntArr[0]);//      mBinds[8] = TaosMultiBind.MultiBindUTinyInt(uTinyIntArr);
+            _insertcmd.Parameters.AddWithValue(uShortArr[0]);//  mBinds[9] = TaosMultiBind.MultiBindUSmallInt(uShortArr);
+            _insertcmd.Parameters.AddWithValue(uIntArr[0]);// mBinds[10] = TaosMultiBind.MultiBindUInt(uIntArr);
+            _insertcmd.Parameters.AddWithValue(uLongArr[0]);//  mBinds[11] = TaosMultiBind.MultiBindUBigInt(uLongArr);
+            _insertcmd.Parameters.AddWithValue(binaryArr[0]);// mBinds[12] = TaosMultiBind.MultiBindBinary(binaryArr);
+            _insertcmd.Parameters.AddWithValue(ncharArr[0].ToCharArray());//mBinds[13] = TaosMultiBind.MultiBindNchar(ncharArr);
+
+            Console.WriteLine($"{insertSql}{0}", _insertcmd.ExecuteNonQuery());
+            string querySql = $"select * from {stable}";
+            var _qreader = connection.CreateCommand(querySql).ExecuteReader();
+            ConsoleTableBuilder.From(_qreader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+        }
 
         static void UploadTelemetryData(  TaosConnection connection, string devid, string keyname, int count)
         {
