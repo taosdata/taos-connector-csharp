@@ -106,7 +106,7 @@ namespace TDengineDriver
     }
 
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi,Pack =4)]
+    [StructLayout(LayoutKind.Sequential)]
     public struct TAOS_MULTI_BIND
     {
         // column type
@@ -127,6 +127,7 @@ namespace TDengineDriver
         // line number, or the values number in buffer 
         public int num;
     }
+
 
 
     /// <summary>
@@ -352,7 +353,16 @@ namespace TDengineDriver
         /// </param>
         /// <returns>0 for success, non-zero for failure.</returns>
         [DllImport("taos", EntryPoint = "taos_stmt_set_tbname_tags", CallingConvention = CallingConvention.Cdecl)]
-        static extern public int StmtSetTbnameTags(IntPtr stmt, string name, TAOS_MULTI_BIND[] tags);
+        static extern private int StmtSetTbnameTags(IntPtr stmt, IntPtr name, TAOS_MULTI_BIND[] tags);
+        //int taos_stmt_set_tbname_tags(TAOS_STMT* stmt, const char* name, TAOS_MULTI_BIND *tags);
+        static public int StmtSetTbnameTags(IntPtr stmt, string name, TAOS_MULTI_BIND[] tags)
+        {
+            UTF8PtrStruct utf8PtrStruct = new UTF8PtrStruct(name);
+            int code = StmtSetTbnameTags(stmt, utf8PtrStruct.utf8Ptr, tags);
+            utf8PtrStruct.UTF8FreePtr();
+
+            return code;
+        }
 
         /// <summary>
         /// For both INSERT and SELECT.
@@ -389,7 +399,7 @@ namespace TDengineDriver
         /// </param>
         /// <returns>0 for success, non-zero for failure.</returns>
         [DllImport("taos", EntryPoint = "taos_stmt_bind_param_batch", CallingConvention = CallingConvention.Cdecl)]
-        static extern public int StmtBindParamBatch(IntPtr stmt, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStruct)] TAOS_MULTI_BIND[] bind);
+        static extern public int StmtBindParamBatch(IntPtr stmt, TAOS_MULTI_BIND[] bind);
 
         /// <summary>
         /// For INSERT only.

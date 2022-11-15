@@ -158,12 +158,41 @@ namespace IoTSharp.Data.Taos
         {
             var parameter = new TaosParameter(parameterName, value);
             Add(parameter);
-
             return parameter;
         }
 
-
-       private int   _param_index=0;
+        private int _tags_index = 0;
+        /// <summary>
+        ///     Adds a parameter to the collection.
+        /// </summary>
+        /// <param name="parameterName">The name of the parameter.</param>
+        /// <param name="value">The value of the parameter. Can be null.</param>
+        /// <returns>The parameter that was added.</returns>
+        public  TaosParameter AddTagsValue(object value)
+        {
+            _tags_index++;
+            var parameter = new TaosParameter($"$p{_tags_index:0000}", value);
+            Add(parameter);
+            return parameter;
+        }
+        public TaosParameter AddTagsValue(char[] value)
+        {
+            _tags_index++;
+            var parameter = new TaosParameter($"$p{_tags_index:0000}", value);
+            parameter.TaosType = TaosType.Text;
+            Add(parameter);
+            return parameter;
+        }
+        public TaosParameter AddTagsValue(string value)
+        {
+            _tags_index++;
+            var parameter = new TaosParameter($"$p{_tags_index:0000}", value);
+            parameter.TaosType = TaosType.Blob;
+            Add(parameter);
+            return parameter;
+        }
+        public string SubTableName { get; set; }
+        private int   _param_index=0;
         /// <summary>
         ///     Adds a parameter to the collection.
         /// </summary>
@@ -173,7 +202,24 @@ namespace IoTSharp.Data.Taos
         public virtual TaosParameter AddWithValue( object value)
         {
             _param_index++;
-            var parameter = new TaosParameter($"{_param_index:0000}", value);
+            var parameter = new TaosParameter($"@p{_param_index:0000}", value);
+            Add(parameter);
+            return parameter;
+        }
+        public virtual TaosParameter AddWithValue(char[] value)
+        {
+            _param_index++;
+            var parameter = new TaosParameter($"@p{_param_index:0000}", new string( value));
+            parameter.TaosType = TaosType.Text;
+            Add(parameter);
+            return parameter;
+        }
+    
+        public virtual TaosParameter AddWithValue(string? value)
+        {
+            _param_index++;
+            var parameter = new TaosParameter($"@p{_param_index:0000}", value);
+            parameter.TaosType = TaosType.Blob;
             Add(parameter);
             return parameter;
         }

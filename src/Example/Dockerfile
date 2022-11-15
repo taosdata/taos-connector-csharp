@@ -7,7 +7,7 @@ RUN echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bullseye main contrib
 	echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bullseye-backports main contrib non-free" >> /etc/apt/sources.list && \
     apt-get  -y   -q update   && apt-get install  -y   -q  apt-utils libgdiplus libc6-dev lsof net-tools wget curl iputils-ping inetutils-tools && \
 	apt-get autoremove -y &&  apt-get clean  &&  apt-get autoclean && rm  /var/cache/apt/* -rf && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-RUN curl -o TDengine-client.tar.gz "https://www.taosdata.com/assets-download/3.0/TDengine-client-3.0.1.4-Linux-x64.tar.gz" && \
+RUN curl -o TDengine-client.tar.gz "https://www.taosdata.com/assets-download/3.0/TDengine-client-3.0.1.6-Linux-x64.tar.gz" && \
     tar  -xvf TDengine-client.tar.gz && rm TDengine-client.tar.gz -f  && cd  $(ls TDengine-client*  -d)  && \
      ./install_client.sh && \
     rm $(pwd) -rf
