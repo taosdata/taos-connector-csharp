@@ -65,7 +65,7 @@ namespace TDengineDriver
 
             for (int i = 0; i < elementCount; i++)
             {
-                Byte[] toByteArr = BitConverter.GetBytes(arr[i] ?? sbyte.MinValue);
+                Byte[] toByteArr = BitConverter.GetBytes((short)(arr[i] ?? sbyte.MinValue));
 
                 //set TAOS_MULTI_BIND.buffer
                 Marshal.WriteByte(c_tinyint_ptr, typeSize * i, toByteArr[0]);

@@ -24,37 +24,91 @@ namespace IoTSharp.Data.Taos
     /// </summary>
     public partial class TaosConnection : DbConnection
     {
-        private string configDir = "C:/TDengine/cfg";
+ 
         private readonly IList<WeakReference<TaosCommand>> _commands = new List<WeakReference<TaosCommand>>();
-        private static Dictionary<string, ConcurrentTaosQueue> g_pool = new Dictionary<string, ConcurrentTaosQueue>();
+        private static readonly Dictionary<string, ConcurrentTaosQueue> g_pool = new Dictionary<string, ConcurrentTaosQueue>();
         private ConcurrentTaosQueue _queue=null;
         private string _connectionString;
         private ConnectionState _state;
 
         private static bool  _dll_isloaded=false;
-     
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="TaosConnection" /> class.
-        /// </summary>
-        public TaosConnection()
+        public TaosConnection():this( string.Empty)
         {
+
+        }
+        public TaosConnection(string connectionString) : this(connectionString,string.Empty)
+        {
+
+        }
+        public TaosConnection(string connectionString, string configdir):this(connectionString,configdir,60,string.Empty,string.Empty,string.Empty)
+        {
+
+        }
+
+        /// <summary>
+        /// 初始化链接
+        /// </summary>
+        /// <param name="connectionString">连接字符串</param>
+        /// <param name="configdir">配置目录 顺序 configdir > BaseDirectory > CurrentDirectory > "/etc/taos" || "C:/TDengine/cfg" </param>
+        /// <param name="shell_activity_timer">Shell 活动定时器</param>
+        /// <param name="locale">区域 'en_US.UTF-8'</param>
+        /// <param name="charset">字符集 'UTF-8'</param>
+        /// <param name="timezone">时区 例如  'Asia/Shanghai' </param>
+        public TaosConnection(string connectionString,string configdir,int  shell_activity_timer,string locale,string charset, string timezone) 
+        {
+            if (!string.IsNullOrEmpty(connectionString) &&  !string.IsNullOrWhiteSpace(connectionString))
+            {
+                ConnectionStringBuilder = new TaosConnectionStringBuilder(connectionString);
+                ConnectionString = connectionString;
+            }
             if (_dll_isloaded == false)
             {
+                if (!string.IsNullOrEmpty(configdir) && !string.IsNullOrEmpty(configdir) && System.IO.File.Exists(Path.Combine(configdir, "taos.cfg")))
+                {
+                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, configdir);
+                }
+               else  if (System.IO.File.Exists(Path.Combine(AppContext.BaseDirectory, "taos.cfg")))
+                {
+                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, AppContext.BaseDirectory);
+                }
+                else if(System.IO.File.Exists(Path.Combine(Environment.CurrentDirectory, "taos.cfg")))
+                {
+                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, Environment.CurrentDirectory);
+                }
+                else
+                {
+                    var configDir = "C:/TDengine/cfg";
 #if NET5_0_OR_GREATER
-                if (  RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    configDir = "/etc/taos";
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        configDir = "/etc/taos";
 
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    configDir = "C:/TDengine/cfg";
-                }
+                    }
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        configDir = "C:/TDengine/cfg";
+                    }
 #else
                 configDir = "C:/TDengine/cfg";
 #endif
-                TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR , this.configDir);
-                TDengine.Options((int)TDengineInitOption.TSDB_OPTION_SHELL_ACTIVITY_TIMER  , "60");
+                    var syscfg = new FileInfo(Path.Combine(configDir, "taos.cfg"));
+                    if (syscfg.Exists)
+                    {
+                        TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, configDir);
+                    }
+                }
+                if (!string.IsNullOrEmpty(locale))
+                {
+                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_LOCALE, locale);
+                }
+                if (!string.IsNullOrEmpty(charset))
+                {
+                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CHARSET, charset);
+                }
+                if (shell_activity_timer > 0)
+                {
+                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_SHELL_ACTIVITY_TIMER, $"{shell_activity_timer}");
+                }
                 TDengine.Init();
                 Process.GetCurrentProcess().Disposed += (object sender, EventArgs e) =>
                     {
@@ -71,16 +125,7 @@ namespace IoTSharp.Data.Taos
         {
              _queue.Return(_taos);
         }
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="TaosConnection" /> class.
-        /// </summary>
-        /// <param name="connectionString">The string used to open the connection.</param>
-        /// <seealso cref="TaosConnectionStringBuilder" />
-        public TaosConnection(string connectionString) : this()
-        {
-            ConnectionStringBuilder = new TaosConnectionStringBuilder(connectionString);
-            ConnectionString = connectionString;
-        }
+     
 
 
 
@@ -227,7 +272,7 @@ namespace IoTSharp.Data.Taos
                 }
             }
        
-           if (_queue.TaosQueue.Count==0)
+           if (_queue.TaosQueue.IsEmpty)
             {
                 TaosException.ThrowExceptionForRC(new TaosErrorResult() {  Code=-1, Error= "Can't open  connection." });
             }
@@ -294,9 +339,9 @@ namespace IoTSharp.Data.Taos
         ///     transaction.
         /// </remarks>
         public new virtual TaosCommand CreateCommand()
-            => new TaosCommand { Connection = this, CommandTimeout = DefaultTimeout, Transaction = Transaction };
+            => new() { Connection = this, CommandTimeout = DefaultTimeout, Transaction = Transaction };
         public virtual TaosCommand CreateCommand(string commandtext)
-          => new TaosCommand { Connection = this, CommandText = commandtext, CommandTimeout = DefaultTimeout, Transaction = Transaction };
+          => new() { Connection = this, CommandText = commandtext, CommandTimeout = DefaultTimeout, Transaction = Transaction };
 
         /// <summary>
         ///     Creates a new command associated with the connection.

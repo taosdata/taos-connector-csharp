@@ -158,14 +158,17 @@ namespace IoTSharp.Data.Taos
                 return;
             }
             _command.DataReader = null;
-       
+           
             _closed = true;
-      
-            TDengine.FreeResult(_taosResult);
-         
+            if (_taosResult != IntPtr.Zero)
+            {
+                TDengine.FreeResult(_taosResult);
+                _taosResult= IntPtr.Zero;
+            }
             if (rowdata != IntPtr.Zero)
             {
                 TDengine.FreeResult(rowdata);
+                rowdata= IntPtr.Zero;
             }
             OnDispose?.Invoke(this, EventArgs.Empty);
         }

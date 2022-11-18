@@ -436,7 +436,7 @@ namespace IoTSharp.Data.Taos
                 else
                 {
                     ptr= TDengine.Query(_taos, _commandText);
-                    if (ptr != IntPtr.Zero )
+                    if (ptr != IntPtr.Zero)
                     {
                         var code = TDengine.ErrorNo(ptr);
                         if (code != 0)
@@ -447,6 +447,15 @@ namespace IoTSharp.Data.Taos
                         {
                             _affectRows = TDengine.AffectRows(ptr);
                         }
+                    }
+                    else
+                    {
+                        var code = TDengine.ErrorNo(_taos);
+                        var xc = new TaosErrorResult()
+                        {
+                            Code = code,
+                            Error = TDengine.Error(_taos)
+                        };
                     }
                 }
                 if (_affectRows>=0)
