@@ -282,6 +282,7 @@ namespace TDengineDriver
             var var = db.ToUTF8IntPtr();
             int result = taos_select_db(taos, var.ptr);
             var.ptr.FreeUtf8IntPtr();
+            var.ptr = IntPtr.Zero;
             return result;
         }
         //stmt APIs:
@@ -322,13 +323,7 @@ namespace TDengineDriver
         /// <returns>0 for success, non-zero for failure.</returns>
         [DllImport("taos", EntryPoint = "taos_stmt_set_tbname", CallingConvention = CallingConvention.Cdecl)]
         static extern internal int  StmtSetTbname(IntPtr stmt, string name);
-        public static int __StmtSetTbname(IntPtr stmt, string name)
-        {
-            var ptrsql = Marshal.StringToHGlobalAnsi(name);
-            int result = 0;// = _StmtSetTbname(stmt, ptrsql);
-            Marshal.FreeHGlobal(ptrsql);
-            return result;
-        }
+     
         /// <summary>
         /// For INSERT only. 
         /// Set a table name for binding table name as parameter. Only used for binding all tables 
