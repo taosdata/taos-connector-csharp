@@ -56,6 +56,7 @@ namespace IoTSharp.Data.Taos
         /// <param name="timezone">时区 例如  'Asia/Shanghai' </param>
         public TaosConnection(string connectionString,string configdir,int  shell_activity_timer,string locale,string charset, string timezone) 
         {
+           
             if (!string.IsNullOrEmpty(connectionString) &&  !string.IsNullOrWhiteSpace(connectionString))
             {
                 ConnectionStringBuilder = new TaosConnectionStringBuilder(connectionString);
@@ -141,7 +142,6 @@ namespace IoTSharp.Data.Taos
             {
                 _connectionString = value;
                 ConnectionStringBuilder = new TaosConnectionStringBuilder(value);
-                TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CHARSET, ConnectionStringBuilder.Charset);
             }
         }
 

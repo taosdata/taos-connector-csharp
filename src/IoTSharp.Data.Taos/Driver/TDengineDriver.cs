@@ -179,7 +179,14 @@ namespace TDengineDriver
         static extern public void Cleanup();
 
         [DllImport("taos", EntryPoint = "taos_options", CallingConvention = CallingConvention.Cdecl)]
-        static extern public void Options(int option, string value);
+        static extern public void _taos_options(int option, IntPtr value);
+
+        static  public void Options(int option, string value)
+        {
+            var var = value.ToUTF8IntPtr();
+             _taos_options(option, var.ptr);
+            var.ptr.FreeUtf8IntPtr();
+        }
 
         [DllImport("taos", EntryPoint = "taos_connect", CallingConvention = CallingConvention.Cdecl)]
         static extern public IntPtr Connect(string ip, string user, string password, string db, short port);

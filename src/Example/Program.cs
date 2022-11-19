@@ -11,11 +11,27 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TDengineDriver;
 
 namespace TaosADODemo
 {
     class Program
     {
+        /// <summary>
+        /// 时间戳计时开始时间
+        /// </summary>
+        private static DateTime timeStampStartTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        /// <summary>
+        /// DateTime转换为13位时间戳（单位：毫秒）
+        /// </summary>
+        /// <param name="dateTime"> DateTime</param>
+        /// <returns>13位时间戳（单位：毫秒）</returns>
+        public static long DateTimeToLongTimeStamp()
+        {
+            return (long)(DateTime.Now.ToUniversalTime() - timeStampStartTime).TotalMilliseconds;
+        }
+
         static void Main(string[] args)
         {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
@@ -31,6 +47,44 @@ namespace TaosADODemo
                 Port = 6030
 
             };
+
+            string configdir = System.Environment.CurrentDirectory.Replace("\\", "/") + "/";
+            using (var connection = new TaosConnection(builder.ConnectionString, configdir))
+            {
+                try
+                {
+                    connection.Open();
+                    Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
+                    connection.ChangeDatabase(database);
+                    var lines = new string[] {
+                        String.Format("meters,tname=cpu1,location=California.LosAngeles,groupid=2 current=11.8,voltage=221,phase=0.28 {0}",DateTimeToLongTimeStamp()),
+                };
+
+                    int result = connection.ExecuteBulkInsert(lines);
+                    Console.WriteLine($"行插入{result}");
+                    if (result != lines.Length)
+                    {
+                        throw new Exception("ExecuteBulkInsert");
+                    }
+                    var cmd_select = connection.CreateCommand();
+                    cmd_select.CommandText = $"select * from {database}.cpu1;";
+                    var reader = cmd_select.ExecuteReader();
+                    Console.WriteLine("");
+                    ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
+                    connection.CreateCommand($"DROP DATABASE {database};").ExecuteNonQuery();
+
+                    Console.WriteLine("执行TDengine成功");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("执行TDengine异常" + ex.Message);
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+ 
             //Example for ADO.Net 
             using (var connection = new TaosConnection(builder.ConnectionString))
             {

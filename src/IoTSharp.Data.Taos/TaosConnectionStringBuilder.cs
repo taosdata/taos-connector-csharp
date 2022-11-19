@@ -47,7 +47,7 @@ namespace IoTSharp.Data.Taos
         private string _dataSource = string.Empty;
         private string _dataBase=string.Empty;
         private string _userName = string.Empty;
-        private string _charset = System.Text.Encoding.UTF8.EncodingName;
+        private string _charset = "UTF-8";
         private string _password = string.Empty;
         private int  _port =6030;
         private int _PoolSize=Environment.ProcessorCount;
