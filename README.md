@@ -6,7 +6,7 @@
 Entity, Framework, EF, Core, Data, O/RM, entity-framework-core,TDengine
 --
 
-IoTSharp.Data.Taos  是一个采用TDengine的原生动态库构建的ADO.Net提供程序。 它将允许你通过.Net Core 访问TDengine 数据库。
+IoTSharp.Data.Taos  是一个采用TDengine的原生动态库构建的ADO.Net提供程序。 它将允许你通过.Net Core 访问TDengine 数据库， 这包括实现了通过行协议、Json协议的批量插入 ExecuteBulkInsert 方法。
 
 ---
 
@@ -39,9 +39,12 @@ IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器，
 
 ##  如何使用？
 
- 例子:
+
+
 
 ![Example](docs/Example.png)
+
+ ### 基本示例:
 
 ```csharp
     ///Specify the name of the database
@@ -101,11 +104,11 @@ IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器，
 ```
 
 
-用于物联网的超级表示例:
+### 用于物联网的超级表示例:
 
 [IoTSharp/Storage/TaosStorage.cs](https://github.com/IoTSharp/IoTSharp/blob/master/IoTSharp/Storage/TaosStorage.cs)
 
-```
+```c#
 
    using (var connection = new TaosConnection(builder.ConnectionString))
             {
@@ -135,4 +138,12 @@ IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器，
             }
         }
         
+```
+
+### RecordData示例
+```c#
+  var rec=  RecordData.table("meters").Tag("location", "Beijing.Haidian").Tag("groupid", "2").Timestamp(DateTime.Now.ToUniversalTime(), TimePrecision.Ms)
+                .Field("current", 12.1).Field("voltage", 234.0).Field("phase",0.33);
+            int result = connection.ExecuteBulkInsert(rec);
+
 ```

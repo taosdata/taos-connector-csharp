@@ -475,7 +475,51 @@ namespace IoTSharp.Data.Taos
         public int ExecuteBulkInsert(string[] lines, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS) =>
             ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
 
-
+#if NETCOREAPP
+        public int ExecuteBulkInsert(RecordData data)
+        {
+            return ExecuteBulkInsert(new RecordData[] {data }, TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED, null);
+        }
+        public int ExecuteBulkInsert(IEnumerable<RecordData> data)
+        {
+            return ExecuteBulkInsert(data, TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED, null);
+        }
+        public int ExecuteBulkInsert(IEnumerable<RecordData> data,RecordSettings settings)
+        {
+            return ExecuteBulkInsert(data,  TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED, settings);
+        }
+        public int ExecuteBulkInsert(IEnumerable<RecordData> data, TDengineSchemalessPrecision precision)
+        {
+            return ExecuteBulkInsert(data, precision, null);
+        }
+        public int ExecuteBulkInsert(IEnumerable<RecordData> data, TDengineSchemalessPrecision precision, RecordSettings settings)
+        {
+            Arguments.CheckNotEmpty(data, "ExecuteBulkInsert(IEnumerable<RecordData> data)");
+            if (precision == TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED)
+            {
+                switch (data.First().Precision)
+                {
+                    case TimePrecision.Ms://毫秒
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS;
+                        break;
+                    case TimePrecision.S://秒
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_SECONDS;
+                        break;
+                    case TimePrecision.Us://微秒
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MICRO_SECONDS;
+                        break;
+                    case TimePrecision.Ns: //纳秒
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NANO_SECONDS;
+                        break;
+                    default:
+                        precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS;
+                        break;
+                }
+            }
+            var lines = data.Select(rd => rd.ToLineProtocol(settings)).ToArray();
+            return ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
+        }
+#endif
         public int ExecuteBulkInsert<T>(IEnumerable<T> array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
         {
             var lines = array.Select(x => Newtonsoft.Json.JsonConvert.SerializeObject(x)).ToArray();

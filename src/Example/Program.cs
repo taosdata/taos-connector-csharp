@@ -176,9 +176,11 @@ namespace TaosADODemo
                 });
 
 
-
+                //行插入
                 BulkInsertLines(connection);
-
+                //使用对象构建Lines 航插入
+                BulkRecordData(connection);
+                //使用json插入
                 BulkInsertJsonString(connection);
 
                 BulkInsertByJsonAndTags(connection);
@@ -328,6 +330,23 @@ namespace TaosADODemo
             int  result = connection.ExecuteBulkInsert(lines);
             Console.WriteLine($"行插入{result}");
             if (result != lines.Length)
+            {
+                throw new Exception("ExecuteBulkInsert");
+            }
+        }
+        /// <summary>
+        /// taos_schemaless_insert 数值类型 和 时间精度 #18413
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <exception cref="Exception"></exception>
+        /// <seealso cref="https://github.com/taosdata/TDengine/issues/18413"/>
+        private static void BulkRecordData(TaosConnection connection)
+        {
+           var rec=  RecordData.table("meters").Tag("location", "Beijing.Haidian").Tag("groupid", "2").Timestamp(DateTime.Now.ToUniversalTime(), TimePrecision.Ms)
+                .Field("current", 12.1).Field("voltage", 234.0).Field("phase",0.33);
+            int result = connection.ExecuteBulkInsert(rec);
+            Console.WriteLine($"行插入{result}");
+            if (result != 1)
             {
                 throw new Exception("ExecuteBulkInsert");
             }
