@@ -16,6 +16,7 @@ using TDengineDriver;
 using System.Linq;
 using IoTSharp.Data.Taos.Driver;
 using System.Collections;
+using IoTSharp.Data.Taos.Protocols;
 
 namespace IoTSharp.Data.Taos
 {
@@ -26,12 +27,11 @@ namespace IoTSharp.Data.Taos
     {
  
         private readonly IList<WeakReference<TaosCommand>> _commands = new List<WeakReference<TaosCommand>>();
-        private static readonly Dictionary<string, ConcurrentTaosQueue> g_pool = new Dictionary<string, ConcurrentTaosQueue>();
-        private ConcurrentTaosQueue _queue=null;
+
         private string _connectionString;
         private ConnectionState _state;
+        internal ITaosProtocol taos;
 
-        private static bool  _dll_isloaded=false;
         public TaosConnection():this( string.Empty)
         {
 
@@ -42,7 +42,7 @@ namespace IoTSharp.Data.Taos
         }
         public TaosConnection(string connectionString, string configdir):this(connectionString,configdir,60,string.Empty,string.Empty,string.Empty)
         {
-
+          
         }
 
         /// <summary>
@@ -54,80 +54,34 @@ namespace IoTSharp.Data.Taos
         /// <param name="locale">区域 'en_US.UTF-8'</param>
         /// <param name="charset">字符集 'UTF-8'</param>
         /// <param name="timezone">时区 例如  'Asia/Shanghai' </param>
-        public TaosConnection(string connectionString,string configdir,int  shell_activity_timer,string locale,string charset, string timezone) 
+        public TaosConnection(string connectionString,string configdir,int  shell_activity_timer,string locale,string charset, string timezone)
         {
-           
-            if (!string.IsNullOrEmpty(connectionString) &&  !string.IsNullOrWhiteSpace(connectionString))
+            if (!string.IsNullOrEmpty(connectionString) && !string.IsNullOrWhiteSpace(connectionString))
             {
                 ConnectionStringBuilder = new TaosConnectionStringBuilder(connectionString);
                 ConnectionString = connectionString;
             }
-            if (_dll_isloaded == false)
+            switch (ConnectionStringBuilder.Protocol)
             {
-                if (!string.IsNullOrEmpty(configdir) && !string.IsNullOrEmpty(configdir) && System.IO.File.Exists(Path.Combine(configdir, "taos.cfg")))
-                {
-                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, configdir);
-                }
-               else  if (System.IO.File.Exists(Path.Combine(AppContext.BaseDirectory, "taos.cfg")))
-                {
-                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, AppContext.BaseDirectory);
-                }
-                else if(System.IO.File.Exists(Path.Combine(Environment.CurrentDirectory, "taos.cfg")))
-                {
-                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, Environment.CurrentDirectory);
-                }
-                else
-                {
-                    var configDir = "C:/TDengine/cfg";
-#if NET5_0_OR_GREATER
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    {
-                        configDir = "/etc/taos";
-
-                    }
-                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        configDir = "C:/TDengine/cfg";
-                    }
-#else
-                configDir = "C:/TDengine/cfg";
-#endif
-                    var syscfg = new FileInfo(Path.Combine(configDir, "taos.cfg"));
-                    if (syscfg.Exists)
-                    {
-                        TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CONFIGDIR, configDir);
-                    }
-                }
-                if (!string.IsNullOrEmpty(locale))
-                {
-                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_LOCALE, locale);
-                }
-                if (!string.IsNullOrEmpty(charset))
-                {
-                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_CHARSET, charset);
-                }
-                if (shell_activity_timer > 0)
-                {
-                    TDengine.Options((int)TDengineInitOption.TSDB_OPTION_SHELL_ACTIVITY_TIMER, $"{shell_activity_timer}");
-                }
-                TDengine.Init();
-                Process.GetCurrentProcess().Disposed += (object sender, EventArgs e) =>
-                    {
-                        TDengine.Cleanup();
-                    };
-                _dll_isloaded = true;
+                case "Native":
+                default:
+                    taos = new TaosNative();
+                    break;
             }
+            taos.InitTaos(configdir, shell_activity_timer, locale, charset);
         }
-        internal IntPtr TakeClient()
-        {
-            return _queue.Take();
-        }
-        internal  void ReturnClient(IntPtr  _taos)
-        {
-             _queue.Return(_taos);
-        }
-     
 
+
+
+        public IntPtr TakeClient()
+        {
+            return taos.Take();
+        }
+
+        public void ReturnClient(IntPtr _taos)
+        {
+            taos.Return(_taos);
+        }
 
 
         /// <summary>
@@ -182,29 +136,23 @@ namespace IoTSharp.Data.Taos
         {
             get
             {
-                var _taos = _queue.Take();
-                if (_taos == IntPtr.Zero)
+                if (string.IsNullOrEmpty(_version))
                 {
-                    _queue.Return(_taos);
-                    TaosException.ThrowExceptionForRC(-10005, "Connection is not open", null);
-                }
-                else if (string.IsNullOrEmpty(_version))
-                {
-                    _version = Marshal.PtrToStringAnsi(TDengine.GetServerInfo(_taos));
-                    _queue.Return(_taos);
+                    _version = taos.GetServerVersion();
                 }
                 return _version;
             }
         }
+        string _client_version = string.Empty;
         public   string ClientVersion
         {
             get
             {
-                if (string.IsNullOrEmpty(_version))
+                if (string.IsNullOrEmpty(_client_version))
                 {
-                    _version = Marshal.PtrToStringAnsi(TDengine.GetClientInfo());
+                    _client_version = taos.GetClientVersion();
                 }
-                return _version;
+                return _client_version;
             }
         }
         /// <summary>
@@ -248,41 +196,19 @@ namespace IoTSharp.Data.Taos
         /// <exception cref="TaosException">A Taos error occurs while opening the connection.</exception>
         public override void Open()
         {
-       
             if (State == ConnectionState.Open)
             {
                 return;
             }
-            if (!g_pool.ContainsKey(_connectionString))
-            {
-                g_pool.Add(_connectionString, new ConcurrentTaosQueue() {  Timeout= ConnectionTimeout});
-            }
-            _queue = g_pool[_connectionString];
-            _queue.AddRef();
-            if (ConnectionString == null)
-            {
-                throw new InvalidOperationException("Open Requires Set ConnectionString");
-            }
-            for (int i = 0; i < ConnectionStringBuilder.PoolSize+1; i++)
-            {
-                var c = TDengine.Connect(this.DataSource, ConnectionStringBuilder.Username, ConnectionStringBuilder.Password, "", (short)ConnectionStringBuilder.Port);
-                if (c!=IntPtr.Zero)
-                {
-                    _queue.Return(c);
-                }
-            }
-       
-           if (_queue.TaosQueue.IsEmpty)
-            {
-                TaosException.ThrowExceptionForRC(new TaosErrorResult() {  Code=-1, Error= "Can't open  connection." });
-            }
-            else
+            var result = taos.Open(ConnectionStringBuilder);
+
+            if (result)
             {
                 SetState(ConnectionState.Open);
                 this.ChangeDatabase(ConnectionStringBuilder.DataBase);
             }
         }
-      
+
         /// <summary>
         ///     Closes the connection to the database. Open transactions are rolled back.
         /// </summary>
@@ -290,17 +216,7 @@ namespace IoTSharp.Data.Taos
         {
             if (State != ConnectionState.Closed)
             {
-                _queue.RemoveRef();
-                if (_queue.GetRef() == 0)
-                {
-                    _queue.TaosQueue.ToList().ForEach(c =>
-                    {
-                        TDengine.Close(c);
-                        }
-                    );
-                    _queue = null;
-                    g_pool.Remove(_connectionString);
-                }
+                taos.Close(ConnectionStringBuilder);
             }
             Transaction?.Dispose();
             _nowdatabase = string.Empty;
@@ -431,23 +347,16 @@ namespace IoTSharp.Data.Taos
         internal string _nowdatabase = string.Empty;
 
         internal bool SelectedDataBase => _nowdatabase != string.Empty ;
+
+        public int Protocol { get;  set; }
+
         /// <summary>
         ///     Changes the current database.  
         /// </summary>
         /// <param name="databaseName">The name of the database to use.</param>
         public override void ChangeDatabase(string databaseName)
         {
-            var _sql = $"use {databaseName}";
-            var ptr = _sql.ToUTF8IntPtr();
-            var result=  _queue.TaosQueue.ToList().TrueForAll(_taos =>
-            {
-                var req = TDengine.Query(_taos, ptr.ptr);
-                int code = TDengine.ErrorNo(req);
-                var msg = TDengine.Error(req);
-                TDengine.FreeResult(req);
-                return code==0;
-            });
-            ptr.ptr.FreeUtf8IntPtr();
+            var result = taos.ChangeDatabase(databaseName);
             if (result)
             {
                 _nowdatabase = databaseName;
@@ -536,20 +445,20 @@ namespace IoTSharp.Data.Taos
         private int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision precision)
         {
             int affectedRows = 0;
-            var _taos= _queue.Take();
+            var _taos= taos.Take();
             IntPtr res = TDengine.SchemalessInsert(_taos, lines, lines.Length, (int)protocol, (int)precision);
          
             if (TDengine.ErrorNo(res) != 0)
             {
                 var tdr = new TaosErrorResult() { Code = TDengine.ErrorNo(res), Error = TDengine.Error(res) };
-                _queue.Return(_taos);
+                taos.Return(_taos);
                 TaosException.ThrowExceptionForRC(tdr);
             }
             else
             {
                 affectedRows = TDengine.AffectRows(res);
                 TDengine.FreeResult(res);
-                _queue.Return(_taos);
+                taos.Return(_taos);
             }
             return affectedRows;
         }

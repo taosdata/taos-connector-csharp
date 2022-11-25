@@ -27,6 +27,7 @@ namespace IoTSharp.Data.Taos
         private const string PortKeyword = "Port";
         private const string PoolSizeKeyword = "PoolSize";
         private const string TimeOutKeyword = "TimeOut";
+        private const string ProtocolKeyword = "Protocol";
         private enum Keywords
         {
             DataSource,
@@ -36,7 +37,8 @@ namespace IoTSharp.Data.Taos
             Port,
             Charset,
             PoolSize,
-            TimeOut
+            TimeOut,
+            Protocol
 
 
         }
@@ -52,10 +54,10 @@ namespace IoTSharp.Data.Taos
         private int  _port =6030;
         private int _PoolSize=Environment.ProcessorCount;
         private int _timeout = 30;
-
+        private string _protocol = "Native";
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[8];
+            var validKeywords = new string[9];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
@@ -64,6 +66,7 @@ namespace IoTSharp.Data.Taos
             validKeywords[(int)Keywords.Port] = PortKeyword;
             validKeywords[(int)Keywords.PoolSize] = PoolSizeKeyword;
             validKeywords[(int)Keywords.TimeOut] = TimeOutKeyword;
+            validKeywords[(int)Keywords.Protocol] = ProtocolKeyword;
             _validKeywords = validKeywords;
 
             _keywords = new Dictionary<string, Keywords>(8, StringComparer.OrdinalIgnoreCase)
@@ -76,7 +79,9 @@ namespace IoTSharp.Data.Taos
                 [DataSourceNoSpaceKeyword] = Keywords.DataSource,
                 [PortKeyword] = Keywords.Port,
                 [PoolSizeKeyword] = Keywords.PoolSize,
-                [TimeOutKeyword] = Keywords.TimeOut
+                [TimeOutKeyword] = Keywords.TimeOut,
+                [ProtocolKeyword] = Keywords.Protocol
+
             };
         }
 
@@ -136,7 +141,11 @@ namespace IoTSharp.Data.Taos
             get => _PoolSize;
             set => base[PoolSizeKeyword] = _PoolSize = value;
         }
-
+        public virtual string Protocol
+        {
+            get => _protocol;
+            set => base[ProtocolKeyword] = Protocol = value;
+        }
 
         /// <summary>
         ///     Gets a collection containing the keys used by the connection string.
@@ -221,6 +230,9 @@ namespace IoTSharp.Data.Taos
                         return;
                     case Keywords.TimeOut:
                         ConnectionTimeout = Convert.ToInt32(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.Protocol:
+                        Charset = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
@@ -348,6 +360,8 @@ namespace IoTSharp.Data.Taos
                     return PoolSize;
                 case Keywords.TimeOut:
                     return ConnectionTimeout;
+                case Keywords.Protocol:
+                    return Protocol;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -386,6 +400,9 @@ namespace IoTSharp.Data.Taos
                     return;
                 case Keywords.TimeOut   :
                     _timeout = 30;
+                    return;
+                case Keywords.Protocol:
+                    _protocol = "Native";
                     return;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
