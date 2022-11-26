@@ -17,6 +17,7 @@ using System.Linq;
 using IoTSharp.Data.Taos.Driver;
 using System.Collections;
 using IoTSharp.Data.Taos.Protocols;
+using IoTSharp.Data.Taos.Protocols.TDRESTful;
 
 namespace IoTSharp.Data.Taos
 {

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using TDengineDriver;
 
-namespace IoTSharp.Data.Taos.Protocols
+namespace IoTSharp.Data.Taos.Protocols.TDRESTful
 {
     internal class TaosRESTful : ITaosProtocol
     {
@@ -78,9 +78,9 @@ namespace IoTSharp.Data.Taos.Protocols
 #endif
             var body = _commandText;
 #if NET46
-                var request = new RestRequest();
+            var request = new RestRequest();
 
-                request.AddParameter("",body, "text/plain",  ParameterType.RequestBody);
+            request.AddParameter("", body, "text/plain", ParameterType.RequestBody);
 #else
             var request = new RestRequest("", Method.Post);
             request.AddHeader("User-Agent", "Maikebing.Data.Taos/0.0.1");
@@ -90,7 +90,7 @@ namespace IoTSharp.Data.Taos.Protocols
             request.AddHeader("User-Agent", "Maikebing.Data.Taos/0.0.1");
             request.AddHeader("Content-Type", "text/plain");
 #if NET46
-                var response = _client.Execute(request, Method.POST);
+            var response = _client.Execute(request, Method.POST);
 #else
             var response = _client.Execute(request, Method.Post);
 #endif
@@ -102,12 +102,12 @@ namespace IoTSharp.Data.Taos.Protocols
 #endif
                 if (result.code != 0)
                 {
-                    TaosException.ThrowExceptionForRC(_commandText, new Taos.TaosErrorResult() { Code = result.code, Error = result.desc });
+                    TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = result.code, Error = result.desc });
                 }
             }
             else if (string.IsNullOrEmpty(response.Content))
             {
-                TaosException.ThrowExceptionForRC(_commandText, new Taos.TaosErrorResult() { Code = (int)response.StatusCode, Error = response.ErrorMessage });
+                TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = (int)response.StatusCode, Error = response.ErrorMessage });
             }
             else
             {
@@ -115,7 +115,7 @@ namespace IoTSharp.Data.Taos.Protocols
 #if DEBUG
                 Console.WriteLine($"Exec code:{tr.code},message:{tr.desc}");
 #endif
-                TaosException.ThrowExceptionForRC(_commandText, new Taos.TaosErrorResult() { Code = tr.code, Error = tr.desc });
+                TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = tr.code, Error = tr.desc });
             }
             return result;
         }

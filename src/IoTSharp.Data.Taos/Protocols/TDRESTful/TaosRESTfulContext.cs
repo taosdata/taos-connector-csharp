@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using TDengineDriver;
 
-namespace IoTSharp.Data.Taos.Protocols
+namespace IoTSharp.Data.Taos.Protocols.TDRESTful
 {
     internal class TaosRESTfulContext : ITaosContext
     {
