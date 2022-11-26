@@ -14,61 +14,6 @@ using TDengineDriver;
 
 namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 {
-    public class WSActionRsp
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        public int code { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string message { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string action { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int req_id { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int timing { get; set; }
-    }
-
-    public class conn
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        public int req_id { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string user { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string password { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string db { get; set; }
-    }
-
-    public class WSActionReq<T>
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        public string action { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public T args { get; set; }
-    }
 
     internal class TaosWebSocket : ITaosProtocol
     {
