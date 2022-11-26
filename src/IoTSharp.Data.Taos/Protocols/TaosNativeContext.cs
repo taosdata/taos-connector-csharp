@@ -208,7 +208,7 @@ namespace IoTSharp.Data.Taos.Protocols
                             double v7 = (double)Marshal.PtrToStructure(data, typeof(double));
                             result = v7;
                             break;
-                        case TDengineDataType.TSDB_DATA_TYPE_BINARY:
+                        case TDengineDataType.TSDB_DATA_TYPE_VARCHAR:
                             {
 #if NET5_0_OR_GREATER
                                 string v8 = Marshal.PtrToStringUTF8(data, GetContentLength(ordinal));

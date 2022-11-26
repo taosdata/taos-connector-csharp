@@ -63,24 +63,15 @@ namespace IoTSharp.Data.Taos
             }
             switch (ConnectionStringBuilder.Protocol)
             {
-                case "Native":
+                case TaosConnectionStringBuilder.Protocol_Rest:
+                    taos = new TaosRest();
+                    break;
+                case TaosConnectionStringBuilder.Protocol_Native:
                 default:
                     taos = new TaosNative();
                     break;
             }
             taos.InitTaos(configdir, shell_activity_timer, locale, charset);
-        }
-
-
-
-        public IntPtr TakeClient()
-        {
-            return taos.Take();
-        }
-
-        public void ReturnClient(IntPtr _taos)
-        {
-            taos.Return(_taos);
         }
 
 

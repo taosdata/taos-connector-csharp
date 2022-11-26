@@ -29,7 +29,9 @@ namespace IoTSharp.Data.Taos
         private const string TimeOutKeyword = "TimeOut";
         private const string ProtocolKeyword = "Protocol";
         private const string TimeZoneKeyword = "TimeZone";
-        
+        public const string Protocol_Rest = "Rest";
+        public const string Protocol_Native = "Native";
+
         private enum Keywords
         {
             DataSource,
@@ -57,7 +59,7 @@ namespace IoTSharp.Data.Taos
         private int  _port =6030;
         private int _PoolSize=Environment.ProcessorCount;
         private int _timeout = 30;
-        private string _protocol = "Native";
+        private string _protocol = Protocol_Native;
         private string _timezone = string.Empty;
         static TaosConnectionStringBuilder()
         {
@@ -153,7 +155,7 @@ namespace IoTSharp.Data.Taos
         public virtual string Protocol
         {
             get => _protocol;
-            set => base[ProtocolKeyword] = Protocol = value;
+            set => base[ProtocolKeyword] = _protocol = value;
         }
         /// <summary>
         /// 默认为空时为 Asia/Shanghai
@@ -161,7 +163,7 @@ namespace IoTSharp.Data.Taos
         public virtual string TimeZone
         {
             get => _timezone;
-            set => base[TimeZoneKeyword] = TimeZone = value;
+            set => base[TimeZoneKeyword] = _timezone = value;
         }
         
         /// <summary>
@@ -249,7 +251,7 @@ namespace IoTSharp.Data.Taos
                         ConnectionTimeout = Convert.ToInt32(value, CultureInfo.InvariantCulture);
                         return;
                     case Keywords.Protocol:
-                        Charset = Convert.ToString(value, CultureInfo.InvariantCulture);
+                         Protocol  = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
                     case Keywords.TimeZone:
                         TimeZone = Convert.ToString(value, CultureInfo.InvariantCulture);
@@ -424,7 +426,7 @@ namespace IoTSharp.Data.Taos
                     _timeout = 30;
                     return;
                 case Keywords.Protocol:
-                    _protocol = "Native";
+                    _protocol = Protocol_Native;
                     return;
                 case Keywords.TimeZone:
                     _timezone = string.Empty;
@@ -433,6 +435,19 @@ namespace IoTSharp.Data.Taos
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return;
             }
+        }
+
+        public TaosConnectionStringBuilder UseRest()
+        {
+            Port = 6041;
+            Protocol = Protocol_Rest;
+            return this;
+        }
+        public TaosConnectionStringBuilder UseNative()
+        {
+            Port = 6030;
+            Protocol = Protocol_Native;
+            return this;
         }
     }
 }

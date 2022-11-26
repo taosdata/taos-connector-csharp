@@ -358,7 +358,7 @@ namespace IoTSharp.Data.Taos.Protocols
             }
             catch when (unprepared)
             {
-                _connection.ReturnClient(_taos);
+                Return(_taos);
                 throw;
             }
 
