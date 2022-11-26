@@ -1,0 +1,453 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Windows.Input;
+using TDengineDriver;
+
+namespace IoTSharp.Data.Taos.Protocols
+{
+    internal class TaosNativeContext : ITaosContext
+    {
+        taosField[] metas;
+        IntPtr taos;
+        private IntPtr ptr;
+        private IntPtr rowdata;
+        private double _date_max_1970;
+        private DateTime _dt1970;
+        public int AffectRows { get; set; }
+        public int FieldCount { get; set; }
+
+        private IntPtr _taosResult;
+        private readonly List<taosField> _metas;
+
+        public bool CloseConnection { get; set; }
+
+        public TaosNativeContext(taosField[] metas, bool closeConnection, nint taos, IntPtr ptr, int affectRows, int fieldcount)
+        {
+            this.metas = metas;
+            this.CloseConnection = closeConnection;
+            this.taos = taos;
+            this.ptr = ptr;
+            this.AffectRows = affectRows;
+            this.FieldCount = fieldcount;
+            _taosResult = ptr;
+            _metas = metas==null?new List<taosField> (): new List<taosField>(metas);
+            _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            _date_max_1970 = DateTime.MaxValue.Subtract(_dt1970).TotalMilliseconds;
+        }
+
+        public bool Read()
+        {
+            rowdata = TDengine.FetchRows(_taosResult);
+            return rowdata != IntPtr.Zero;
+        }
+
+        public TaosException LastException()
+        {
+            return TDengine.ErrorNo(_taosResult) == 0 ? null : new TaosException(new TaosErrorResult() { Code = TDengine.ErrorNo(_taosResult), Error = TDengine.Error(_taosResult) }, null);
+        }
+
+        public int GetErrorNo()
+        {
+            return TDengine.ErrorNo(_taosResult);
+        }
+
+        public void Dispose()
+        {
+            if (_taosResult != IntPtr.Zero)
+            {
+                TDengine.FreeResult(_taosResult);
+                _taosResult = IntPtr.Zero;
+            }
+            if (rowdata != IntPtr.Zero)
+            {
+                TDengine.FreeResult(rowdata);
+                rowdata = IntPtr.Zero;
+            }
+        }
+        private IntPtr GetValuePtr(int ordinal)
+        {
+            int offset = IntPtr.Size * ordinal;
+            return Marshal.ReadIntPtr(rowdata, offset);
+        }
+        private int GetContentLength(int ordinal)
+        {
+            IntPtr colLengthPrt = TDengine.FetchLengths(_taosResult);
+            int numOfFiled = TDengine.FieldCount(_taosResult);
+            int[] colLengthArr = new int[numOfFiled];
+            Marshal.Copy(colLengthPrt, colLengthArr, 0, numOfFiled);
+            return colLengthArr[ordinal];
+        }
+
+        public static System.Text.Encoding GetType(FileStream fs)
+        {
+            byte[] Unicode = new byte[] { 0xFF, 0xFE, 0x41 };
+            byte[] UnicodeBIG = new byte[] { 0xFE, 0xFF, 0x00 };
+            byte[] UTF8 = new byte[] { 0xEF, 0xBB, 0xBF }; //带BOM
+            Encoding reVal = Encoding.Default;
+
+            BinaryReader r = new BinaryReader(fs, System.Text.Encoding.Default);
+            int i;
+            int.TryParse(fs.Length.ToString(), out i);
+            byte[] ss = r.ReadBytes(i);
+            if (IsUTF8Bytes(ss) || (ss[0] == 0xEF && ss[1] == 0xBB && ss[2] == 0xBF))
+            {
+                reVal = Encoding.UTF8;
+            }
+            else if (ss[0] == 0xFE && ss[1] == 0xFF && ss[2] == 0x00)
+            {
+                reVal = Encoding.BigEndianUnicode;
+            }
+            else if (ss[0] == 0xFF && ss[1] == 0xFE && ss[2] == 0x41)
+            {
+                reVal = Encoding.Unicode;
+            }
+            r.Close();
+            return reVal;
+
+        }
+
+
+        private static bool IsUTF8Bytes(byte[] data)
+        {
+            int charByteCounter = 1; //计算当前正分析的字符应还有的字节数
+            byte curByte; //当前分析的字节.
+            for (int i = 0; i < data.Length; i++)
+            {
+                curByte = data[i];
+                if (charByteCounter == 1)
+                {
+                    if (curByte >= 0x80)
+                    {
+                        //判断当前
+                        while (((curByte <<= 1) & 0x80) != 0)
+                        {
+                            charByteCounter++;
+                        }
+                        //标记位首位若为非0 则至少以2个1开始 如:110XXXXX…1111110X
+                        if (charByteCounter == 1 || charByteCounter > 6)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    //若是UTF-8 此时第一位必须为1
+                    if ((curByte & 0xC0) != 0x80)
+                    {
+                        return false;
+                    }
+                    charByteCounter--;
+                }
+            }
+            if (charByteCounter > 1)
+            {
+                return false;
+            }
+            return true;
+        }
+        public object GetValue(int ordinal)
+        {
+            object result = null;
+            if (ordinal >= 0 && ordinal < _metas.Count)
+            {
+                var meta = _metas[ordinal];
+                int offset = IntPtr.Size * ordinal;
+                IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
+                if (data != IntPtr.Zero)
+                {
+                    switch ((TDengineDataType)meta.type)
+                    {
+                        case TDengineDataType.TSDB_DATA_TYPE_BOOL:
+                            bool v1 = Marshal.ReadByte(data) == 0 ? false : true;
+                            result = v1;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
+                            sbyte v2s = (sbyte)Marshal.ReadByte(data);
+                            result = v2s;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
+                            byte v2 = Marshal.ReadByte(data);
+                            result = v2;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
+                            short v3 = Marshal.ReadInt16(data);
+                            result = v3;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
+                            ushort v12 = (ushort)Marshal.ReadInt16(data);
+                            result = v12;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_INT:
+                            int v4 = Marshal.ReadInt32(data);
+                            result = v4;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_UINT:
+                            uint v13 = (uint)Marshal.ReadInt32(data);
+                            result = v13;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
+                            long v5 = Marshal.ReadInt64(data);
+                            result = v5;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
+                            ulong v14 = (ulong)Marshal.ReadInt64(data);
+                            result = v14;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
+                            float v6 = (float)Marshal.PtrToStructure(data, typeof(float));
+                            result = v6;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
+                            double v7 = (double)Marshal.PtrToStructure(data, typeof(double));
+                            result = v7;
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_BINARY:
+                            {
+#if NET5_0_OR_GREATER
+                                string v8 = Marshal.PtrToStringUTF8(data, GetContentLength(ordinal));
+                                result = v8?.RemoveNull();
+#else
+                                byte[] buffer = new byte[GetContentLength(ordinal)];
+                                Marshal.Copy(data, buffer, 0, buffer.Length);
+                                string v8 = Encoding.UTF8.GetString(buffer);
+                                result = v8?.RemoveNull();
+#endif
+                            }
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
+                            {
+                                result = GetDateTimeFrom(data);
+                            }
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_JSONTAG:
+                        case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
+                            {
+                                string v10 = string.Empty;
+                                int contentLength = GetContentLength(ordinal);
+                                if (contentLength > 0)// https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/issues/99
+                                {
+                                    byte[] bf = new byte[contentLength];
+                                    Marshal.Copy(data, bf, 0, contentLength);
+
+                                    if (IsUTF8Bytes(bf) || (bf[0] == 0xEF && bf[1] == 0xBB && bf[2] == 0xBF))
+                                    {
+                                        v10 = System.Text.Encoding.UTF8.GetString(bf)?.RemoveNull();
+                                    }
+                                    else
+                                    {
+                                        v10 = System.Text.Encoding.GetEncoding(936).GetString(bf)?.RemoveNull();
+                                    }
+                                }
+                                result = v10;
+                            }
+                            break;
+                        case TDengineDataType.TSDB_DATA_TYPE_NULL:
+                            result = null;
+                            break;
+                    }
+                }
+                else
+                {
+                    result = null;
+                }
+            }
+            return result;
+        }
+
+        public DateTime GetDataTime(int ordinal)
+        {
+            return GetDateTimeFrom(GetValuePtr(ordinal));
+        }
+        private DateTime GetDateTimeFrom(IntPtr data)
+        {
+            var val = Marshal.ReadInt64(data);
+            //double tsp;
+            var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taosResult);
+            switch (_dateTimePrecision)
+            {
+                /*
+                * ticks为100纳秒，必须乘以10才能达到微秒级的区分度
+                * 1秒s    = 1000毫秒ms
+                * 1毫秒ms = 1000微秒us
+                * 1微秒us = 1000纳秒ns
+                * 因此， 1毫秒ms = 1000000纳秒ns = 10000ticks
+                */
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
+                    val /= 100;
+                    break;
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
+                    val *= 10;
+                    break;
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MILLI:
+                default:
+                    val *= 10000;
+                    break;
+            }
+            var v9 = _dt1970.AddTicks(val);
+            return v9.ToLocalTime();
+        }
+
+        public Stream GetStream(int ordinal)
+        {
+            MemoryStream result = null;
+            var meta = _metas[ordinal];
+            int offset = IntPtr.Size * ordinal;
+            IntPtr data = Marshal.ReadIntPtr(rowdata, offset);
+            if (data != IntPtr.Zero)
+            {
+                byte[] bf = new byte[meta.Size];
+                Marshal.Copy(data, bf, 0, meta.Size);
+                result = new MemoryStream(bf);
+            }
+            return result;
+        }
+
+        public bool GetBoolean(int ordinal) => Marshal.ReadByte(GetValuePtr(ordinal)) == 0 ? false : true;
+
+
+        public byte GetByte(int ordinal) => Marshal.ReadByte(GetValuePtr(ordinal));
+        public long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
+        {
+            byte[] buffer1 = new byte[length + bufferOffset];
+            Marshal.Copy(GetValuePtr(ordinal), buffer1, (int)dataOffset, length + bufferOffset);
+            Array.Copy(buffer1, bufferOffset, buffer, 0, length);
+            return length;
+        }
+        public TimeSpan GetTimeSpan(int ordinal)
+        {
+            var val = Marshal.ReadInt64(GetValuePtr(ordinal));
+            var _dateTimePrecision = (TSDB_TIME_PRECISION)TDengine.ResultPrecision(_taosResult);
+            switch (_dateTimePrecision)
+            {
+                /*
+                * ticks为100纳秒，必须乘以10才能达到微秒级的区分度
+                * 1秒s    = 1000毫秒ms
+                * 1毫秒ms = 1000微秒us
+                * 1微秒us = 1000纳秒ns
+                * 因此， 1毫秒ms = 1000000纳秒ns = 10000ticks
+                */
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
+                    return TimeSpan.FromTicks(val / 100);
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
+                    return TimeSpan.FromTicks(val * 10);
+                case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MILLI:
+                default:
+                    return TimeSpan.FromTicks(val * 10000);
+            }
+        }
+
+        public DataTable GetSchemaTable(Func<int, string> getName, Func<int, Type> getFieldType, Func<int, string> getDataTypeName,  TaosCommand _command)
+        {
+            {
+                var schemaTable = new DataTable("SchemaTable");
+                if (_metas != null && _metas.Count > 0)
+                {
+                    var ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));
+                    var ColumnOrdinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int));
+                    var ColumnSize = new DataColumn(SchemaTableColumn.ColumnSize, typeof(int));
+                    var NumericPrecision = new DataColumn(SchemaTableColumn.NumericPrecision, typeof(short));
+                    var NumericScale = new DataColumn(SchemaTableColumn.NumericScale, typeof(short));
+
+                    var DataType = new DataColumn(SchemaTableColumn.DataType, typeof(Type));
+                    var DataTypeName = new DataColumn("DataTypeName", typeof(string));
+
+                    var IsLong = new DataColumn(SchemaTableColumn.IsLong, typeof(bool));
+                    var AllowDBNull = new DataColumn(SchemaTableColumn.AllowDBNull, typeof(bool));
+
+                    var IsUnique = new DataColumn(SchemaTableColumn.IsUnique, typeof(bool));
+                    var IsKey = new DataColumn(SchemaTableColumn.IsKey, typeof(bool));
+                    var IsAutoIncrement = new DataColumn(SchemaTableOptionalColumn.IsAutoIncrement, typeof(bool));
+
+                    var BaseCatalogName = new DataColumn(SchemaTableOptionalColumn.BaseCatalogName, typeof(string));
+                    var BaseSchemaName = new DataColumn(SchemaTableColumn.BaseSchemaName, typeof(string));
+                    var BaseTableName = new DataColumn(SchemaTableColumn.BaseTableName, typeof(string));
+                    var BaseColumnName = new DataColumn(SchemaTableColumn.BaseColumnName, typeof(string));
+
+                    var BaseServerName = new DataColumn(SchemaTableOptionalColumn.BaseServerName, typeof(string));
+                    var IsAliased = new DataColumn(SchemaTableColumn.IsAliased, typeof(bool));
+                    var IsExpression = new DataColumn(SchemaTableColumn.IsExpression, typeof(bool));
+
+                    var columns = schemaTable.Columns;
+
+                    columns.Add(ColumnName);
+                    columns.Add(ColumnOrdinal);
+                    columns.Add(ColumnSize);
+                    columns.Add(NumericPrecision);
+                    columns.Add(NumericScale);
+                    columns.Add(IsUnique);
+                    columns.Add(IsKey);
+                    columns.Add(BaseServerName);
+                    columns.Add(BaseCatalogName);
+                    columns.Add(BaseColumnName);
+                    columns.Add(BaseSchemaName);
+                    columns.Add(BaseTableName);
+                    columns.Add(DataType);
+                    columns.Add(DataTypeName);
+                    columns.Add(AllowDBNull);
+                    columns.Add(IsAliased);
+                    columns.Add(IsExpression);
+                    columns.Add(IsAutoIncrement);
+                    columns.Add(IsLong);
+
+                    for (var i = 0; i < _metas.Count; i++)
+                    {
+                        var schemaRow = schemaTable.NewRow();
+
+                        schemaRow[ColumnName] = getName(i);
+                        schemaRow[ColumnOrdinal] = i;
+                        schemaRow[ColumnSize] = _metas[i].Size;
+                        schemaRow[NumericPrecision] = DBNull.Value;
+                        schemaRow[NumericScale] = DBNull.Value;
+                        schemaRow[BaseServerName] = _command.Connection.DataSource;
+                        var databaseName = _command.Connection.Database;
+                        schemaRow[BaseCatalogName] = databaseName;
+                        var columnName = getName(i);
+                        schemaRow[BaseColumnName] = columnName;
+                        schemaRow[BaseSchemaName] = DBNull.Value;
+                        var tableName = string.Empty;
+                        schemaRow[BaseTableName] = tableName;
+                        schemaRow[DataType] = getFieldType(i);
+                        schemaRow[DataTypeName] = getDataTypeName(i);
+                        schemaRow[IsAliased] = columnName != getName(i);
+                        schemaRow[IsExpression] = columnName == null;
+                        schemaRow[IsLong] = DBNull.Value;
+                        if (i == 0)
+                        {
+                            schemaRow[IsKey] = true;
+                            schemaRow[DataType] =getFieldType(i);
+                            schemaRow[DataTypeName] = getDataTypeName(i);
+                        }
+                        schemaTable.Rows.Add(schemaRow);
+                    }
+
+                }
+
+                return schemaTable;
+            }
+        }
+
+        public string GetName(int ordinal)
+        {
+            return _metas[ordinal].Name;
+        }
+        public int GetOrdinal(string name)
+     => _metas.IndexOf(_metas.FirstOrDefault(m => m.Name == name));
+
+
+        public  Type GetFieldType(int ordinal)
+        {
+            if (_metas == null || ordinal >= _metas.Count)
+            {
+                throw new InvalidOperationException($"DataReaderClosed{nameof(GetFieldType)}");
+            }
+            return _metas[ordinal].CrlType;
+        }
+    }
+}

@@ -7,26 +7,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-
-/* 项目“IoTSharp.Data.Taos (net4.6)”的未合并的更改
-在此之前:
-using IoTSharp.Data.Taos.Protocols;
-在此之后:
-using IoTSharp;
-using IoTSharp.Data;
-using IoTSharp.Data.Taos;
-using IoTSharp.Data.Taos.Protocols;
-*/
-
-/* 项目“IoTSharp.Data.Taos (netstandard2.0)”的未合并的更改
-在此之前:
-using IoTSharp.Data.Taos.Protocols;
-在此之后:
-using IoTSharp;
-using IoTSharp.Data;
-using IoTSharp.Data.Taos;
-using IoTSharp.Data.Taos.Protocols;
-*/
 using IoTSharp.Data.Taos;
 using TDengineDriver;
 
@@ -368,7 +348,7 @@ namespace IoTSharp.Data.Taos.Protocols
                         }
                     }
 #endif
-                    dataReader = new TaosDataReader(command, metas, closeConnection, _taos, ptr, _affectRows, metas?.Length ?? 0);
+                    dataReader = new TaosDataReader( command, new TaosNativeContext( metas, closeConnection, _taos, ptr, _affectRows, metas?.Length ?? 0));
                     dataReader.OnDispose += (sender, e) => Return(_taos);
                 }
                 else

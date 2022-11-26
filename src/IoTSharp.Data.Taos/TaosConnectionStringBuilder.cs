@@ -28,6 +28,8 @@ namespace IoTSharp.Data.Taos
         private const string PoolSizeKeyword = "PoolSize";
         private const string TimeOutKeyword = "TimeOut";
         private const string ProtocolKeyword = "Protocol";
+        private const string TimeZoneKeyword = "TimeZone";
+        
         private enum Keywords
         {
             DataSource,
@@ -38,7 +40,8 @@ namespace IoTSharp.Data.Taos
             Charset,
             PoolSize,
             TimeOut,
-            Protocol
+            Protocol,
+            TimeZone
 
 
         }
@@ -55,9 +58,10 @@ namespace IoTSharp.Data.Taos
         private int _PoolSize=Environment.ProcessorCount;
         private int _timeout = 30;
         private string _protocol = "Native";
+        private string _timezone = string.Empty;
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[9];
+            var validKeywords = new string[10];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
@@ -67,9 +71,10 @@ namespace IoTSharp.Data.Taos
             validKeywords[(int)Keywords.PoolSize] = PoolSizeKeyword;
             validKeywords[(int)Keywords.TimeOut] = TimeOutKeyword;
             validKeywords[(int)Keywords.Protocol] = ProtocolKeyword;
+            validKeywords[(int)Keywords.TimeZone] = TimeZoneKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(8, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(10, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
                 [UserNameKeyword] = Keywords.Username,
@@ -80,7 +85,8 @@ namespace IoTSharp.Data.Taos
                 [PortKeyword] = Keywords.Port,
                 [PoolSizeKeyword] = Keywords.PoolSize,
                 [TimeOutKeyword] = Keywords.TimeOut,
-                [ProtocolKeyword] = Keywords.Protocol
+                [ProtocolKeyword] = Keywords.Protocol,
+                [TimeZoneKeyword] = Keywords.TimeZone
 
             };
         }
@@ -141,12 +147,23 @@ namespace IoTSharp.Data.Taos
             get => _PoolSize;
             set => base[PoolSizeKeyword] = _PoolSize = value;
         }
+        /// <summary>
+        /// 协议类型， 默认为空时为 Native
+        /// </summary>
         public virtual string Protocol
         {
             get => _protocol;
             set => base[ProtocolKeyword] = Protocol = value;
         }
-
+        /// <summary>
+        /// 默认为空时为 Asia/Shanghai
+        /// </summary>
+        public virtual string TimeZone
+        {
+            get => _timezone;
+            set => base[TimeZoneKeyword] = TimeZone = value;
+        }
+        
         /// <summary>
         ///     Gets a collection containing the keys used by the connection string.
         /// </summary>
@@ -233,6 +250,9 @@ namespace IoTSharp.Data.Taos
                         return;
                     case Keywords.Protocol:
                         Charset = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.TimeZone:
+                        TimeZone = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
@@ -362,6 +382,8 @@ namespace IoTSharp.Data.Taos
                     return ConnectionTimeout;
                 case Keywords.Protocol:
                     return Protocol;
+                case Keywords.TimeZone:
+                    return TimeZone;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -403,6 +425,9 @@ namespace IoTSharp.Data.Taos
                     return;
                 case Keywords.Protocol:
                     _protocol = "Native";
+                    return;
+                case Keywords.TimeZone:
+                    _timezone = string.Empty;
                     return;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
