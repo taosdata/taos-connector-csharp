@@ -1,15 +1,15 @@
-﻿namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
+﻿using Newtonsoft.Json;
+
+namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 {
+
     public class WSActionReq<T>
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        public string action { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public T args { get; set; }
+        [JsonProperty("action")]
+        public string Action { get; set; }
+
+        [JsonProperty("args")]
+        public T Args { get; set; }
     }
 
 

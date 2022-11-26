@@ -8,6 +8,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Net;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using TDengineDriver;
@@ -15,7 +16,7 @@ using TDengineDriver;
 namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 {
 
-    internal class TaosWebSocket : ITaosProtocol
+    internal partial class TaosWebSocket : ITaosProtocol
     {
         private ClientWebSocket _client = null;
         private string _databaseName;
@@ -25,7 +26,6 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         {
             _databaseName = databaseName;
             _builder.DataBase = _databaseName;
-            ResetClient(_builder);
             return true;
         }
 
@@ -76,7 +76,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             }
             return dataReader;
         }
-        private R Execute<T, R>(WSActionReq<T> req)
+        private R WSExecute<R,T>(WSActionReq<T> req)
         {
             var _req = Newtonsoft.Json.JsonConvert.SerializeObject(req);
             Debug.WriteLine(_req);
@@ -96,12 +96,13 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         public string GetClientVersion()
         {
-            return Execute("SELECT CLIENT_VERSION()")?.Scalar as string;
+            return typeof(TaosWebSocket).Assembly.GetName().Version.ToString();
         }
 
         public string GetServerVersion()
         {
-            return Execute("SELECT SERVER_VERSION()")?.Scalar as string;
+           var rep= WSExecute<WSVersionRsp,string> (new WSActionReq<string>() { Action = "version", Args="" });
+            return rep.version;
         }
 
         public void InitTaos(string configdir, int shell_activity_timer, string locale, string charset)
@@ -115,21 +116,21 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             string _timez = string.IsNullOrEmpty(builder.TimeZone) ? "" : $"?tz={builder.TimeZone}";
             _client = new ClientWebSocket();
             _client.Options.Credentials = new NetworkCredential(builder.Username, builder.Password);
-            var url = $"http://{builder.DataSource}:{builder.Port}/rest/ws";
+            var url = $"ws://{builder.DataSource}:{builder.Port}/rest/ws";
             _client.ConnectAsync(new Uri(url), CancellationToken.None).Wait(TimeSpan.FromSeconds(builder.ConnectionTimeout));
             if (_client.State != WebSocketState.Open)
             {
-                throw new Exception($"{_client.State}");
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code =(int) _client.CloseStatus, Error = _client .CloseStatusDescription});
             }
-
-            return true;
+            var rep = WSExecute<WSConnRsp, WSConnReq>(new WSActionReq<WSConnReq> () {  Action = "conn", Args = new WSConnReq() {  user=builder.Username, password=builder.Password,  req_id=0} });
+            if (rep.code!=0)
+            {
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = rep.code, Error = rep.message });
+            }
+            return rep.code == 0;
         }
 
-        private void ResetClient(TaosConnectionStringBuilder connectionStringBuilder)
-        {
-
-        }
-
+      
         public void Return(nint taos)
         {
         }

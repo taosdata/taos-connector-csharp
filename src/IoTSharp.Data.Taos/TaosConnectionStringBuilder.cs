@@ -29,8 +29,9 @@ namespace IoTSharp.Data.Taos
         private const string TimeOutKeyword = "TimeOut";
         private const string ProtocolKeyword = "Protocol";
         private const string TimeZoneKeyword = "TimeZone";
-        public const string Protocol_Rest = "Rest";
+        public const string Protocol_RESTful = "RESTful";
         public const string Protocol_Native = "Native";
+        public const string Protocol_WebSocket = "WebSocket";
 
         private enum Keywords
         {
@@ -437,10 +438,16 @@ namespace IoTSharp.Data.Taos
             }
         }
 
-        public TaosConnectionStringBuilder UseRest()
+        public TaosConnectionStringBuilder UseRESTful()
         {
             Port = 6041;
-            Protocol = Protocol_Rest;
+            Protocol = Protocol_RESTful;
+            return this;
+        }
+        public TaosConnectionStringBuilder UseWebSocket()
+        {
+            Port = 6041;
+            Protocol = Protocol_WebSocket;
             return this;
         }
         public TaosConnectionStringBuilder UseNative()

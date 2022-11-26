@@ -18,6 +18,7 @@ using IoTSharp.Data.Taos.Driver;
 using System.Collections;
 using IoTSharp.Data.Taos.Protocols;
 using IoTSharp.Data.Taos.Protocols.TDRESTful;
+using IoTSharp.Data.Taos.Protocols.TDWebSocket;
 
 namespace IoTSharp.Data.Taos
 {
@@ -64,7 +65,10 @@ namespace IoTSharp.Data.Taos
             }
             switch (ConnectionStringBuilder.Protocol)
             {
-                case TaosConnectionStringBuilder.Protocol_Rest:
+                case TaosConnectionStringBuilder.Protocol_WebSocket:
+                    taos = new TaosWebSocket();
+                    break;
+                case TaosConnectionStringBuilder.Protocol_RESTful:
                     taos = new TaosRESTful();
                     break;
                 case TaosConnectionStringBuilder.Protocol_Native:

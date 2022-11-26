@@ -1,6 +1,7 @@
 ﻿namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 {
-    public class conn
+
+    public class WSConnReq
     {
         /// <summary>
         /// 
