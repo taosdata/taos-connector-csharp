@@ -188,6 +188,7 @@ namespace IoTSharp.Data.Taos
         /// <returns>The data type of the column.</returns>
         public override Type GetFieldType(int ordinal) =>_context.GetFieldType(ordinal);
 
+        public  int  GetFieldSize(int ordinal) => _context.GetFieldSize(ordinal);
         /// <summary>
         ///     Gets a value indicating whether the specified column is <see cref="DBNull" />.
         /// </summary>
@@ -406,7 +407,7 @@ namespace IoTSharp.Data.Taos
         ///     Returns a System.Data.DataTable that describes the column metadata of the System.Data.Common.DbDataReader.
         /// </summary>
         /// <returns>A System.Data.DataTable that describes the column metadata.</returns>
-        public override DataTable GetSchemaTable() => _context.GetSchemaTable(GetName,GetFieldType,GetDataTypeName,_command);
+        public override DataTable GetSchemaTable() => _command.GetSchemaTable(GetName, GetFieldType, GetDataTypeName,GetFieldSize,_fieldCount);
       
     }
 }

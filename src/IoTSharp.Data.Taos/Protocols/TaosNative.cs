@@ -1,13 +1,12 @@
-﻿using System;
+﻿using IoTSharp.Data.Taos;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using IoTSharp.Data.Taos;
 using TDengineDriver;
 
 namespace IoTSharp.Data.Taos.Protocols
@@ -18,10 +17,12 @@ namespace IoTSharp.Data.Taos.Protocols
         private ConcurrentTaosQueue _queue = null;
         private static bool _dll_isloaded = false;
         private readonly DateTime _dt1970;
+
         public TaosNative()
         {
             _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         }
+
         public void InitTaos(string configdir, int shell_activity_timer, string locale, string charset)
         {
             if (_dll_isloaded == false)
@@ -45,7 +46,6 @@ namespace IoTSharp.Data.Taos.Protocols
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     {
                         configDir = "/etc/taos";
-
                     }
                     else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                     {
@@ -80,8 +80,6 @@ namespace IoTSharp.Data.Taos.Protocols
                 _dll_isloaded = true;
             }
         }
-
-
 
         public string GetServerVersion()
         {
@@ -171,6 +169,7 @@ namespace IoTSharp.Data.Taos.Protocols
             ptr.ptr.FreeUtf8IntPtr();
             return result;
         }
+
         public TaosDataReader ExecuteReader(CommandBehavior behavior, TaosCommand command)
         {
             var _taos = Take();
@@ -182,8 +181,6 @@ namespace IoTSharp.Data.Taos.Protocols
             {
                 throw new ArgumentException($"InvalidCommandBehavior{behavior}");
             }
-
-
 
             if (_connection?.State != ConnectionState.Open)
             {
@@ -207,7 +204,6 @@ namespace IoTSharp.Data.Taos.Protocols
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
             try
             {
-
 #if DEBUG
                 Debug.WriteLine($"_commandText:{_commandText}");
 #endif
@@ -222,7 +218,6 @@ namespace IoTSharp.Data.Taos.Protocols
                         {
                             _commandText = _commandText.Replace(tp.ParameterName, "?");
                         });
-
                     }
                     var stmt = TDengine.StmtInit(_taos);
                     if (stmt == IntPtr.Zero)
@@ -301,7 +296,6 @@ namespace IoTSharp.Data.Taos.Protocols
                                 }
                                 else
                                 {
-
                                     TaosException.ThrowExceptionForStmt(nameof(TDengine.StmtExecute), _commandText, re, stmt);
                                 }
                             }
@@ -348,7 +342,7 @@ namespace IoTSharp.Data.Taos.Protocols
                         }
                     }
 #endif
-                    dataReader = new TaosDataReader( command, new TaosNativeContext( metas, closeConnection, _taos, ptr, _affectRows, metas?.Length ?? 0));
+                    dataReader = new TaosDataReader(command, new TaosNativeContext(metas, closeConnection, _taos, ptr, _affectRows, metas?.Length ?? 0));
                     dataReader.OnDispose += (sender, e) => Return(_taos);
                 }
                 else
@@ -371,7 +365,6 @@ namespace IoTSharp.Data.Taos.Protocols
             _tags = new List<TAOS_MULTI_BIND>();
             for (int i = 0; i < pms.Count; i++)
             {
-
                 var tp = pms[i];
                 TAOS_MULTI_BIND _bind = new TAOS_MULTI_BIND();
                 switch (Type.GetTypeCode(tp.Value?.GetType()))
@@ -379,15 +372,19 @@ namespace IoTSharp.Data.Taos.Protocols
                     case TypeCode.Boolean:
                         _bind = TaosMultiBind.MultiBindBool(new bool?[] { tp.Value as bool? });
                         break;
+
                     case TypeCode.Char:
                         _bind = TaosMultiBind.MultiBindNchar(new string[] { tp.Value as string });
                         break;
+
                     case TypeCode.Byte:
                         _bind = TaosMultiBind.MultiBindUTinyInt(new byte?[] { tp.Value as byte? });
                         break;
+
                     case TypeCode.SByte:
                         _bind = TaosMultiBind.MultiBindTinyInt(new sbyte?[] { (sbyte?)tp.Value });
                         break;
+
                     case TypeCode.DateTime:
                         var t0 = tp.Value as DateTime?;
                         if (!t0.HasValue)
@@ -396,31 +393,40 @@ namespace IoTSharp.Data.Taos.Protocols
                         }
                         _bind = TaosMultiBind.MultiBindTimestamp(new long[] { GetDateTimeFrom(t0.GetValueOrDefault(), _taos) });
                         break;
+
                     case TypeCode.Single:
                         _bind = TaosMultiBind.MultiBindFloat(new float?[] { tp.Value as float? });
                         break;
+
                     case TypeCode.Decimal:
                     case TypeCode.Double:
                         _bind = TaosMultiBind.MultiBindDouble(new double?[] { tp.Value as double? });
                         break;
+
                     case TypeCode.Int16:
                         _bind = TaosMultiBind.MultiBindSmallInt(new short?[] { tp.Value as short? });
                         break;
+
                     case TypeCode.Int32:
                         _bind = TaosMultiBind.MultiBindInt(new int?[] { tp.Value as int? });
                         break;
+
                     case TypeCode.Int64:
                         _bind = TaosMultiBind.MultiBindBigint(new long?[] { tp.Value as long? });
                         break;
+
                     case TypeCode.UInt16:
                         _bind = TaosMultiBind.MultiBindUSmallInt(new ushort?[] { tp.Value as ushort? });
                         break;
+
                     case TypeCode.UInt32:
                         _bind = TaosMultiBind.MultiBindUInt(new uint?[] { tp.Value as uint? });
                         break;
+
                     case TypeCode.UInt64:
                         _bind = TaosMultiBind.MultiBindUBigInt(new ulong?[] { tp.Value as ulong? });
                         break;
+
                     case TypeCode.String:
                         {
                             switch (tp.TaosType)
@@ -428,14 +434,17 @@ namespace IoTSharp.Data.Taos.Protocols
                                 case TaosType.Text:
                                     _bind = TaosMultiBind.MultiBindNchar(new string[] { tp.Value as string });
                                     break;
+
                                 case TaosType.Blob:
                                     _bind = TaosMultiBind.MultiBindBinary(new string[] { tp.Value as string });
                                     break;
+
                                 default:
                                     break;
                             }
                         }
                         break;
+
                     case TypeCode.Object:
                         if (tp.Value?.GetType() == typeof(byte[]))//后期重写这里 ， 需要重写 MultiBindBinary
                         {
@@ -446,6 +455,7 @@ namespace IoTSharp.Data.Taos.Protocols
                             _bind = TaosMultiBind.MultiBindNchar(new string[] { new string(tp.Value as char[]) });
                         }
                         break;
+
                     default:
                         throw new NotSupportedException($"列{tp.ParameterName}的类型{tp.Value?.GetType()}({tp.DbType},{tp.TaosType})不支持");
                 }
@@ -459,11 +469,11 @@ namespace IoTSharp.Data.Taos.Protocols
                 }
                 else if (tp.ParameterName.StartsWith("@"))
                 {
-
                     _datas.Add(_bind);
                 }
             }
         }
+
         internal long GetDateTimeFrom(DateTime dt, IntPtr _taos)
         {
             var val = dt.ToUniversalTime().Ticks - _dt1970.Ticks;
@@ -481,15 +491,37 @@ namespace IoTSharp.Data.Taos.Protocols
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
                     val *= 100;
                     break;
+
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
                     val /= 10;
                     break;
+
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MILLI:
                 default:
                     val /= 10000;
                     break;
             }
             return val;
+        }
+
+        public int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision precision)
+        {
+            int affectedRows = 0;
+            var _taos = Take();
+            IntPtr res = TDengine.SchemalessInsert(_taos, lines, lines.Length, (int)protocol, (int)precision);
+            if (TDengine.ErrorNo(res) != 0)
+            {
+                var tdr = new TaosErrorResult() { Code = TDengine.ErrorNo(res), Error = TDengine.Error(res) };
+                Return(_taos);
+                TaosException.ThrowExceptionForRC(tdr);
+            }
+            else
+            {
+                affectedRows = TDengine.AffectRows(res);
+                TDengine.FreeResult(res);
+                Return(_taos);
+            }
+            return affectedRows;
         }
     }
 }

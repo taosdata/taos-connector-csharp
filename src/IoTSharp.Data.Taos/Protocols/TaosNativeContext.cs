@@ -6,15 +6,14 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Input;
 using TDengineDriver;
 
 namespace IoTSharp.Data.Taos.Protocols
 {
     internal class TaosNativeContext : ITaosContext
     {
-        taosField[] metas;
-        IntPtr taos;
+        private taosField[] metas;
+        private IntPtr taos;
         private IntPtr ptr;
         private IntPtr rowdata;
         private double _date_max_1970;
@@ -36,7 +35,7 @@ namespace IoTSharp.Data.Taos.Protocols
             this.AffectRows = affectRows;
             this.FieldCount = fieldcount;
             _taosResult = ptr;
-            _metas = metas==null?new List<taosField> (): new List<taosField>(metas);
+            _metas = metas == null ? new List<taosField>() : new List<taosField>(metas);
             _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             _date_max_1970 = DateTime.MaxValue.Subtract(_dt1970).TotalMilliseconds;
         }
@@ -70,12 +69,14 @@ namespace IoTSharp.Data.Taos.Protocols
                 rowdata = IntPtr.Zero;
             }
         }
+
         private IntPtr GetValuePtr(int ordinal)
         {
             int offset = IntPtr.Size * ordinal;
             return Marshal.ReadIntPtr(rowdata, offset);
         }
-        private int GetContentLength(int ordinal)
+
+        public int GetFieldSize(int ordinal)
         {
             IntPtr colLengthPrt = TDengine.FetchLengths(_taosResult);
             int numOfFiled = TDengine.FieldCount(_taosResult);
@@ -109,9 +110,7 @@ namespace IoTSharp.Data.Taos.Protocols
             }
             r.Close();
             return reVal;
-
         }
-
 
         private static bool IsUTF8Bytes(byte[] data)
         {
@@ -152,6 +151,7 @@ namespace IoTSharp.Data.Taos.Protocols
             }
             return true;
         }
+
         public object GetValue(int ordinal)
         {
             object result = null;
@@ -168,69 +168,82 @@ namespace IoTSharp.Data.Taos.Protocols
                             bool v1 = Marshal.ReadByte(data) == 0 ? false : true;
                             result = v1;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_TINYINT:
                             sbyte v2s = (sbyte)Marshal.ReadByte(data);
                             result = v2s;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_UTINYINT:
                             byte v2 = Marshal.ReadByte(data);
                             result = v2;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_SMALLINT:
                             short v3 = Marshal.ReadInt16(data);
                             result = v3;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_USMALLINT:
                             ushort v12 = (ushort)Marshal.ReadInt16(data);
                             result = v12;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_INT:
                             int v4 = Marshal.ReadInt32(data);
                             result = v4;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_UINT:
                             uint v13 = (uint)Marshal.ReadInt32(data);
                             result = v13;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_BIGINT:
                             long v5 = Marshal.ReadInt64(data);
                             result = v5;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_UBIGINT:
                             ulong v14 = (ulong)Marshal.ReadInt64(data);
                             result = v14;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_FLOAT:
                             float v6 = (float)Marshal.PtrToStructure(data, typeof(float));
                             result = v6;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
                             double v7 = (double)Marshal.PtrToStructure(data, typeof(double));
                             result = v7;
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_VARCHAR:
                             {
 #if NET5_0_OR_GREATER
-                                string v8 = Marshal.PtrToStringUTF8(data, GetContentLength(ordinal));
+                                string v8 = Marshal.PtrToStringUTF8(data, GetFieldSize(ordinal));
                                 result = v8?.RemoveNull();
 #else
-                                byte[] buffer = new byte[GetContentLength(ordinal)];
+                                byte[] buffer = new byte[GetFieldSize(ordinal)];
                                 Marshal.Copy(data, buffer, 0, buffer.Length);
                                 string v8 = Encoding.UTF8.GetString(buffer);
                                 result = v8?.RemoveNull();
 #endif
                             }
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
                             {
                                 result = GetDateTimeFrom(data);
                             }
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_JSONTAG:
                         case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                             {
                                 string v10 = string.Empty;
-                                int contentLength = GetContentLength(ordinal);
+                                int contentLength = GetFieldSize(ordinal);
                                 if (contentLength > 0)// https://github.com/maikebing/Maikebing.EntityFrameworkCore.Taos/issues/99
                                 {
                                     byte[] bf = new byte[contentLength];
@@ -248,6 +261,7 @@ namespace IoTSharp.Data.Taos.Protocols
                                 result = v10;
                             }
                             break;
+
                         case TDengineDataType.TSDB_DATA_TYPE_NULL:
                             result = null;
                             break;
@@ -265,6 +279,7 @@ namespace IoTSharp.Data.Taos.Protocols
         {
             return GetDateTimeFrom(GetValuePtr(ordinal));
         }
+
         private DateTime GetDateTimeFrom(IntPtr data)
         {
             var val = Marshal.ReadInt64(data);
@@ -282,9 +297,11 @@ namespace IoTSharp.Data.Taos.Protocols
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
                     val /= 100;
                     break;
+
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
                     val *= 10;
                     break;
+
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MILLI:
                 default:
                     val *= 10000;
@@ -311,8 +328,8 @@ namespace IoTSharp.Data.Taos.Protocols
 
         public bool GetBoolean(int ordinal) => Marshal.ReadByte(GetValuePtr(ordinal)) == 0 ? false : true;
 
-
         public byte GetByte(int ordinal) => Marshal.ReadByte(GetValuePtr(ordinal));
+
         public long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
         {
             byte[] buffer1 = new byte[length + bufferOffset];
@@ -320,6 +337,7 @@ namespace IoTSharp.Data.Taos.Protocols
             Array.Copy(buffer1, bufferOffset, buffer, 0, length);
             return length;
         }
+
         public TimeSpan GetTimeSpan(int ordinal)
         {
             var val = Marshal.ReadInt64(GetValuePtr(ordinal));
@@ -335,113 +353,24 @@ namespace IoTSharp.Data.Taos.Protocols
                 */
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_NANO:
                     return TimeSpan.FromTicks(val / 100);
+
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MICRO:
                     return TimeSpan.FromTicks(val * 10);
+
                 case TSDB_TIME_PRECISION.TSDB_TIME_PRECISION_MILLI:
                 default:
                     return TimeSpan.FromTicks(val * 10000);
             }
         }
 
-        public DataTable GetSchemaTable(Func<int, string> getName, Func<int, Type> getFieldType, Func<int, string> getDataTypeName,  TaosCommand _command)
-        {
-            {
-                var schemaTable = new DataTable("SchemaTable");
-                if (_metas != null && _metas.Count > 0)
-                {
-                    var ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));
-                    var ColumnOrdinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int));
-                    var ColumnSize = new DataColumn(SchemaTableColumn.ColumnSize, typeof(int));
-                    var NumericPrecision = new DataColumn(SchemaTableColumn.NumericPrecision, typeof(short));
-                    var NumericScale = new DataColumn(SchemaTableColumn.NumericScale, typeof(short));
+      
 
-                    var DataType = new DataColumn(SchemaTableColumn.DataType, typeof(Type));
-                    var DataTypeName = new DataColumn("DataTypeName", typeof(string));
+        public string GetName(int ordinal) => _metas[ordinal].Name;
 
-                    var IsLong = new DataColumn(SchemaTableColumn.IsLong, typeof(bool));
-                    var AllowDBNull = new DataColumn(SchemaTableColumn.AllowDBNull, typeof(bool));
-
-                    var IsUnique = new DataColumn(SchemaTableColumn.IsUnique, typeof(bool));
-                    var IsKey = new DataColumn(SchemaTableColumn.IsKey, typeof(bool));
-                    var IsAutoIncrement = new DataColumn(SchemaTableOptionalColumn.IsAutoIncrement, typeof(bool));
-
-                    var BaseCatalogName = new DataColumn(SchemaTableOptionalColumn.BaseCatalogName, typeof(string));
-                    var BaseSchemaName = new DataColumn(SchemaTableColumn.BaseSchemaName, typeof(string));
-                    var BaseTableName = new DataColumn(SchemaTableColumn.BaseTableName, typeof(string));
-                    var BaseColumnName = new DataColumn(SchemaTableColumn.BaseColumnName, typeof(string));
-
-                    var BaseServerName = new DataColumn(SchemaTableOptionalColumn.BaseServerName, typeof(string));
-                    var IsAliased = new DataColumn(SchemaTableColumn.IsAliased, typeof(bool));
-                    var IsExpression = new DataColumn(SchemaTableColumn.IsExpression, typeof(bool));
-
-                    var columns = schemaTable.Columns;
-
-                    columns.Add(ColumnName);
-                    columns.Add(ColumnOrdinal);
-                    columns.Add(ColumnSize);
-                    columns.Add(NumericPrecision);
-                    columns.Add(NumericScale);
-                    columns.Add(IsUnique);
-                    columns.Add(IsKey);
-                    columns.Add(BaseServerName);
-                    columns.Add(BaseCatalogName);
-                    columns.Add(BaseColumnName);
-                    columns.Add(BaseSchemaName);
-                    columns.Add(BaseTableName);
-                    columns.Add(DataType);
-                    columns.Add(DataTypeName);
-                    columns.Add(AllowDBNull);
-                    columns.Add(IsAliased);
-                    columns.Add(IsExpression);
-                    columns.Add(IsAutoIncrement);
-                    columns.Add(IsLong);
-
-                    for (var i = 0; i < _metas.Count; i++)
-                    {
-                        var schemaRow = schemaTable.NewRow();
-
-                        schemaRow[ColumnName] = getName(i);
-                        schemaRow[ColumnOrdinal] = i;
-                        schemaRow[ColumnSize] = _metas[i].Size;
-                        schemaRow[NumericPrecision] = DBNull.Value;
-                        schemaRow[NumericScale] = DBNull.Value;
-                        schemaRow[BaseServerName] = _command.Connection.DataSource;
-                        var databaseName = _command.Connection.Database;
-                        schemaRow[BaseCatalogName] = databaseName;
-                        var columnName = getName(i);
-                        schemaRow[BaseColumnName] = columnName;
-                        schemaRow[BaseSchemaName] = DBNull.Value;
-                        var tableName = string.Empty;
-                        schemaRow[BaseTableName] = tableName;
-                        schemaRow[DataType] = getFieldType(i);
-                        schemaRow[DataTypeName] = getDataTypeName(i);
-                        schemaRow[IsAliased] = columnName != getName(i);
-                        schemaRow[IsExpression] = columnName == null;
-                        schemaRow[IsLong] = DBNull.Value;
-                        if (i == 0)
-                        {
-                            schemaRow[IsKey] = true;
-                            schemaRow[DataType] =getFieldType(i);
-                            schemaRow[DataTypeName] = getDataTypeName(i);
-                        }
-                        schemaTable.Rows.Add(schemaRow);
-                    }
-
-                }
-
-                return schemaTable;
-            }
-        }
-
-        public string GetName(int ordinal)
-        {
-            return _metas[ordinal].Name;
-        }
         public int GetOrdinal(string name)
-     => _metas.IndexOf(_metas.FirstOrDefault(m => m.Name == name));
+                    => _metas.IndexOf(_metas.FirstOrDefault(m => m.Name == name));
 
-
-        public  Type GetFieldType(int ordinal)
+        public Type GetFieldType(int ordinal)
         {
             if (_metas == null || ordinal >= _metas.Count)
             {
@@ -449,5 +378,7 @@ namespace IoTSharp.Data.Taos.Protocols
             }
             return _metas[ordinal].CrlType;
         }
+
+      
     }
 }

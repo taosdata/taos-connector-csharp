@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -153,6 +154,90 @@ namespace IoTSharp.Data.Taos
 #endif
         }
 
+        internal static DataTable GetSchemaTable(this TaosCommand _command, Func<int, string> getName, Func<int, Type> getFieldType, Func<int, string> getDataTypeName, Func<int, int >  getFieldSize, int column_count)
+        {
+            var schemaTable = new DataTable("SchemaTable");
+            if (column_count > 0)
+            {
+                var ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));
+                var ColumnOrdinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int));
+                var ColumnSize = new DataColumn(SchemaTableColumn.ColumnSize, typeof(int));
+                var NumericPrecision = new DataColumn(SchemaTableColumn.NumericPrecision, typeof(short));
+                var NumericScale = new DataColumn(SchemaTableColumn.NumericScale, typeof(short));
 
+                var DataType = new DataColumn(SchemaTableColumn.DataType, typeof(Type));
+                var DataTypeName = new DataColumn("DataTypeName", typeof(string));
+
+                var IsLong = new DataColumn(SchemaTableColumn.IsLong, typeof(bool));
+                var AllowDBNull = new DataColumn(SchemaTableColumn.AllowDBNull, typeof(bool));
+
+                var IsUnique = new DataColumn(SchemaTableColumn.IsUnique, typeof(bool));
+                var IsKey = new DataColumn(SchemaTableColumn.IsKey, typeof(bool));
+                var IsAutoIncrement = new DataColumn(SchemaTableOptionalColumn.IsAutoIncrement, typeof(bool));
+
+                var BaseCatalogName = new DataColumn(SchemaTableOptionalColumn.BaseCatalogName, typeof(string));
+                var BaseSchemaName = new DataColumn(SchemaTableColumn.BaseSchemaName, typeof(string));
+                var BaseTableName = new DataColumn(SchemaTableColumn.BaseTableName, typeof(string));
+                var BaseColumnName = new DataColumn(SchemaTableColumn.BaseColumnName, typeof(string));
+
+                var BaseServerName = new DataColumn(SchemaTableOptionalColumn.BaseServerName, typeof(string));
+                var IsAliased = new DataColumn(SchemaTableColumn.IsAliased, typeof(bool));
+                var IsExpression = new DataColumn(SchemaTableColumn.IsExpression, typeof(bool));
+
+                var columns = schemaTable.Columns;
+
+                columns.Add(ColumnName);
+                columns.Add(ColumnOrdinal);
+                columns.Add(ColumnSize);
+                columns.Add(NumericPrecision);
+                columns.Add(NumericScale);
+                columns.Add(IsUnique);
+                columns.Add(IsKey);
+                columns.Add(BaseServerName);
+                columns.Add(BaseCatalogName);
+                columns.Add(BaseColumnName);
+                columns.Add(BaseSchemaName);
+                columns.Add(BaseTableName);
+                columns.Add(DataType);
+                columns.Add(DataTypeName);
+                columns.Add(AllowDBNull);
+                columns.Add(IsAliased);
+                columns.Add(IsExpression);
+                columns.Add(IsAutoIncrement);
+                columns.Add(IsLong);
+
+                for (var i = 0; i < column_count; i++)
+                {
+                    var schemaRow = schemaTable.NewRow();
+
+                    schemaRow[ColumnName] = getName(i);
+                    schemaRow[ColumnOrdinal] = i;
+                    schemaRow[ColumnSize] = getFieldSize(i);
+                    schemaRow[NumericPrecision] = DBNull.Value;
+                    schemaRow[NumericScale] = DBNull.Value;
+                    schemaRow[BaseServerName] = _command.Connection.DataSource;
+                    var databaseName = _command.Connection.Database;
+                    schemaRow[BaseCatalogName] = databaseName;
+                    var columnName = getName(i);
+                    schemaRow[BaseColumnName] = columnName;
+                    schemaRow[BaseSchemaName] = DBNull.Value;
+                    var tableName = string.Empty;
+                    schemaRow[BaseTableName] = tableName;
+                    schemaRow[DataType] = getFieldType(i);
+                    schemaRow[DataTypeName] = getDataTypeName(i);
+                    schemaRow[IsAliased] = columnName != getName(i);
+                    schemaRow[IsExpression] = columnName == null;
+                    schemaRow[IsLong] = DBNull.Value;
+                    if (i == 0)
+                    {
+                        schemaRow[IsKey] = true;
+                        schemaRow[DataType] = getFieldType(i);
+                        schemaRow[DataTypeName] = getDataTypeName(i);
+                    }
+                    schemaTable.Rows.Add(schemaRow);
+                }
+            }
+            return schemaTable;
+        }
     }
 }

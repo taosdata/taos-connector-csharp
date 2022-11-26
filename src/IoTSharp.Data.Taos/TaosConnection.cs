@@ -64,7 +64,7 @@ namespace IoTSharp.Data.Taos
             switch (ConnectionStringBuilder.Protocol)
             {
                 case TaosConnectionStringBuilder.Protocol_Rest:
-                    taos = new TaosRest();
+                    taos = new TaosRESTful();
                     break;
                 case TaosConnectionStringBuilder.Protocol_Native:
                 default:
@@ -373,7 +373,7 @@ namespace IoTSharp.Data.Taos
         /// <param name="precision"></param>
         /// <returns></returns>
         public int ExecuteBulkInsert(string[] lines, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS) =>
-            ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
+          taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
 
 #if NETCOREAPP
         public int ExecuteBulkInsert(RecordData data)
@@ -417,42 +417,23 @@ namespace IoTSharp.Data.Taos
                 }
             }
             var lines = data.Select(rd => rd.ToLineProtocol(settings)).ToArray();
-            return ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
+            return taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
         }
 #endif
         public int ExecuteBulkInsert<T>(IEnumerable<T> array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
         {
             var lines = array.Select(x => Newtonsoft.Json.JsonConvert.SerializeObject(x)).ToArray();
-            return ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
+            return taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
         }
 
         public int ExecuteBulkInsert(JArray array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
         {
             var lines = array.Children().Select(x => x.ToString()).ToArray();
-            return ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
+            return taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
         }
    
 
-        private int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision precision)
-        {
-            int affectedRows = 0;
-            var _taos= taos.Take();
-            IntPtr res = TDengine.SchemalessInsert(_taos, lines, lines.Length, (int)protocol, (int)precision);
-         
-            if (TDengine.ErrorNo(res) != 0)
-            {
-                var tdr = new TaosErrorResult() { Code = TDengine.ErrorNo(res), Error = TDengine.Error(res) };
-                taos.Return(_taos);
-                TaosException.ThrowExceptionForRC(tdr);
-            }
-            else
-            {
-                affectedRows = TDengine.AffectRows(res);
-                TDengine.FreeResult(res);
-                taos.Return(_taos);
-            }
-            return affectedRows;
-        }
+   
         private class AggregateContext<T>
         {
             public AggregateContext(T seed)

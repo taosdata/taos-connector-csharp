@@ -4,18 +4,13 @@ using RestSharp.Authenticators;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
+using TDengineDriver;
 
 namespace IoTSharp.Data.Taos.Protocols
 {
-    internal class TaosRest : ITaosProtocol
+    internal class TaosRESTful : ITaosProtocol
     {
-        private string _token;
-        private RestClient _client=null;
+        private RestClient _client = null;
         private string _databaseName;
         private TaosConnectionStringBuilder _builder;
 
@@ -65,15 +60,14 @@ namespace IoTSharp.Data.Taos.Protocols
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
             try
             {
-                var tr = Execute( _commandText);
-                dataReader = new TaosDataReader(command, new TaosRestContext(tr));
+                var tr = Execute(_commandText);
+                dataReader = new TaosDataReader(command, new TaosRESTfulContext(tr));
             }
             catch when (unprepared)
             {
                 throw;
             }
             return dataReader;
-
         }
 
         private TaosResult Execute(string _commandText)
@@ -85,7 +79,7 @@ namespace IoTSharp.Data.Taos.Protocols
             var body = _commandText;
 #if NET46
                 var request = new RestRequest();
-      
+
                 request.AddParameter("",body, "text/plain",  ParameterType.RequestBody);
 #else
             var request = new RestRequest("", Method.Post);
@@ -128,7 +122,7 @@ namespace IoTSharp.Data.Taos.Protocols
 
         public string GetClientVersion()
         {
-           return  Execute("SELECT CLIENT_VERSION()")?.Scalar as string;
+            return Execute("SELECT CLIENT_VERSION()")?.Scalar as string;
         }
 
         public string GetServerVersion()
@@ -138,7 +132,6 @@ namespace IoTSharp.Data.Taos.Protocols
 
         public void InitTaos(string configdir, int shell_activity_timer, string locale, string charset)
         {
-        
         }
 
         public bool Open(TaosConnectionStringBuilder connectionStringBuilder)
@@ -165,27 +158,30 @@ namespace IoTSharp.Data.Taos.Protocols
 
         public void Return(nint taos)
         {
-      
         }
 
         public nint Take()
         {
             return IntPtr.Zero;
         }
+
+        public int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision precision)
+        {
+            throw new NotSupportedException("RESTful  不支持 ExecuteBulkInsert");
+        }
     }
-  
+
     public class TaosResult
     {
- 
         public int code { get; set; }
         public string desc { get; set; }
- 
+
         public List<List<string>> column_meta { get; set; }
-  
+
         public JArray data { get; set; }
 
         public int rows { get; set; }
-        
+
         public object Scalar => (data?.First?.First as JValue)?.Value;
     }
 }
