@@ -9,6 +9,9 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using TDengineDriver;
@@ -76,21 +79,44 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             }
             return dataReader;
         }
-        private R WSExecute<R,T>(WSActionReq<T> req)
+        private R WSExecute<R,T>(WSActionReq<T> req,Action<byte[],int>  action=null, int buffer_lenght=4*1024*1024)
         {
+            R result = default;
             var _req = Newtonsoft.Json.JsonConvert.SerializeObject(req);
             Debug.WriteLine(_req);
             var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(_req));
             _client.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).Wait(TimeSpan.FromSeconds(_builder.ConnectionTimeout));
-            ArraySegment<byte> bytes = new ArraySegment<byte>(new byte[4 * 1024 * 1024]);
-            var result = _client.ReceiveAsync(bytes, CancellationToken.None).GetAwaiter().GetResult();
-            var json = Encoding.UTF8.GetString(bytes.Array, 0, result.Count);
-            Debug.WriteLine(json);
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<R>(json);
+            ArraySegment<byte> bytes = new ArraySegment<byte>(new byte[buffer_lenght]);
+            var wresult = _client.ReceiveAsync(bytes, CancellationToken.None).GetAwaiter().GetResult();
+            action?.Invoke(bytes.Array, wresult.Count);
+            var json = Encoding.UTF8.GetString(bytes.Array, 0, wresult.Count);
+            result = Newtonsoft.Json.JsonConvert.DeserializeObject<R>(json);
+            return result;
         }
+        //https://github.com/taosdata/taosadapter/blob/e57b466a3f243901bc93b15519b57a26d649612a/controller/rest/ws_test.go
+        //https://github.com/taosdata/taosadapter/blob/e57b466a3f243901bc93b15519b57a26d649612a/controller/rest/ws.go#L152
+        private volatile static int  _reqid=0;
         private TaosResult Execute(string _commandText)
         {
-
+            var dt = DateTime.Now;
+            _reqid++;
+            if (_reqid > 99) _reqid = 0;
+            long reqid = (long)(dt.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds * 100 + _reqid);
+            var repquery = WSExecute<WSQueryRsp, WSQueryReq>(new WSActionReq<WSQueryReq>() { Action = "query", Args = new WSQueryReq() { req_id = reqid, sql = _commandText } });
+            var repfetch = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id } });
+            foreach (var _block_length in repfetch.lengths)
+            {
+                byte[] buffer = new byte[_block_length];
+                var repfetch_block = WSExecute<byte[], WSFetchReq>(
+           new WSActionReq<WSFetchReq>() { Action = "fetch_block", Args = new WSFetchReq { req_id = repquery.req_id } }
+           , (byte[] bytes, int len) => Array.Copy(bytes, buffer, len), _block_length);
+                IntPtr ptr = Marshal.AllocHGlobal(_block_length);
+                Marshal.Copy(buffer, 0, ptr, _block_length);
+                var id = Marshal.ReadInt64(ptr);
+                //*(*uintptr)(unsafe.Pointer(&data)) +uintptr(8)
+                //    result:= parser.ReadBlock(unsafe.Pointer(columnPtr), rows, colTypes, precision)
+                var result = IntPtr.Add(ptr, 8);
+            }
             return null;
         }
 
