@@ -4,9 +4,8 @@
     public class TaosWSResult
     {
         public byte[] data { get; set; }
-        public int block_length { get; set; }
         public WSQueryRsp meta { get; set; }
-        public WSFetchRsp fetch { get; set; }
+        public int rows { get;  set; }
     }
 
 

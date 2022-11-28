@@ -205,7 +205,7 @@ namespace TaosADODemo
         {
             var builder_rest = new TaosConnectionStringBuilder()
             {
-                DataSource = "taos",
+                DataSource = "localhost",
                 DataBase = database,
                 Username = "root",
                 Password = "taosdata",

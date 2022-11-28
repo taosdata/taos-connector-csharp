@@ -40,7 +40,7 @@ namespace TDengineDriver
         TSDB_DATA_TYPE_USMALLINT = 12,// 2 bytes
         TSDB_DATA_TYPE_UINT = 13,    // 4 bytes
         TSDB_DATA_TYPE_UBIGINT = 14,   // 8 bytes
-        TSDB_DATA_TYPE_JSONTAG = 15,  //4096 bytes 
+        TSDB_DATA_TYPE_JSON = 15,  //4096 bytes 
         TSDB_DATA_TYPE_VARBINARY = 16, // binary
         TSDB_DATA_TYPE_DECIMAL = 17, // decimal
         TSDB_DATA_TYPE_BLOB = 18, // binary

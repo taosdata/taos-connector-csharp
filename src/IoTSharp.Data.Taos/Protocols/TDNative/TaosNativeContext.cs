@@ -200,7 +200,7 @@ namespace IoTSharp.Data.Taos.Protocols
                             }
                             break;
 
-                        case TDengineDataType.TSDB_DATA_TYPE_JSONTAG:
+                        case TDengineDataType.TSDB_DATA_TYPE_JSON:
                         case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                             {
                                 string v10 = string.Empty;

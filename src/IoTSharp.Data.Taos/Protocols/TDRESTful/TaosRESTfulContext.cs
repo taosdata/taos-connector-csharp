@@ -161,7 +161,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDRESTful
                     break;
 
                 case "JSON":
-                    tdtype = TDengineDataType.TSDB_DATA_TYPE_JSONTAG;
+                    tdtype = TDengineDataType.TSDB_DATA_TYPE_JSON;
                     break;
 
                 case "VARCHAR":

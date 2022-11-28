@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
@@ -79,30 +80,63 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             }
             return dataReader;
         }
-        private R WSExecute<R, T>(WSActionReq<T> req, Action<byte[], int> action = null, int buffer_lenght = 4 * 1024 * 1024)
+        private R WSExecute<R, T>(WSActionReq<T> req, Action<byte[], int> action = null)
         {
-            R result = default;
+            R _result = default;
+            var token = CancellationToken.None;
             var _req = Newtonsoft.Json.JsonConvert.SerializeObject(req);
             Debug.WriteLine(_req);
-            var buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(_req));
-            _client.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None).Wait(TimeSpan.FromSeconds(_builder.ConnectionTimeout));
-            ArraySegment<byte> bytes = new ArraySegment<byte>(new byte[buffer_lenght]);
-            var wresult = _client.ReceiveAsync(bytes, CancellationToken.None).GetAwaiter().GetResult();
-            switch (wresult.MessageType)
+            _client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(_req)), WebSocketMessageType.Text, true, CancellationToken.None).Wait(TimeSpan.FromSeconds(_builder.ConnectionTimeout));
+            int bufferSize = 1024*1024*4;
+            var buffer = new byte[bufferSize];
+            var offset = 0;
+            var free = buffer.Length;
+                    WebSocketMessageType _msgType;
+            while (true)
+            {
+                var result = _client.ReceiveAsync(new ArraySegment<byte>(buffer, offset, free), token).GetAwaiter().GetResult();
+                offset += result.Count;
+                free -= result.Count;
+                if (result.EndOfMessage)
+                {
+                    _msgType = result.MessageType;
+                    break;
+                }
+                if (free == 0)
+                {
+                    // No free space
+                    // Resize the outgoing buffer
+                    var newSize = buffer.Length + bufferSize;
+                    // Check if the new size exceeds a limit
+                    // It should suit the data it receives
+                    // This limit however has a max value of 2 billion bytes (2 GB)
+                    if (newSize > 1024*1024*1024)
+                    {
+                        throw new Exception("Maximum size exceeded");
+                    }
+                    var newBuffer = new byte[newSize];
+                    Array.Copy(buffer, 0, newBuffer, 0, offset);
+                    buffer = newBuffer;
+                    free = buffer.Length - offset;
+                }
+            }
+
+  
+            switch (_msgType)
             {
                 case WebSocketMessageType.Binary:
-                    action?.Invoke(bytes.Array, wresult.Count);
+                    action?.Invoke(buffer, offset);
                     break;
                 case WebSocketMessageType.Close:
                     break;
                 case WebSocketMessageType.Text:
-                    var json = Encoding.UTF8.GetString(bytes.Array, 0, wresult.Count);
-                    result = Newtonsoft.Json.JsonConvert.DeserializeObject<R>(json);
+                    var json = Encoding.UTF8.GetString(buffer,0, offset);
+                    _result = Newtonsoft.Json.JsonConvert.DeserializeObject<R>(json);
                     break;
                 default:
                     break;
             }
-            return result;
+            return _result;
         }
         //https://github.com/taosdata/taosadapter/blob/e57b466a3f243901bc93b15519b57a26d649612a/controller/rest/ws_test.go
         //https://github.com/taosdata/taosadapter/blob/e57b466a3f243901bc93b15519b57a26d649612a/controller/rest/ws.go#L152
@@ -114,23 +148,40 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             _reqid++;
             if (_reqid > 99999) _reqid = 0;
             var repquery = WSExecute<WSQueryRsp, WSQueryReq>(new WSActionReq<WSQueryReq>() { Action = "query", Args = new WSQueryReq() { req_id = _reqid, sql = _commandText } });
-            var repfetch = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id=repquery.id } });
-            if (repfetch.code == 0)
+          
+            if (!repquery.is_update)
             {
-                foreach (var _block_length in repfetch.lengths)
+            var repfetch = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
+            List<byte> data = new List<byte>();
+                int _rows = repfetch.rows;
+                if (repfetch.code == 0)
                 {
-                    byte[] buffer = new byte[_block_length];
-                    var repfetch_block = WSExecute<byte[], WSFetchReq>(
-               new WSActionReq<WSFetchReq>() { Action = "fetch_block", Args = new WSFetchReq { req_id = repquery.req_id,id=repfetch.id } }
-               , (byte[] bytes, int len) => Array.Copy(bytes, buffer, len), _block_length);
-
-                      wSResult = new TaosWSResult() { data = buffer, meta = repquery, fetch = repfetch, block_length = _block_length };
-                    break;//暂时只处理第一个。 原理搞清楚再说。 
+                    do
+                    {
+                        byte[] buffer = new byte[] { };
+                        var repfetch_block = WSExecute<byte[], WSFetchReq>
+                           (
+                               new WSActionReq<WSFetchReq>()
+                               {
+                                   Action = "fetch_block",
+                                   Args = new WSFetchReq() { req_id = repquery.req_id, id = repfetch.id }
+                               },
+                               (byte[] bytes, int len) =>
+                               {
+                                   buffer = new byte[len];
+                                   Array.Copy(bytes, buffer, len);
+                               }
+                         );
+                        repfetch = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
+                        _rows += repfetch.rows;
+                        data.AddRange(buffer);
+                    } while (!repfetch.completed);
                 }
+                wSResult = new TaosWSResult() { data = data.ToArray(), meta = repquery, rows=_rows };
             }
             else
             {
-                wSResult = new TaosWSResult() { meta = repquery, fetch = repfetch };
+                wSResult = new TaosWSResult() { meta = repquery};
             }
             return wSResult;
         }

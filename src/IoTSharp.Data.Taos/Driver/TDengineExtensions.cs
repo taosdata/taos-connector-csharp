@@ -42,7 +42,7 @@ namespace IoTSharp.Data.Taos.Driver
                     return "TIMESTAMP";
                 case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                     return "NCHAR";
-                case TDengineDataType.TSDB_DATA_TYPE_JSONTAG:
+                case TDengineDataType.TSDB_DATA_TYPE_JSON:
                     return "JSON";
                 case TDengineDataType.TSDB_DATA_TYPE_VARBINARY:
                     return "VARBINARY";

@@ -584,7 +584,7 @@ namespace TDengineDriver
                 Marshal.WriteByte(nullArr, byteSize * i, Convert.ToByte(String.IsNullOrEmpty(jsonStr[i]) ? 1 : 0));
             }
             //Config TAOS_MULTI_BIND
-            multiBind.buffer_type = (int)TDengineDataType.TSDB_DATA_TYPE_JSONTAG;
+            multiBind.buffer_type = (int)TDengineDataType.TSDB_DATA_TYPE_JSON;
             multiBind.buffer = c_char_prt;
             multiBind.buffer_length = (ulong)typeSize;
             multiBind.length = lengthArr;

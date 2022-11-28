@@ -35,17 +35,18 @@ namespace IoTSharp.Data.Taos
                         try
                         {
                             string strKey = dataReader.GetName(i);
-                            if (dataReader[i] != DBNull.Value)
+                            var _value = dataReader[i];
+                            if (_value != DBNull.Value)
                             {
                                 var pr = from p in pots where (p.Name == strKey ||  p.ColumnNameIs(strKey)) && p.CanWrite select p;
                                 if (pr.Any())
                                 {
                                     var pi = pr.FirstOrDefault();
-                                    pi.SetValue(jObject, Convert.ChangeType(dataReader[i], pi.PropertyType));
+                                    pi.SetValue(jObject, Convert.ChangeType(_value, pi.PropertyType));
                                 }
                             }
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
 
                         }
@@ -239,7 +240,7 @@ namespace IoTSharp.Data.Taos
             }
             return schemaTable;
         }
-
+     
         internal static bool IsUTF8Bytes(this byte[] data)
         {
             int charByteCounter = 1; //计算当前正分析的字符应还有的字节数
