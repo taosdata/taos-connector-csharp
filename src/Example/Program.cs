@@ -251,7 +251,7 @@ namespace TaosADODemo
                 var readerdatas = cmd_datas.ExecuteReader();
                 Console.WriteLine(cmd_datas.CommandText);
                 Console.WriteLine("");
-                ConsoleTableBuilder.From(readerdatas.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+               ConsoleTableBuilder.From(readerdatas.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 Console.WriteLine("");
 
                 Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupdId int);").ExecuteNonQuery());

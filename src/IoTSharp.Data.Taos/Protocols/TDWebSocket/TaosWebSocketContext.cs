@@ -203,8 +203,8 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         public int GetFieldSize(int ordinal)
         {
-            var dt = GetValuePtr(ordinal);
-            return dt.len;
+            var info = lstpColInfoData[ordinal].info;
+            return info.IS_VAR_DATA_TYPE() ? info.bytes - 2 : info.bytes;
         }
 
      

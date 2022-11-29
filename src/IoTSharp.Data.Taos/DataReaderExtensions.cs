@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -103,7 +104,14 @@ namespace IoTSharp.Data.Taos
         public static DataTable ToDataTable(this IDataReader reader)
         {
             var datatable = new DataTable();
-            datatable.Load(reader);
+            try
+            {
+                datatable.Load(reader);
+            }
+            catch (Exception ex)
+            {
+
+            }
             return datatable;
         }
         public static string RemoveNull(this string str)
@@ -206,11 +214,11 @@ namespace IoTSharp.Data.Taos
                 columns.Add(IsExpression);
                 columns.Add(IsAutoIncrement);
                 columns.Add(IsLong);
-
+         
                 for (var i = 0; i < column_count; i++)
                 {
                     var schemaRow = schemaTable.NewRow();
-
+                    
                     schemaRow[ColumnName] = getName(i);
                     schemaRow[ColumnOrdinal] = i;
                     schemaRow[ColumnSize] = getFieldSize(i);
@@ -231,9 +239,7 @@ namespace IoTSharp.Data.Taos
                     schemaRow[IsLong] = DBNull.Value;
                     if (i == 0)
                     {
-                        schemaRow[IsKey] = true;
-                        schemaRow[DataType] = getFieldType(i);
-                        schemaRow[DataTypeName] = getDataTypeName(i);
+                     //   schemaRow[IsKey] = true;
                     }
                     schemaTable.Rows.Add(schemaRow);
                 }
