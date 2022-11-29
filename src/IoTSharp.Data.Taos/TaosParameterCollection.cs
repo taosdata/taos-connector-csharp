@@ -215,7 +215,7 @@ namespace IoTSharp.Data.Taos
             return parameter;
         }
     
-        public virtual TaosParameter AddWithValue(string? value)
+        public virtual TaosParameter AddWithValue(string value)
         {
             _param_index++;
             var parameter = new TaosParameter($"@p{_param_index:0000}", value);

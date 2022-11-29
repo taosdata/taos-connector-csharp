@@ -36,14 +36,20 @@ namespace IoTSharp.Data.Taos.Driver
                     return "FLOAT";
                 case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
                     return "DOUBLE";
-                case TDengineDataType.TSDB_DATA_TYPE_BINARY:
-                    return "BINARY";
+                case TDengineDataType.TSDB_DATA_TYPE_VARCHAR:
+                    return "VARCHAR";
                 case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:
                     return "TIMESTAMP";
                 case TDengineDataType.TSDB_DATA_TYPE_NCHAR:
                     return "NCHAR";
-                case TDengineDataType.TSDB_DATA_TYPE_JSONTAG:
+                case TDengineDataType.TSDB_DATA_TYPE_JSON:
                     return "JSON";
+                case TDengineDataType.TSDB_DATA_TYPE_VARBINARY:
+                    return "VARBINARY";
+                case TDengineDataType.TSDB_DATA_TYPE_DECIMAL:
+                    return "DECIMAL";
+                case TDengineDataType.TSDB_DATA_TYPE_MEDIUMBLOB:
+                    return "MEDIUMBLOB";
                 default:
                     return "undefine";
             }
@@ -87,7 +93,7 @@ namespace IoTSharp.Data.Taos.Driver
                 case TDengineDataType.TSDB_DATA_TYPE_DOUBLE:
                     crltype = typeof(double);
                     break;
-                case TDengineDataType.TSDB_DATA_TYPE_BINARY:
+                case TDengineDataType.TSDB_DATA_TYPE_VARCHAR:
                     crltype = typeof(string);
                     break;
                 case TDengineDataType.TSDB_DATA_TYPE_TIMESTAMP:

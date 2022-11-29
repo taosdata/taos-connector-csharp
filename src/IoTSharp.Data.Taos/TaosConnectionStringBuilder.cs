@@ -27,6 +27,12 @@ namespace IoTSharp.Data.Taos
         private const string PortKeyword = "Port";
         private const string PoolSizeKeyword = "PoolSize";
         private const string TimeOutKeyword = "TimeOut";
+        private const string ProtocolKeyword = "Protocol";
+        private const string TimeZoneKeyword = "TimeZone";
+        public const string Protocol_RESTful = "RESTful";
+        public const string Protocol_Native = "Native";
+        public const string Protocol_WebSocket = "WebSocket";
+
         private enum Keywords
         {
             DataSource,
@@ -36,7 +42,9 @@ namespace IoTSharp.Data.Taos
             Port,
             Charset,
             PoolSize,
-            TimeOut
+            TimeOut,
+            Protocol,
+            TimeZone
 
 
         }
@@ -52,10 +60,11 @@ namespace IoTSharp.Data.Taos
         private int  _port =6030;
         private int _PoolSize=Environment.ProcessorCount;
         private int _timeout = 30;
-
+        private string _protocol = Protocol_Native;
+        private string _timezone = string.Empty;
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[8];
+            var validKeywords = new string[10];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
@@ -64,9 +73,11 @@ namespace IoTSharp.Data.Taos
             validKeywords[(int)Keywords.Port] = PortKeyword;
             validKeywords[(int)Keywords.PoolSize] = PoolSizeKeyword;
             validKeywords[(int)Keywords.TimeOut] = TimeOutKeyword;
+            validKeywords[(int)Keywords.Protocol] = ProtocolKeyword;
+            validKeywords[(int)Keywords.TimeZone] = TimeZoneKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(8, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(10, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
                 [UserNameKeyword] = Keywords.Username,
@@ -76,7 +87,10 @@ namespace IoTSharp.Data.Taos
                 [DataSourceNoSpaceKeyword] = Keywords.DataSource,
                 [PortKeyword] = Keywords.Port,
                 [PoolSizeKeyword] = Keywords.PoolSize,
-                [TimeOutKeyword] = Keywords.TimeOut
+                [TimeOutKeyword] = Keywords.TimeOut,
+                [ProtocolKeyword] = Keywords.Protocol,
+                [TimeZoneKeyword] = Keywords.TimeZone
+
             };
         }
 
@@ -136,8 +150,23 @@ namespace IoTSharp.Data.Taos
             get => _PoolSize;
             set => base[PoolSizeKeyword] = _PoolSize = value;
         }
-
-
+        /// <summary>
+        /// 协议类型， 默认为空时为 Native
+        /// </summary>
+        public virtual string Protocol
+        {
+            get => _protocol;
+            set => base[ProtocolKeyword] = _protocol = value;
+        }
+        /// <summary>
+        /// 默认为空时为 Asia/Shanghai
+        /// </summary>
+        public virtual string TimeZone
+        {
+            get => _timezone;
+            set => base[TimeZoneKeyword] = _timezone = value;
+        }
+        
         /// <summary>
         ///     Gets a collection containing the keys used by the connection string.
         /// </summary>
@@ -221,6 +250,12 @@ namespace IoTSharp.Data.Taos
                         return;
                     case Keywords.TimeOut:
                         ConnectionTimeout = Convert.ToInt32(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.Protocol:
+                         Protocol  = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        return;
+                    case Keywords.TimeZone:
+                        TimeZone = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
@@ -348,6 +383,10 @@ namespace IoTSharp.Data.Taos
                     return PoolSize;
                 case Keywords.TimeOut:
                     return ConnectionTimeout;
+                case Keywords.Protocol:
+                    return Protocol;
+                case Keywords.TimeZone:
+                    return TimeZone;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -387,10 +426,35 @@ namespace IoTSharp.Data.Taos
                 case Keywords.TimeOut   :
                     _timeout = 30;
                     return;
+                case Keywords.Protocol:
+                    _protocol = Protocol_Native;
+                    return;
+                case Keywords.TimeZone:
+                    _timezone = string.Empty;
+                    return;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return;
             }
+        }
+
+        public TaosConnectionStringBuilder UseRESTful()
+        {
+            Port = 6041;
+            Protocol = Protocol_RESTful;
+            return this;
+        }
+        public TaosConnectionStringBuilder UseWebSocket()
+        {
+            Port = 6041;
+            Protocol = Protocol_WebSocket;
+            return this;
+        }
+        public TaosConnectionStringBuilder UseNative()
+        {
+            Port = 6030;
+            Protocol = Protocol_Native;
+            return this;
         }
     }
 }
