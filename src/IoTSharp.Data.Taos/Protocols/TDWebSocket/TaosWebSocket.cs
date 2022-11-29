@@ -148,14 +148,17 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             _reqid++;
             if (_reqid > 99999) _reqid = 0;
             var repquery = WSExecute<WSQueryRsp, WSQueryReq>(new WSActionReq<WSQueryReq>() { Action = "query", Args = new WSQueryReq() { req_id = _reqid, sql = _commandText } });
-          
+            if (repquery.code != 0)
+            {
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = repquery.code, Error = repquery.message });
+            }
             if (!repquery.is_update)
             {
-            var repfetch = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
-            List<byte> data = new List<byte>();
-                int _rows = repfetch.rows;
+                var repfetch = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
                 if (repfetch.code == 0)
                 {
+                    List<byte> data = new List<byte>();
+                    int _rows = repfetch.rows;
                     do
                     {
                         byte[] buffer = new byte[] { };
@@ -176,12 +179,17 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                         _rows += repfetch.rows;
                         data.AddRange(buffer);
                     } while (!repfetch.completed);
+                    var free_result = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "free_result", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
+                    wSResult = new TaosWSResult() { data = data.ToArray(), meta = repquery, rows = _rows };
                 }
-                wSResult = new TaosWSResult() { data = data.ToArray(), meta = repquery, rows=_rows };
+                else
+                {
+                    TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = repfetch.code, Error = repfetch.message });
+                }
             }
             else
             {
-                wSResult = new TaosWSResult() { meta = repquery};
+                wSResult = new TaosWSResult() { meta = repquery };
             }
             return wSResult;
         }
