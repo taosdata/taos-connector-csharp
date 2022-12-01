@@ -14,7 +14,7 @@ namespace IoTSharp.Data.Taos
         Quotation = 2,
         Parameter = 3,
         ShortComment = 4,
-        Comment = 5
+        Comment = 5,
     }
 
     public abstract class StatementPart
@@ -66,14 +66,14 @@ namespace IoTSharp.Data.Taos
             _Parts = parts.ToArray();
         }
 
-        public string[] ParameterNames => _Parts.OfType<Param>().Select(p => p.OriginalText).ToArray();
+        public string[] ParameterNames => _Parts.OfType<Param>().Where(p => p.OriginalText.StartsWith("@")).Select(p => p.OriginalText).ToArray();
 
         public string CommandText => string.Join(string.Empty, _Parts.Select(p => p.GetText()));
 
         public int Count => _Parts.Length;
 
-        public string SubTableName { get; set; }
-        public string[] TagsNames { get; set; }
+        public string SubTableName => _Parts.OfType<Param>().Where(p => p.OriginalText.StartsWith("#")).Select(p => p.OriginalText).ToList().FirstOrDefault();
+        public string[] TagsNames => _Parts.OfType<Param>().Where(p => p.OriginalText.StartsWith("$")).Select(p => p.OriginalText).ToArray();
 
         public StatementPart this[int index] => _Parts[index];
 
@@ -126,7 +126,7 @@ namespace IoTSharp.Data.Taos
                         }
                         status = StatementState.Quotation;
                     }
-                    else if (ch == '@')
+                    else if (ch == '@' || ch == '$' || ch == '#')
                     {
                         if (pos > partStart)
                         {

@@ -191,6 +191,24 @@ namespace IoTSharp.Data.Taos
             Add(parameter);
             return parameter;
         }
+        public TaosParameter SetSubTableName(string value)
+        {
+            TaosParameter parameter;
+            var _pst = from p in this._parameters where p.ParameterName.StartsWith("#") select p;
+            var _p = _pst.FirstOrDefault();
+            if (_p != null)
+            {
+                parameter = this[IndexOfChecked(_p.ParameterName)];
+                parameter.Value = value;
+            }
+            else
+            {
+                parameter = new TaosParameter($"$p{_tags_index:0000}", value);
+                parameter.TaosType = TaosType.Blob;
+                Add(parameter);
+            }
+            return parameter;
+        }
         public string SubTableName { get; set; }
         private int   _param_index=0;
         /// <summary>

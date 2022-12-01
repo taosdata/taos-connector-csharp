@@ -211,14 +211,16 @@ namespace IoTSharp.Data.Taos.Protocols
                 IntPtr ptr = IntPtr.Zero;
                 if (_parameters.IsValueCreated)
                 {
-                    if (_commandText.IndexOf('@') > 0)
-                    {
-                        var tps = _parameters.Value.OfType<TaosParameter>().OrderByDescending(c => c.ParameterName.Length).ToList();
-                        tps.ForEach(tp =>
-                        {
-                            _commandText = _commandText.Replace(tp.ParameterName, "?");
-                        });
-                    }
+                    //if (_commandText.IndexOf('@') > 0)
+                    //{
+                    //    var tps = _parameters.Value.OfType<TaosParameter>().OrderByDescending(c => c.ParameterName.Length).ToList();
+                    //    tps.ForEach(tp =>
+                    //    {
+                    //        _commandText = _commandText.Replace(tp.ParameterName, "?");
+                    //    });
+                    //}
+                    var sql = StatementObject.ResolveCommandText(_commandText);
+                    _commandText =sql.CommandText;
                     var stmt = TDengine.StmtInit(_taos);
                     if (stmt == IntPtr.Zero)
                     {
