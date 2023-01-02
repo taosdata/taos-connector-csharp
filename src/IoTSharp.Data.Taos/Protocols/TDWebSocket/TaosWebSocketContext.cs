@@ -15,12 +15,10 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 {
     internal class TaosWebSocketContext : ITaosContext
     {
-    
         private readonly int _rows;
         private WSQueryRsp _meta;
         private readonly DateTime _dt1970;
         private IntPtr ptr = IntPtr.Zero;
-
         int _index = -1;
         private int numOfRows;
         private int numOfCols;
@@ -33,13 +31,20 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         public TaosWebSocketContext(TaosWSResult tr)
         {
             _dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            AffectRows = tr.meta.affected_rows;
-            FieldCount = tr.meta.fields_count;
-            _rows = tr.rows;
-            _meta = tr.meta;
-            if (!_meta.is_update && tr.data.Length>0)
+            if (tr.meta != null)//query 
             {
-                blockDecode(tr.data);
+                _meta = tr.meta;
+                AffectRows = tr.meta.affected_rows;
+                FieldCount = tr.meta.fields_count;
+                if (!_meta.is_update && tr.data.Length > 0)
+                {
+                    blockDecode(tr.data);
+                }
+                _rows = tr.rows;
+            }
+            else if (tr.StmtExec!=null)//insert 
+            {
+                AffectRows = tr.StmtExec.affected;
             }
         }
         public int AffectRows { get; set; }

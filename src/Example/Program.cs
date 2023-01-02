@@ -47,6 +47,7 @@ namespace TaosADODemo
                 Port = 6030
 
             };
+            ExecSqlByStmt(database);
             ExecSqlByWebSocket(database);
             ExecSqlByRESTFul(database);
 
@@ -201,6 +202,44 @@ namespace TaosADODemo
             UseTaosEFCore(builder);
 
         }
+        private static void ExecSqlByStmt(string database)
+        {
+            var builder_rest = new TaosConnectionStringBuilder()
+            {
+                DataSource = "localhost",
+                DataBase = database,
+                Username = "root",
+                Password = "taosdata",
+
+            }.UseWebSocket();
+            using (var connection = new TaosConnection(builder_rest.ConnectionString))
+            {
+                connection.Open();
+                connection.CreateCommand("create database if not exists test_ws_stmt precision 'ns';").ExecuteNonQuery();
+                connection.CreateCommand("create table if not exists test_ws_stmt.st(ts timestamp,c1 bool, c2 tinyint,c3 smallint, c4 int, c5 bigint, c6 tinyint unsigned, c7 smallint unsigned, c8 int unsigned, c9 bigint unsigned, c10 float,  c11 double, c12 binary(20), c13 nchar(20) ) tags (info json);").ExecuteNonQuery();
+                var insert = connection.CreateCommand("insert into ? using test_ws_stmt.st tags (?) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                var pms = insert.Parameters;
+              //  pms.SetSubTableName("test_ws_stmt.st3");
+                pms.SubTableName = "test_ws_stmt.st3";
+                pms.AddTagsValue("{\"a\":\"b\"}");
+                pms.AddWithValue(DateTime.Now);
+                pms.AddWithValue(true);
+                pms.AddWithValue(2);
+                pms.AddWithValue(3);
+                pms.AddWithValue(4);
+                pms.AddWithValue(5);
+                pms.AddWithValue(6);
+                pms.AddWithValue(7);
+                pms.AddWithValue(8);
+                pms.AddWithValue(9);
+                pms.AddWithValue(10);
+                pms.AddWithValue(11);
+                pms.AddWithValue("binary");
+                pms.AddWithValue("nchar");
+                var rest = insert.ExecuteNonQuery();
+            }
+        }
+
         private static void ExecSqlByWebSocket(string database)
         {
             var builder_rest = new TaosConnectionStringBuilder()

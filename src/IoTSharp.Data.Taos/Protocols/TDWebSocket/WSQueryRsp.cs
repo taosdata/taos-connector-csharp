@@ -38,9 +38,6 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         /// 
         /// </summary>
         public List<int> fields_lengths { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
         public int precision { get; set; }
     }
 
