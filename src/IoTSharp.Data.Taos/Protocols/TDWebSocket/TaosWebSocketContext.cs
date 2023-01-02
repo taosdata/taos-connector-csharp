@@ -23,7 +23,6 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         private int numOfRows;
         private int numOfCols;
         private List<SColumnInfoData> lstpColInfoData = new List<SColumnInfoData>();
-        private TaosException _LastException;
         private int version;
         private int dataLen;
         private uint hasColumnInfo;

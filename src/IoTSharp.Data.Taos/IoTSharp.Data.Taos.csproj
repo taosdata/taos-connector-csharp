@@ -36,14 +36,22 @@
 
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 
-		<Copyright>Copyright © 2019-2022 IoTSharp All rights reserved.</Copyright>
+		<Copyright>Copyright © 2019-2023 IoTSharp All rights reserved.</Copyright>
 
 		<Version>1.0.1</Version>
 
 		<Platforms>AnyCPU;x64;x86</Platforms>
 
-		<PackageIcon>48876650.jpg</PackageIcon>
+		<PackageIcon>logo.png</PackageIcon>
+
+		<ApplicationIcon>favicon.ico</ApplicationIcon>
+
+		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Content Include="favicon.ico" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Compile Update="TaosCommand.cs" />
@@ -52,7 +60,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\..\docs\48876650.jpg">
+		<None Include="..\..\docs\logo.png">
 			<Pack>True</Pack>
 			<PackagePath></PackagePath>
 		</None>

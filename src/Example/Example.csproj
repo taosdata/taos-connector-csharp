@@ -8,6 +8,7 @@
     <DockerfileContext>..\..</DockerfileContext>
     <Platforms>AnyCPU;x64;x86</Platforms>
     <PackageIcon>48876650.jpg</PackageIcon>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -28,6 +29,10 @@
     <None Remove="TDengine-client\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="favicon.ico" />
+  </ItemGroup>
+
   
 
   <ItemGroup>
@@ -40,13 +45,6 @@
   <ItemGroup>
     <ProjectReference Include="..\EFCore.Taos.Core\IoTSharp.EntityFrameworkCore.Taos.csproj" />
     <ProjectReference Include="..\IoTSharp.Data.Taos\IoTSharp.Data.Taos.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\..\docs\48876650.jpg">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

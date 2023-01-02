@@ -49,7 +49,7 @@ namespace IoTSharp.Data.Taos
                         }
                         catch (Exception ex)
                         {
-
+                            Debug.WriteLine(ex.ToString());
                         }
                     }
                     jArray.Add(jObject);
@@ -110,7 +110,7 @@ namespace IoTSharp.Data.Taos
             }
             catch (Exception ex)
             {
-
+                Debug.WriteLine(ex.ToString());
             }
             return datatable;
         }
