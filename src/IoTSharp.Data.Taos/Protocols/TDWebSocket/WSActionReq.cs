@@ -12,5 +12,4 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         public T Args { get; set; }
     }
 
-
 }
