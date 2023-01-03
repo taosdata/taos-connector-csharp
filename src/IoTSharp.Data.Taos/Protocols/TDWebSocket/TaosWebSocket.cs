@@ -125,8 +125,9 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             var _exec = WSExecute<WSStmtExecRsp>(_stmt_client, "exec", new { req_id, stmt_id });
             wSResult = new TaosWSResult() { StmtExec = _exec };
             if (_exec.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _exec.code, Error = _exec.message });
-            var _close = WSExecute<WSStmtRsp>(_stmt_client, "close", new { req_id, stmt_id });
-            if (_close.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _close.code, Error = _close.message });
+            req_id++;
+            //https://github.com/taosdata/taosadapter/issues/129#issuecomment-1369468337
+            WSExecute(_stmt_client, "close", new { req_id, stmt_id });
             return wSResult;
         }
 
@@ -251,8 +252,13 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         {
             return WSExecute<R, object>(_client, new WSActionReq<object>() { Action = _action, Args = req }, _deserialize_binary);
         }
-    
-        private R WSExecute<R, T>(ClientWebSocket _client, WSActionReq<T> req, Action<byte[], int> _deserialize_binary = null)
+        private void WSExecute<T>(ClientWebSocket _client, string _action, T req)
+        {
+            var token = CancellationToken.None;
+            var _req = JsonConvert.SerializeObject(new WSActionReq<object>() { Action = _action, Args = req });
+            _client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(_req)), WebSocketMessageType.Text, true, CancellationToken.None).Wait(TimeSpan.FromSeconds(_builder.ConnectionTimeout));
+        }
+            private R WSExecute<R, T>(ClientWebSocket _client, WSActionReq<T> req, Action<byte[], int> _deserialize_binary = null)
         {
             R _result = default;
             var token = CancellationToken.None;
