@@ -11,7 +11,7 @@
     <RepositoryUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>taos;HealthChecks;TDengine</PackageTags>
-    <Copyright>Copyright 2019-2023 IoTSharp</Copyright>
+    <Copyright>Copyright 2023 IoTSharp</Copyright>
     <Description>提供涛思时序数据库的健康检查</Description>
     <Authors>maikebing</Authors>
   </PropertyGroup>

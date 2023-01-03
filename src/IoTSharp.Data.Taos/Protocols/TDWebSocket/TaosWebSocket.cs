@@ -468,7 +468,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                 protocol = (int)protocol,
                 precision,
                 ttl = 1000,
-                data = string.Join('\n', lines)
+                data = string.Join("\n", lines)
             }
             );
             if (_insert != null)

@@ -25,7 +25,6 @@ namespace EntityFrameworkCore.Taos.Tests
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            
         }
     }
 }
