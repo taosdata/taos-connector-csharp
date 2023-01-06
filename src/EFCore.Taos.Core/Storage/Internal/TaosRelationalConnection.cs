@@ -86,10 +86,9 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Storage.Internal
         }
         public override bool Open(bool errorsExpected = false)
         {
-            _connection.Open();
             _connection._nowdatabase = string.Empty;
+            _connection.Open();
             bool result = _connection.State == System.Data.ConnectionState.Open;
-            _connection.ChangeDatabase(_connection.Database);
             return result;
         }
         public override bool Close()

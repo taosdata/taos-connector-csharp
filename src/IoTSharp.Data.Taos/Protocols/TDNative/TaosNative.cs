@@ -1,5 +1,6 @@
 ﻿using IoTSharp.Data.Taos;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -144,11 +145,22 @@ namespace IoTSharp.Data.Taos.Protocols
             _queue.RemoveRef();
             if (_queue.GetRef() == 0)
             {
-                _queue.TaosQueue.ToList().ForEach(c =>
+                for (int i = 0; i < _queue.TaosQueue.Count; i++)
                 {
-                    TDengine.Close(c);
+                    try
+                    {
+                        var tk = _queue.Take();
+                        if (tk != IntPtr.Zero)
+                        {
+                            TDengine.Close(tk);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                     
+                    }
                 }
-                );
                 _queue = null;
                 g_pool.Remove(_connectionString);
             }
@@ -211,14 +223,16 @@ namespace IoTSharp.Data.Taos.Protocols
                 IntPtr ptr = IntPtr.Zero;
                 if (_parameters.IsValueCreated)
                 {
-                    if (_commandText.IndexOf('@') > 0)
-                    {
-                        var tps = _parameters.Value.OfType<TaosParameter>().OrderByDescending(c => c.ParameterName.Length).ToList();
-                        tps.ForEach(tp =>
-                        {
-                            _commandText = _commandText.Replace(tp.ParameterName, "?");
-                        });
-                    }
+                    //if (_commandText.IndexOf('@') > 0)
+                    //{
+                    //    var tps = _parameters.Value.OfType<TaosParameter>().OrderByDescending(c => c.ParameterName.Length).ToList();
+                    //    tps.ForEach(tp =>
+                    //    {
+                    //        _commandText = _commandText.Replace(tp.ParameterName, "?");
+                    //    });
+                    //}
+                    var sql = StatementObject.ResolveCommandText(_commandText);
+                    _commandText =sql.CommandText;
                     var stmt = TDengine.StmtInit(_taos);
                     if (stmt == IntPtr.Zero)
                     {
@@ -235,14 +249,14 @@ namespace IoTSharp.Data.Taos.Protocols
                         else
                         {
                             var isinsert = TDengine.StmtIsInsert(stmt);
-                            BindParamters(pms, _taos, out var datas, out var tags);
+                            BindParamters(pms, _taos, out var datas, out var tags,out var subtablename);
                             int ret = -1;
                             if (isinsert)
                             {
                                 int tags_ret = -1;
-                                if (tags.Count > 0 && !string.IsNullOrEmpty(pms.SubTableName))
+                                if (tags.Count > 0 && !string.IsNullOrEmpty(subtablename))
                                 {
-                                    tags_ret = TDengine.StmtSetTbnameTags(stmt, pms.SubTableName, tags.ToArray());
+                                    tags_ret = TDengine.StmtSetTbnameTags(stmt, subtablename, tags.ToArray());
                                     if (tags_ret != 0)
                                     {
                                         TaosException.ThrowExceptionForStmt(nameof(TDengine.StmtSetTbnameTags), _commandText, ret, stmt);
@@ -301,6 +315,7 @@ namespace IoTSharp.Data.Taos.Protocols
                             }
                             TaosMultiBind.FreeTaosBind(datas.ToArray());
                             TaosMultiBind.FreeTaosBind(tags.ToArray());
+                            TDengine.StmtClose(stmt);
                         }
                     }
                 }
@@ -331,7 +346,7 @@ namespace IoTSharp.Data.Taos.Protocols
                 }
                 if (_affectRows >= 0)
                 {
-                    taosField[] metas = TDengine.FetchFields(ptr);
+                    taosField[] metas = ptr!=IntPtr.Zero ? TDengine.FetchFields(ptr):new taosField[] { };
 #if DEBUG
                     if (Debugger.IsAttached)
                     {
@@ -359,10 +374,11 @@ namespace IoTSharp.Data.Taos.Protocols
             return dataReader;
         }
 
-        private void BindParamters(TaosParameterCollection pms, IntPtr _taos, out List<TAOS_MULTI_BIND> _datas, out List<TAOS_MULTI_BIND> _tags)
+        private void BindParamters(TaosParameterCollection pms, IntPtr _taos, out List<TAOS_MULTI_BIND> _datas, out List<TAOS_MULTI_BIND> _tags, out string _subtablename)
         {
             _datas = new List<TAOS_MULTI_BIND>();
             _tags = new List<TAOS_MULTI_BIND>();
+            _subtablename = string.Empty;
             for (int i = 0; i < pms.Count; i++)
             {
                 var tp = pms[i];
@@ -470,6 +486,10 @@ namespace IoTSharp.Data.Taos.Protocols
                 else if (tp.ParameterName.StartsWith("@"))
                 {
                     _datas.Add(_bind);
+                }
+                else if (tp.ParameterName.StartsWith("#"))
+                {
+                    _subtablename = tp.Value as string;
                 }
             }
         }

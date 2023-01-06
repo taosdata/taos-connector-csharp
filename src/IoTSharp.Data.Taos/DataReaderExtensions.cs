@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -49,7 +50,7 @@ namespace IoTSharp.Data.Taos
                         }
                         catch (Exception ex)
                         {
-
+                            Debug.WriteLine(ex.ToString());
                         }
                     }
                     jArray.Add(jObject);
@@ -106,11 +107,36 @@ namespace IoTSharp.Data.Taos
             var datatable = new DataTable();
             try
             {
-                datatable.Load(reader);
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    var col = new DataColumn(reader.GetName(i), reader.GetFieldType(i), null, MappingType.Element);
+                    datatable.Columns.Add(col);
+                }
+                while (reader.Read())
+                {
+                    var row = datatable.NewRow();
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        string strKey = reader.GetName(i);
+                        try
+                        {
+                            if (reader[i] != DBNull.Value)
+                            {
+                                object obj = Convert.ChangeType(reader[i], reader.GetFieldType(i));
+                                row[strKey] = obj;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            TaosException.ThrowExceptionForRC(-10002, $"ChangeType  Error {strKey}", ex);
+                        }
+                    }
+                    datatable.Rows.Add(row);
+                }
             }
             catch (Exception ex)
             {
-
+                TaosException.ThrowExceptionForRC(-10001, "ToDataTable Error", ex);
             }
             return datatable;
         }
@@ -218,7 +244,10 @@ namespace IoTSharp.Data.Taos
                 for (var i = 0; i < column_count; i++)
                 {
                     var schemaRow = schemaTable.NewRow();
-                    
+                    if (i == 0)
+                    {
+                        schemaRow[IsKey] = true;
+                    }
                     schemaRow[ColumnName] = getName(i);
                     schemaRow[ColumnOrdinal] = i;
                     schemaRow[ColumnSize] = getFieldSize(i);
@@ -237,10 +266,7 @@ namespace IoTSharp.Data.Taos
                     schemaRow[IsAliased] = columnName != getName(i);
                     schemaRow[IsExpression] = columnName == null;
                     schemaRow[IsLong] = DBNull.Value;
-                    if (i == 0)
-                    {
-                     //   schemaRow[IsKey] = true;
-                    }
+                  
                     schemaTable.Rows.Add(schemaRow);
                 }
             }

@@ -2,7 +2,7 @@
 
 namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 {
-
+ 
     public class WSActionReq<T>
     {
         [JsonProperty("action")]
@@ -11,6 +11,5 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
         [JsonProperty("args")]
         public T Args { get; set; }
     }
-
 
 }

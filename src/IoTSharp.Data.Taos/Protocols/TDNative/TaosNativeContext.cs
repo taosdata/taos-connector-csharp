@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -81,7 +82,15 @@ namespace IoTSharp.Data.Taos.Protocols
             IntPtr colLengthPrt = TDengine.FetchLengths(_taosResult);
             int numOfFiled = TDengine.FieldCount(_taosResult);
             int[] colLengthArr = new int[numOfFiled];
-            Marshal.Copy(colLengthPrt, colLengthArr, 0, numOfFiled);
+            if (colLengthPrt != IntPtr.Zero)
+            {
+                Marshal.Copy(colLengthPrt, colLengthArr, 0, numOfFiled);
+            }
+            else
+            {
+                var ex = LastException();
+                Debug.WriteIf(ex?.ErrorCode != 0, $"taos_fetch_lengths return null  {ex?.ErrorCode}-{ex?.Message}");
+            }
             return colLengthArr[ordinal];
         }
 

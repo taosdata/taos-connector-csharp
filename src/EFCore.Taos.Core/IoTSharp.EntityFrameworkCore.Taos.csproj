@@ -15,11 +15,11 @@
       Maikebing.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于Maikebing.Data.Taos构建。
     </PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <Copyright>Copyright © 2019-2020  maikebing All rights reserved.</Copyright>
+    <Copyright>Copyright © 2019-2023  IoTSharp All rights reserved.</Copyright>
     <Version>1.0.1</Version>
     <PackageTags>Taos;Data;ADO.NET;Entity Framework;EF; Core;Data O/RM;entity-framework-core;TDengine</PackageTags>
     <Platforms>AnyCPU;x64;x86</Platforms>
-    <PackageIcon>48876650.jpg</PackageIcon>
+    <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" />
@@ -35,7 +35,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\docs\48876650.jpg">
+    <None Include="..\..\docs\logo.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>

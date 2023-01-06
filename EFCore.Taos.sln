@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		appveyor.yml = appveyor.yml
 		LICENSE = LICENSE
+		docs\logo.png = docs\logo.png
 		README.md = README.md
 		docs\taos_ch.png = docs\taos_ch.png
 		docs\taos_ch_600.png = docs\taos_ch_600.png
@@ -32,7 +33,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IoTSharp.ORM.Taos", "src\Io
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ORMExample", "src\ORMExample\ORMExample.csproj", "{9961CED3-F482-41E7-AB0D-17EC37FD637D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleAppCppSharp", "src\ConsoleAppCppSharp\ConsoleAppCppSharp.csproj", "{9474C715-BB6C-445B-B80A-387A95751E93}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleAppCppSharp", "src\ConsoleAppCppSharp\ConsoleAppCppSharp.csproj", "{9474C715-BB6C-445B-B80A-387A95751E93}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,36 +1,33 @@
-﻿using IoTSharp.Data.Taos.Protocols.TDRESTful;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RestSharp;
-using RestSharp.Authenticators;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using TDengineDriver;
 
 namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 {
-
     internal partial class TaosWebSocket : ITaosProtocol
     {
-        private ClientWebSocket _client = null;
+        private ClientWebSocket _ws_client = null;
+        private ClientWebSocket _stmt_client = null;
+        private ClientWebSocket _schemaless_client = null;
         private string _databaseName;
         private TaosConnectionStringBuilder _builder;
 
         public bool ChangeDatabase(string databaseName)
         {
+            Close(_builder);
             _databaseName = databaseName;
             _builder.DataBase = _databaseName;
-            return true;
+            var result = Open(_builder);
+            return result;
         }
 
         public void Close(TaosConnectionStringBuilder connectionStringBuilder)
@@ -38,7 +35,9 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 #if NET46
 
 #else
-            _client?.Dispose();
+            _ws_client?.Dispose();
+            _stmt_client?.Dispose();
+            _schemaless_client?.Dispose();
 #endif
         }
 
@@ -71,8 +70,16 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             var closeConnection = (behavior & CommandBehavior.CloseConnection) != 0;
             try
             {
-                var tr = Execute(_commandText);
-                dataReader = new TaosDataReader(command, new TaosWebSocketContext(tr));
+                if (_parameters.IsValueCreated && _parameters.Value.Count > 0)
+                {
+                    var tr = ExecuteStmt(_commandText, _parameters);
+                    dataReader = new TaosDataReader(command, new TaosWebSocketContext(tr));
+                }
+                else
+                {
+                    var tr = Execute(_commandText);
+                    dataReader = new TaosDataReader(command, new TaosWebSocketContext(tr));
+                }
             }
             catch when (unprepared)
             {
@@ -80,18 +87,201 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             }
             return dataReader;
         }
-        private R WSExecute<R, T>(WSActionReq<T> req, Action<byte[], int> action = null)
+
+        private TaosWSResult ExecuteStmt(string _commandText, Lazy<TaosParameterCollection> _parameters)
+        {
+            TaosWSResult wSResult = new TaosWSResult(); ;
+            var pms = _parameters.Value;
+            var req_id = 0;
+            var _init = WSExecute<WSStmtRsp>(_stmt_client, "init", new { req_id });
+            var stmt_id = _init.stmt_id;
+
+            if (_init.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _init.code, Error = _init.message });
+            req_id++;
+            var sql = StatementObject.ResolveCommandText(_commandText);
+            var _prepare = WSExecute<WSStmtRsp>(_stmt_client, "prepare", new { req_id, stmt_id, sql = sql.CommandText });
+            if (_prepare.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _prepare.code, Error = _prepare.message });
+          
+            BindParamters(pms, out var columns, out var tags,out var subtablename);
+            req_id++;
+            if (!string.IsNullOrEmpty(subtablename))
+            {
+                var _set_table_name = WSExecute<WSStmtRsp>(_stmt_client, "set_table_name", new { req_id, stmt_id, name = subtablename });
+                if (_set_table_name.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _set_table_name.code, Error = _set_table_name.message });
+                req_id++;
+            }
+            if (tags.Count > 0)
+            {
+                var _set_tags = WSExecute<WSStmtRsp>(_stmt_client, "set_tags", new { req_id, stmt_id, tags });
+                if (_set_tags.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _set_tags.code, Error = _set_tags.message });
+                req_id++;
+            }
+            var _bind = WSExecute<WSStmtRsp>(_stmt_client, "bind", new { req_id, stmt_id, columns });
+            if (_bind.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _bind.code, Error = _bind.message });
+            req_id++;
+
+            var _add_batch = WSExecute<WSStmtRsp>(_stmt_client, "add_batch", new { req_id, stmt_id });
+            if (_add_batch.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _add_batch.code, Error = _add_batch.message });
+            var _exec = WSExecute<WSStmtExecRsp>(_stmt_client, "exec", new { req_id, stmt_id });
+            wSResult = new TaosWSResult() { StmtExec = _exec };
+            if (_exec.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _exec.code, Error = _exec.message });
+            req_id++;
+            //https://github.com/taosdata/taosadapter/issues/129#issuecomment-1369468337
+            WSExecute(_stmt_client, "close", new { req_id, stmt_id });
+            return wSResult;
+        }
+
+        private void BindParamters(TaosParameterCollection pms, out List<object[]> _datas, out List<string> _tags,out string _subtablename)
+        {
+            _datas = new List<object[]>();
+            _tags = new List<string>();
+            _subtablename = string.Empty;
+            for (int i = 0; i < pms.Count; i++)
+            {
+                var tp = pms[i];
+                var _bind = new KeyValuePair<string, object>();
+                switch (Type.GetTypeCode(tp.Value?.GetType()))
+                {
+                    case TypeCode.Boolean:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as bool?);
+                        break;
+
+                    case TypeCode.Char:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as string);
+                        break;
+
+                    case TypeCode.Byte:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as byte?);
+                        break;
+
+                    case TypeCode.SByte:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as sbyte?);
+                        break;
+
+                    case TypeCode.DateTime:
+                        var t0 = tp.Value as DateTime?;
+                        if (!t0.HasValue)
+                        {
+                            throw new ArgumentException($"InvalidArgumentOfDateTime{tp.Value}");
+                        }
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, t0);
+                        break;
+
+                    case TypeCode.Single:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as float?);
+                        break;
+
+                    case TypeCode.Decimal:
+                    case TypeCode.Double:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as double?);
+                        break;
+
+                    case TypeCode.Int16:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as short?);
+                        break;
+
+                    case TypeCode.Int32:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as int?);
+                        break;
+
+                    case TypeCode.Int64:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as long?);
+                        break;
+
+                    case TypeCode.UInt16:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as ushort?);
+                        break;
+
+                    case TypeCode.UInt32:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as uint?);
+                        break;
+
+                    case TypeCode.UInt64:
+                        _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as ulong?);
+                        break;
+
+                    case TypeCode.String:
+                        {
+                            switch (tp.TaosType)
+                            {
+                                case TaosType.Text:
+                                    _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as string);
+                                    break;
+
+                                case TaosType.Blob:
+                                    _bind = new KeyValuePair<string, object>(tp.ParameterName, tp.Value as string);
+                                    break;
+
+                                default:
+                                    break;
+                            }
+                        }
+                        break;
+
+                    case TypeCode.Object:
+                        if (tp.Value?.GetType() == typeof(byte[]))//后期重写这里 ， 需要重写 MultiBindBinary
+                        {
+                            _bind = new KeyValuePair<string, object>(tp.ParameterName, Encoding.Default.GetString(tp.Value as byte[]));
+                        }
+                        else if (tp.Value?.GetType() == typeof(char[]))
+                        {
+                            _bind = new KeyValuePair<string, object>(tp.ParameterName, new string(tp.Value as char[]));
+                        }
+                        break;
+
+                    default:
+                        throw new NotSupportedException($"列{tp.ParameterName}的类型{tp.Value?.GetType()}({tp.DbType},{tp.TaosType})不支持");
+                }
+                if (_bind.Value == null || string.IsNullOrEmpty(_bind.Value?.ToString()))
+                {
+                    throw new ArgumentNullException($"列{tp.ParameterName}的类型为空");
+                }
+                JObject jo = new()
+                {
+                        { _bind.Key, new JValue(_bind.Value) }
+                    };
+                if (tp.ParameterName.StartsWith("$"))
+                {
+                    _tags.Add(jo.ToString());
+                }
+                else if (tp.ParameterName.StartsWith("@"))
+                {
+                    _datas.Add(new object[] { _bind.Value });
+                }
+                else if (tp.ParameterName.StartsWith("#"))
+                {
+                    _subtablename = tp.Value as string;
+                }
+            }
+        }
+
+        private R WSExecute<R>(ClientWebSocket _client, string _action, object req, Action<byte[], int> _deserialize_binary = null)
+        {
+            return WSExecute<R, object>(_client, new WSActionReq<object>() { Action = _action, Args = req }, _deserialize_binary);
+        }
+
+        private void WSExecute<T>(ClientWebSocket _client, string _action, T req)
+        {
+            var token = CancellationToken.None;
+            var _req = JsonConvert.SerializeObject(new WSActionReq<object>() { Action = _action, Args = req });
+            _client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(_req)), WebSocketMessageType.Text, true, CancellationToken.None).Wait(TimeSpan.FromSeconds(_builder.ConnectionTimeout));
+        }
+        private R WSExecute<R, T>(ClientWebSocket _client, string _action, T req, Action<byte[], int> _deserialize_binary = null)
+        {
+           return WSExecute<R, T>(_client, new WSActionReq<T>() { Action = _action, Args = req }, _deserialize_binary);
+        }
+        private R WSExecute<R, T>(ClientWebSocket _client, WSActionReq<T> req, Action<byte[], int> _deserialize_binary = null)
         {
             R _result = default;
             var token = CancellationToken.None;
             var _req = Newtonsoft.Json.JsonConvert.SerializeObject(req);
             Debug.WriteLine(_req);
             _client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(_req)), WebSocketMessageType.Text, true, CancellationToken.None).Wait(TimeSpan.FromSeconds(_builder.ConnectionTimeout));
-            int bufferSize = 1024*1024*4;
+            int bufferSize = 1024 * 1024 * 4;
             var buffer = new byte[bufferSize];
             var offset = 0;
             var free = buffer.Length;
-                    WebSocketMessageType _msgType;
+            WebSocketMessageType _msgType;
             while (true)
             {
                 var result = _client.ReceiveAsync(new ArraySegment<byte>(buffer, offset, free), token).GetAwaiter().GetResult();
@@ -110,7 +300,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                     // Check if the new size exceeds a limit
                     // It should suit the data it receives
                     // This limit however has a max value of 2 billion bytes (2 GB)
-                    if (newSize > 1024*1024*1024)
+                    if (newSize > 1024 * 1024 * 1024)
                     {
                         throw new Exception("Maximum size exceeded");
                     }
@@ -121,40 +311,44 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                 }
             }
 
-  
             switch (_msgType)
             {
                 case WebSocketMessageType.Binary:
-                    action?.Invoke(buffer, offset);
+                    _deserialize_binary?.Invoke(buffer, offset);
                     break;
+
                 case WebSocketMessageType.Close:
                     break;
+
                 case WebSocketMessageType.Text:
-                    var json = Encoding.UTF8.GetString(buffer,0, offset);
+                    var json = Encoding.UTF8.GetString(buffer, 0, offset);
                     _result = Newtonsoft.Json.JsonConvert.DeserializeObject<R>(json);
                     break;
+
                 default:
                     break;
             }
             return _result;
         }
+
         //https://github.com/taosdata/taosadapter/blob/e57b466a3f243901bc93b15519b57a26d649612a/controller/rest/ws_test.go
         //https://github.com/taosdata/taosadapter/blob/e57b466a3f243901bc93b15519b57a26d649612a/controller/rest/ws.go#L152
-        private volatile static int  _reqid=0;
+        private static volatile int _reqid = 0;
+
         private TaosWSResult Execute(string _commandText)
         {
             var dt = DateTime.Now;
             TaosWSResult wSResult = new TaosWSResult(); ;
             _reqid++;
             if (_reqid > 99999) _reqid = 0;
-            var repquery = WSExecute<WSQueryRsp, WSQueryReq>(new WSActionReq<WSQueryReq>() { Action = "query", Args = new WSQueryReq() { req_id = _reqid, sql = _commandText } });
+            var repquery = WSExecute<WSQueryRsp, WSQueryReq>(_ws_client, new WSActionReq<WSQueryReq>() { Action = "query", Args = new WSQueryReq() { req_id = _reqid, sql = _commandText } });
             if (repquery.code != 0)
             {
                 TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = repquery.code, Error = repquery.message });
             }
             if (!repquery.is_update)
             {
-                var repfetch = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
+                var repfetch = WSExecute<WSFetchRsp, WSFetchReq>(_ws_client, new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
                 if (repfetch.code == 0)
                 {
                     List<byte> data = new List<byte>();
@@ -164,7 +358,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                         byte[] buffer = new byte[] { };
                         var repfetch_block = WSExecute<byte[], WSFetchReq>
                            (
-                               new WSActionReq<WSFetchReq>()
+                               _ws_client, new WSActionReq<WSFetchReq>()
                                {
                                    Action = "fetch_block",
                                    Args = new WSFetchReq() { req_id = repquery.req_id, id = repfetch.id }
@@ -175,11 +369,11 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                                    Array.Copy(bytes, buffer, len);
                                }
                          );
-                        repfetch = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
-                        _rows += repfetch.rows;
+                        repfetch = WSExecute<WSFetchRsp, WSFetchReq>(_ws_client, new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
+                        // _rows += repfetch.rows;
                         data.AddRange(buffer);
                     } while (!repfetch.completed);
-                    var free_result = WSExecute<WSFetchRsp, WSFetchReq>(new WSActionReq<WSFetchReq>() { Action = "free_result", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
+                    WSExecute(_ws_client, "free_result", new { repquery.req_id, repquery.id });
                     wSResult = new TaosWSResult() { data = data.ToArray(), meta = repquery, rows = _rows };
                 }
                 else
@@ -201,7 +395,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         public string GetServerVersion()
         {
-           var rep= WSExecute<WSVersionRsp,string> (new WSActionReq<string>() { Action = "version", Args="" });
+            var rep = WSExecute<WSVersionRsp, string>(_ws_client, new WSActionReq<string>() { Action = "version", Args = "" });
             return rep.version;
         }
 
@@ -214,23 +408,55 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             _builder = connectionStringBuilder;
             var builder = connectionStringBuilder;
             string _timez = string.IsNullOrEmpty(builder.TimeZone) ? "" : $"?tz={builder.TimeZone}";
-            _client = new ClientWebSocket();
-            _client.Options.Credentials = new NetworkCredential(builder.Username, builder.Password);
-            var url = $"ws://{builder.DataSource}:{builder.Port}/rest/ws";
-            _client.ConnectAsync(new Uri(url), CancellationToken.None).Wait(TimeSpan.FromSeconds(builder.ConnectionTimeout));
-            if (_client.State != WebSocketState.Open)
+            _ws_client = new ClientWebSocket();
+            _stmt_client = new ClientWebSocket();
+            var ws_ok = _open_ws(builder);
+            var stmt_ok = _open_stmt(builder);
+            return ws_ok && stmt_ok;
+        }
+
+        private bool _open_stmt(TaosConnectionStringBuilder builder)
+        {
+            _stmt_client.Options.Credentials = new NetworkCredential(builder.Username, builder.Password);
+            var url = $"ws://{builder.DataSource}:{builder.Port}/rest/stmt";
+            _stmt_client.ConnectAsync(new Uri(url), CancellationToken.None).Wait(TimeSpan.FromSeconds(builder.ConnectionTimeout));
+            if (_stmt_client.State != WebSocketState.Open)
             {
-                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code =(int) _client.CloseStatus, Error = _client .CloseStatusDescription});
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = (int)_stmt_client.CloseStatus, Error = _stmt_client.CloseStatusDescription });
             }
-            var rep = WSExecute<WSConnRsp, WSConnReq>(new WSActionReq<WSConnReq> () {  Action = "conn", Args = new WSConnReq() {  user=builder.Username, password=builder.Password,  req_id=0} });
-            if (rep.code!=0)
+            var rep = WSExecute<WSConnRsp, WSConnReq>(_stmt_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0,db=builder.DataBase } });
+            if (rep.code==899)
+            {
+                  rep = WSExecute<WSConnRsp, WSConnReq>(_stmt_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0} });
+            }
+            if (rep.code != 0)
             {
                 TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = rep.code, Error = rep.message });
             }
             return rep.code == 0;
         }
 
-      
+        private bool _open_ws(TaosConnectionStringBuilder builder)
+        {
+            _ws_client.Options.Credentials = new NetworkCredential(builder.Username, builder.Password);
+            var url = $"ws://{builder.DataSource}:{builder.Port}/rest/ws";
+            _ws_client.ConnectAsync(new Uri(url), CancellationToken.None).Wait(TimeSpan.FromSeconds(builder.ConnectionTimeout));
+            if (_ws_client.State != WebSocketState.Open)
+            {
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = (int)_ws_client.CloseStatus, Error = _ws_client.CloseStatusDescription });
+            }
+            var rep = WSExecute<WSConnRsp, WSConnReq>(_ws_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0, db = builder.DataBase } });
+            if (rep.code == 899)
+            {
+                rep = WSExecute<WSConnRsp, WSConnReq>(_ws_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0 } });
+            }
+            if (rep.code != 0)
+            {
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = rep.code, Error = rep.message });
+            }
+            return rep.code == 0;
+        }
+
         public void Return(nint taos)
         {
         }
@@ -240,11 +466,65 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             return IntPtr.Zero;
         }
 
-        public int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision precision)
+        private void _open__schemaless(TaosConnectionStringBuilder builder)
         {
-            throw new NotSupportedException("RESTful  不支持 ExecuteBulkInsert");
+            _schemaless_client.Options.Credentials = new NetworkCredential(builder.Username, builder.Password);
+            var url = $"ws://{builder.DataSource}:{builder.Port}/rest/schemaless";
+            _schemaless_client.ConnectAsync(new Uri(url), CancellationToken.None).Wait(TimeSpan.FromSeconds(builder.ConnectionTimeout));
+            if (_ws_client.State != WebSocketState.Open)
+            {
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = (int)_ws_client.CloseStatus, Error = _ws_client.CloseStatusDescription });
+            }
+            WSExecute(_ws_client, "conn", new { user = builder.Username, password = builder.Password });
+        }
+
+        public int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision _precision)
+        {
+            if (_schemaless_client == null || _schemaless_client.State != WebSocketState.Open)
+            {
+                _open__schemaless(_builder);
+            }
+            string precision = SchemalessPrecisionToString(_precision);
+            var _insert = WSExecute<WSSchemalessRsp>(_schemaless_client, "insert", new
+            {
+                db = _builder.DataBase,
+                protocol = (int)protocol,
+                precision,
+                ttl = 1000,
+                data = string.Join("\n", lines)
+            }
+            );
+            if (_insert != null)
+            {
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = -1, Error = "返回值错误." });
+            }
+            return lines.Length;
+        }
+
+        private static string SchemalessPrecisionToString(TDengineSchemalessPrecision _precision)
+        {
+            var precision = "ms";
+            switch (_precision)
+            {
+                case TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_SECONDS:
+                    precision = "s";
+                    break;
+
+                case TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MICRO_SECONDS:
+                    precision = "us";
+                    break;
+
+                case TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NANO_SECONDS:
+                    precision = "ns";
+                    break;
+
+                case TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS:
+                default:
+                    precision = "ms";
+                    break;
+            }
+
+            return precision;
         }
     }
-
-
 }

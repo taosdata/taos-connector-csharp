@@ -153,10 +153,8 @@ namespace IoTSharp.Data.Taos
            
             _closed = true;
             _context?.Dispose();
-            OnDispose?.Invoke(this, EventArgs.Empty);
             _context = null;
-          
-        
+            OnDispose?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
