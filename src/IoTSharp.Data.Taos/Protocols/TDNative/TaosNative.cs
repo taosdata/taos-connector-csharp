@@ -237,14 +237,14 @@ namespace IoTSharp.Data.Taos.Protocols
                         else
                         {
                             var isinsert = TDengine.StmtIsInsert(stmt);
-                            BindParamters(pms, _taos, out var datas, out var tags);
+                            BindParamters(pms, _taos, out var datas, out var tags,out var subtablename);
                             int ret = -1;
                             if (isinsert)
                             {
                                 int tags_ret = -1;
-                                if (tags.Count > 0 && !string.IsNullOrEmpty(pms.SubTableName))
+                                if (tags.Count > 0 && !string.IsNullOrEmpty(subtablename))
                                 {
-                                    tags_ret = TDengine.StmtSetTbnameTags(stmt, pms.SubTableName, tags.ToArray());
+                                    tags_ret = TDengine.StmtSetTbnameTags(stmt, subtablename, tags.ToArray());
                                     if (tags_ret != 0)
                                     {
                                         TaosException.ThrowExceptionForStmt(nameof(TDengine.StmtSetTbnameTags), _commandText, ret, stmt);
@@ -361,10 +361,11 @@ namespace IoTSharp.Data.Taos.Protocols
             return dataReader;
         }
 
-        private void BindParamters(TaosParameterCollection pms, IntPtr _taos, out List<TAOS_MULTI_BIND> _datas, out List<TAOS_MULTI_BIND> _tags)
+        private void BindParamters(TaosParameterCollection pms, IntPtr _taos, out List<TAOS_MULTI_BIND> _datas, out List<TAOS_MULTI_BIND> _tags, out string _subtablename)
         {
             _datas = new List<TAOS_MULTI_BIND>();
             _tags = new List<TAOS_MULTI_BIND>();
+            _subtablename = string.Empty;
             for (int i = 0; i < pms.Count; i++)
             {
                 var tp = pms[i];
@@ -472,6 +473,10 @@ namespace IoTSharp.Data.Taos.Protocols
                 else if (tp.ParameterName.StartsWith("@"))
                 {
                     _datas.Add(_bind);
+                }
+                else if (tp.ParameterName.StartsWith("#"))
+                {
+                    _subtablename = tp.Value as string;
                 }
             }
         }
