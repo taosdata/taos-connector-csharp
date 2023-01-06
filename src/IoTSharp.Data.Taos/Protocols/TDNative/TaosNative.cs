@@ -1,5 +1,6 @@
 ﻿using IoTSharp.Data.Taos;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -144,11 +145,22 @@ namespace IoTSharp.Data.Taos.Protocols
             _queue.RemoveRef();
             if (_queue.GetRef() == 0)
             {
-                _queue.TaosQueue.ToList().ForEach(c =>
+                for (int i = 0; i < _queue.TaosQueue.Count; i++)
                 {
-                    TDengine.Close(c);
+                    try
+                    {
+                        var tk = _queue.Take();
+                        if (tk != IntPtr.Zero)
+                        {
+                            TDengine.Close(tk);
+                        }
+                    }
+                    catch (Exception)
+                    {
+
+                     
+                    }
                 }
-                );
                 _queue = null;
                 g_pool.Remove(_connectionString);
             }
@@ -303,6 +315,7 @@ namespace IoTSharp.Data.Taos.Protocols
                             }
                             TaosMultiBind.FreeTaosBind(datas.ToArray());
                             TaosMultiBind.FreeTaosBind(tags.ToArray());
+                            TDengine.StmtClose(stmt);
                         }
                     }
                 }
@@ -333,7 +346,7 @@ namespace IoTSharp.Data.Taos.Protocols
                 }
                 if (_affectRows >= 0)
                 {
-                    taosField[] metas = TDengine.FetchFields(ptr);
+                    taosField[] metas = ptr!=IntPtr.Zero ? TDengine.FetchFields(ptr):new taosField[] { };
 #if DEBUG
                     if (Debugger.IsAttached)
                     {

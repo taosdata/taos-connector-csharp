@@ -237,10 +237,7 @@ namespace TDengineDriver
 
         public static taosField[] FetchFields(IntPtr res)
         {
-            if (res == IntPtr.Zero)
-            {
-                return null;
-            }
+          
             taosField[] taosField=null;
             int fieldCount = FieldCount(res);
             if (fieldCount > 0)
