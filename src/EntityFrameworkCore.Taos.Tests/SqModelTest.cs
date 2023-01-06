@@ -31,7 +31,7 @@ namespace EntityFrameworkCore.Taos.Tests
             Assert.AreEqual(1, pn2.Count);
             Assert.AreEqual("@p1", pn2.Keys.ToArray()[0]);
             var s3 = SqlParser.Parse(SQLDemo3);
-            Assert.AreEqual(7, s3.Parameters.Count);
+            Assert.AreEqual(7, s3.Parameters?.Count);
             Assert.AreEqual("@t1", s3.Parameters.ToArray()[1].Key);
             Assert.AreEqual("@t11", s3.Parameters.ToArray()[3].Key);
         //    Assert.AreEqual(" LIMIT ",s3.);
