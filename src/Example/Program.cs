@@ -1,8 +1,6 @@
 ﻿using ConsoleTableExt;
 using IoTSharp.Data.Taos;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -11,11 +9,10 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TDengineDriver;
 
 namespace TaosADODemo
 {
-    class Program
+    internal class Program
     {
         /// <summary>
         /// 时间戳计时开始时间
@@ -32,25 +29,45 @@ namespace TaosADODemo
             return (long)(DateTime.Now.ToUniversalTime() - timeStampStartTime).TotalMilliseconds;
         }
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
+            var IS_RUNNING_IN_CONTAINER = bool.TryParse(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out bool _DOTNET_RUNNING_IN_CONTAINER) && _DOTNET_RUNNING_IN_CONTAINER;
+            var _dbhost = IS_RUNNING_IN_CONTAINER ? "taos" : "localhost";
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             DbProviderFactories.RegisterFactory("TDengine", TaosFactory.Instance);
-            ///Specify the name of the database
             string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             var builder = new TaosConnectionStringBuilder()
             {
-                DataSource = "taos",
+                DataSource = _dbhost,
                 DataBase = database,
                 Username = "root",
                 Password = "taosdata",
                 Port = 6030
-
             };
-            ExecSqlByStmt(database);
-            ExecSqlByWebSocket(database);
-            ExecSqlByRESTFul(database);
+#if DEBUG
+            ExecSqlByStmt(builder.UseWebSocket());
+            ExecSqlByWebSocket(builder.UseWebSocket());
+            UseTaosEFCore(builder.UseWebSocket());
 
+            ExecSqlByRESTFul(builder.UseRESTful());
+            ExecSqlByNative(builder.UseNative());
+
+            UseTaosEFCore(builder.UseNative());
+#else
+            ExecSqlByStmt(builder.UseWebSocket());
+            ExecSqlByWebSocket(builder.UseWebSocket());
+            UseTaosEFCore(builder.UseWebSocket());
+
+            ExecSqlByRESTFul(builder.UseRESTful());
+            ExecSqlByNative(builder.UseNative());
+
+            UseTaosEFCore(builder.UseNative());
+#endif
+        }
+
+        private static void ExecSqlByNative(TaosConnectionStringBuilder builder)
+        {
+            string database = builder.DataBase;
             string configdir = System.Environment.CurrentDirectory.Replace("\\", "/") + "/";
             using (var connection = new TaosConnection(builder.ConnectionString, configdir))
             {
@@ -60,7 +77,7 @@ namespace TaosADODemo
                     Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
                     connection.ChangeDatabase(database);
                     var lines = new string[] {
-                        String.Format("meters,tname=cpu1,location=California.LosAngeles,groupid=2 current=11.8,voltage=221,phase=0.28 {0}",DateTimeToLongTimeStamp()),
+                        string.Format("meters,tname=cpu1,location=California.LosAngeles,groupid=2 current=11.8,voltage=221,phase=0.28 {0}",DateTimeToLongTimeStamp()),
                 };
 
                     int result = connection.ExecuteBulkInsert(lines);
@@ -88,7 +105,7 @@ namespace TaosADODemo
                 }
             }
 
-            //Example for ADO.Net 
+            //Example for ADO.Net
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
                 connection.Open();
@@ -178,7 +195,6 @@ namespace TaosADODemo
                     ConsoleTableBuilder.From(dic[k]).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine(TableAligntment.Center);
                 });
 
-
                 //行插入
                 BulkInsertLines(connection);
                 //使用对象构建Lines 航插入
@@ -191,36 +207,20 @@ namespace TaosADODemo
                 BulkInsertWithJson_BuildJson(connection);
 
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
-
-
-
-                connection.Close();
-
-
-
             }
-            UseTaosEFCore(builder);
-
         }
-        private static void ExecSqlByStmt(string database)
-        {
-            var builder_rest = new TaosConnectionStringBuilder()
-            {
-                DataSource = "localhost",
-                DataBase = database,
-                Username = "root",
-                Password = "taosdata",
 
-            }.UseWebSocket();
-            using (var connection = new TaosConnection(builder_rest.ConnectionString))
+        private static void ExecSqlByStmt(TaosConnectionStringBuilder builder)
+        {
+            using (var connection = new TaosConnection(builder.ConnectionString))
             {
                 connection.Open();
                 connection.CreateCommand("create database if not exists test_ws_stmt precision 'ns';").ExecuteNonQuery();
                 connection.CreateCommand("create table if not exists test_ws_stmt.st(ts timestamp,c1 bool, c2 tinyint,c3 smallint, c4 int, c5 bigint, c6 tinyint unsigned, c7 smallint unsigned, c8 int unsigned, c9 bigint unsigned, c10 float,  c11 double, c12 binary(20), c13 nchar(20) ) tags (info json);").ExecuteNonQuery();
                 var insert = connection.CreateCommand("insert into ? using test_ws_stmt.st tags (?) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
                 var pms = insert.Parameters;
-              //  pms.SetSubTableName("test_ws_stmt.st3");
-                pms.SubTableName = "test_ws_stmt.st3";
+                //  pms.SetSubTableName("test_ws_stmt.st3");
+                pms.AddSubTableName("test_ws_stmt.st3");
                 pms.AddTagsValue("{\"a\":\"b\"}");
                 pms.AddWithValue(DateTime.Now);
                 pms.AddWithValue(true);
@@ -240,17 +240,10 @@ namespace TaosADODemo
             }
         }
 
-        private static void ExecSqlByWebSocket(string database)
+        private static void ExecSqlByWebSocket(TaosConnectionStringBuilder builder)
         {
-            var builder_rest = new TaosConnectionStringBuilder()
-            {
-                DataSource = "localhost",
-                DataBase = database,
-                Username = "root",
-                Password = "taosdata",
-
-            }.UseWebSocket();
-            using (var connection = new TaosConnection(builder_rest.ConnectionString))
+            var database = builder.DataBase;
+            using (var connection = new TaosConnection(builder.ConnectionString))
             {
                 connection.Open();
                 Console.WriteLine("ServerVersion:{0}", connection.ServerVersion);
@@ -264,7 +257,6 @@ namespace TaosADODemo
                 Thread.Sleep(100);
                 Console.WriteLine("单表插入多行数据 {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 101) ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds + 1)}, 992);").ExecuteNonQuery());
                 connection.ChangeDatabase(database);
-
 
                 Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.AddMonths(-1).Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 20);").ExecuteNonQuery());
                 var cmd_select = connection.CreateCommand();
@@ -283,24 +275,24 @@ namespace TaosADODemo
 
                 connection.ChangeDatabase(database);
                 Console.WriteLine("");
-                connection.CreateCommand($"CREATE TABLE datas (reportTime timestamp, type int, bufferedEnd bool, address nchar(64), parameter nchar(64), `value` nchar(64)) TAGS (boxCode nchar(64), machineId int);").ExecuteNonQuery();
-                connection.CreateCommand($"INSERT INTO  data_history_67 USING datas TAGS ('mongo', 67) values ( 1608173534840, 2 ,false ,'Channel1.窑.烟囱温度', '烟囱温度' ,'122.00' );").ExecuteNonQuery();
+                connection.CreateCommand($"CREATE TABLE {database}.datas (reportTime timestamp, type int, bufferedEnd bool, address nchar(64), parameter nchar(64), `value` nchar(64)) TAGS (boxCode nchar(64), machineId int);").ExecuteNonQuery();
+                connection.CreateCommand($"INSERT INTO  {database}.data_history_67 USING {database}.datas TAGS ('mongo', 67) values ( 1608173534840, 2 ,false ,'Channel1.窑.烟囱温度', '烟囱温度' ,'122.00' );").ExecuteNonQuery();
                 var cmd_datas = connection.CreateCommand();
                 cmd_datas.CommandText = $"SELECT  reportTime,type,bufferedEnd,address,parameter,`value` FROM  {database}.data_history_67 LIMIT  100";
                 var readerdatas = cmd_datas.ExecuteReader();
                 Console.WriteLine(cmd_datas.CommandText);
                 Console.WriteLine("");
-               ConsoleTableBuilder.From(readerdatas.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                ConsoleTableBuilder.From(readerdatas.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 Console.WriteLine("");
 
-                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupdId int);").ExecuteNonQuery());
-                Console.WriteLine("CREATE TABLE d1001 ", connection.CreateCommand($"CREATE TABLE d1001 USING meters TAGS (\"Beijing.Chaoyang\", 2);").ExecuteNonQuery());
-                Console.WriteLine("INSERT INTO d1001  ", connection.CreateCommand($"INSERT INTO d1001 USING METERS TAGS(\"Beijng.Chaoyang\", 2) VALUES(now, 10.2, 219, 0.32);").ExecuteNonQuery());
+                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE {database}.meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupdId int);").ExecuteNonQuery());
+                Console.WriteLine("CREATE TABLE d1001 ", connection.CreateCommand($"CREATE TABLE {database}.d1001 USING {database}.meters TAGS (\"Beijing.Chaoyang\", 2);").ExecuteNonQuery());
+                Console.WriteLine("INSERT INTO d1001  ", connection.CreateCommand($"INSERT INTO {database}.d1001 USING {database}.METERS TAGS(\"Beijng.Chaoyang\", 2) VALUES(now, 10.2, 219, 0.32);").ExecuteNonQuery());
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
                 Console.WriteLine("DROP DATABASE {0} {1}", database, connection.CreateCommand($"DROP DATABASE   {database};").ExecuteNonQuery());
-                connection.CreateCommand("DROP DATABASE IF EXISTS  IoTSharp").ExecuteNonQuery();
-                connection.CreateCommand("CREATE DATABASE IoTSharp KEEP 365d;").ExecuteNonQuery();
-                connection.ChangeDatabase("IoTSharp");
+                connection.CreateCommand("DROP DATABASE IF EXISTS  iotsharp").ExecuteNonQuery();
+                connection.CreateCommand("CREATE DATABASE iotsharp KEEP 365d;").ExecuteNonQuery();
+                connection.ChangeDatabase("iotsharp");
                 connection.CreateCommand("CREATE TABLE IF NOT EXISTS telemetrydata  (ts timestamp,value_type  tinyint, value_boolean bool, value_string binary(10240), value_long bigint,value_datetime timestamp,value_double double)   TAGS (deviceid binary(32),keyname binary(64));").ExecuteNonQuery();
                 var devid1 = $"{Guid.NewGuid():N}";
                 var devid2 = $"{Guid.NewGuid():N}";
@@ -339,28 +331,13 @@ namespace TaosADODemo
                     ConsoleTableBuilder.From(dic[k]).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine(TableAligntment.Center);
                 });
 
-
-
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
-
-
-
-                connection.Close();
-
-
-
             }
         }
-        private static void ExecSqlByRESTFul(string database)
-        {
-            var builder_rest = new TaosConnectionStringBuilder()
-            {
-                DataSource = "taos",
-                DataBase = database,
-                Username = "root",
-                Password = "taosdata",
 
-            }.UseRESTful();
+        private static void ExecSqlByRESTFul(TaosConnectionStringBuilder builder_rest)
+        {
+            string database = builder_rest.DataBase;
             using (var connection = new TaosConnection(builder_rest.ConnectionString))
             {
                 connection.Open();
@@ -375,7 +352,6 @@ namespace TaosADODemo
                 Thread.Sleep(100);
                 Console.WriteLine("单表插入多行数据 {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 101) ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds + 1)}, 992);").ExecuteNonQuery());
                 connection.ChangeDatabase(database);
-
 
                 Console.WriteLine("insert into t values  {0} ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.AddMonths(-1).Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 20);").ExecuteNonQuery());
                 var cmd_select = connection.CreateCommand();
@@ -450,22 +426,15 @@ namespace TaosADODemo
                     ConsoleTableBuilder.From(dic[k]).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine(TableAligntment.Center);
                 });
 
-
-
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
 
-
-
                 connection.Close();
-
-
-
             }
         }
 
         private static void UseTaosEFCore(TaosConnectionStringBuilder builder)
         {
-            //Example for  Entity Framework Core  
+            //Example for  Entity Framework Core
             using (var context = new TaosContext(new DbContextOptionsBuilder()
                                                     .UseTaos(builder.ConnectionString).Options))
             {
@@ -583,20 +552,20 @@ namespace TaosADODemo
 
         private static void BulkInsertLines(TaosConnection connection)
         {
-          
-           var lines =new string[] {
+            var lines = new string[] {
                 "meters,location=Beijing.Haidian,groupid=2 current=11.8,voltage=221,phase=0.28 1648432611249",
                 "meters,location=Beijing.Haidian,groupid=2 current=13.4,voltage=223,phase=0.29 1648432611250",
                 "meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249",
                 "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
             };
-            int  result = connection.ExecuteBulkInsert(lines);
+            int result = connection.ExecuteBulkInsert(lines);
             Console.WriteLine($"行插入{result}");
             if (result != lines.Length)
             {
                 throw new Exception("ExecuteBulkInsert");
             }
         }
+
         /// <summary>
         /// taos_schemaless_insert 数值类型 和 时间精度 #18413
         /// </summary>
@@ -605,8 +574,8 @@ namespace TaosADODemo
         /// <seealso cref="https://github.com/taosdata/TDengine/issues/18413"/>
         private static void BulkRecordData(TaosConnection connection)
         {
-           var rec=  RecordData.table("meters").Tag("location", "Beijing.Haidian").Tag("groupid", "2").Timestamp(DateTime.Now.ToUniversalTime(), TimePrecision.Ms)
-                .Field("current", 12.1).Field("voltage", 234.0).Field("phase",0.33);
+            var rec = RecordData.table("meters").Tag("location", "Beijing.Haidian").Tag("groupid", "2").Timestamp(DateTime.Now.ToUniversalTime(), TimePrecision.Ms)
+                 .Field("current", 12.1).Field("voltage", 234.0).Field("phase", 0.33);
             int result = connection.ExecuteBulkInsert(rec);
             Console.WriteLine($"行插入{result}");
             if (result != 1)
@@ -651,7 +620,7 @@ namespace TaosADODemo
             Console.WriteLine($"{createTable} {0}", connection.CreateCommand(createTable).ExecuteNonQuery());
             var _insertcmd = connection.CreateCommand(insertSql);
             string subTable = stable + "_s01";
-            _insertcmd.Parameters.SubTableName = subTable;
+            _insertcmd.Parameters.AddSubTableName(subTable);
             _insertcmd.Parameters.AddTagsValue(true);// mBinds[0] = TaosMultiBind.MultiBindBool(new bool?[] { true });
             _insertcmd.Parameters.AddTagsValue((sbyte)1);//    mBinds[1] = TaosMultiBind.MultiBindTinyInt(new sbyte?[] { 1 });
             _insertcmd.Parameters.AddTagsValue((short)2);//      mBinds[2] = TaosMultiBind.MultiBindSmallInt(new short?[] { 2 });
@@ -666,8 +635,6 @@ namespace TaosADODemo
             _insertcmd.Parameters.AddTagsValue("taosdata");//   mBinds[11] = TaosMultiBind.MultiBindBinary(new string?[] { "taosdata" });
             _insertcmd.Parameters.AddTagsValue("TDenginge".ToCharArray());//    mBinds[12] = TaosMultiBind.MultiBindNchar(new string?[] { "TDenginge" });
 
-
-
             long[] tsArr = new long[5] { 1656677700000, 1656677710000, 1656677720000, 1656677730000, 1656677700000 };
             bool?[] boolArr = new bool?[5] { true, false, null, true, true };
             sbyte?[] tinyIntArr = new sbyte?[5] { -127, 0, null, 8, 127 };
@@ -680,10 +647,8 @@ namespace TaosADODemo
             ushort?[] uShortArr = new ushort?[5] { ushort.MinValue, 200, null, 400, ushort.MaxValue - 1 };
             uint?[] uIntArr = new uint?[5] { uint.MinValue, 100, null, 2, uint.MaxValue - 1 };
             ulong?[] uLongArr = new ulong?[5] { ulong.MinValue, 2000, null, 1000, long.MaxValue - 1 };
-            string?[] binaryArr = new string?[5] { "1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", String.Empty, null, "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM", "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890~!@#$%^&*()_+=-`[]{}:,./<>?" };
-            string?[] ncharArr = new string?[5] { "1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", null, "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM", "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", string.Empty };
-
-
+            string[] binaryArr = new string[5] { "1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", string.Empty, null, "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM", "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890~!@#$%^&*()_+=-`[]{}:,./<>?" };
+            string[] ncharArr = new string[5] { "1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", null, "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM", "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890~!@#$%^&*()_+=-`[]{}:,./<>?", string.Empty };
 
             _insertcmd.Parameters.AddWithValue(DateTime.UnixEpoch.AddMilliseconds(tsArr[0]));// mBinds[0] = TaosMultiBind.MultiBindTimestamp(tsArr);
             _insertcmd.Parameters.AddWithValue(boolArr[0]);// mBinds[1] = TaosMultiBind.MultiBindBool(boolArr);
@@ -706,7 +671,7 @@ namespace TaosADODemo
             ConsoleTableBuilder.From(_qreader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
         }
 
-        static void UploadTelemetryData(  TaosConnection connection, string devid, string keyname, int count)
+        private static void UploadTelemetryData(TaosConnection connection, string devid, string keyname, int count)
         {
             for (int i = 0; i < count; i++)
             {
@@ -714,9 +679,9 @@ namespace TaosADODemo
             }
         }
 
-        static void UploadTelemetryDataPool(TaosConnection connection, string devid, string keyname, int count)
+        private static void UploadTelemetryDataPool(TaosConnection connection, string devid, string keyname, int count)
         {
-            Parallel.For(0, count,new ParallelOptions() { MaxDegreeOfParallelism=connection.PoolSize }, i =>
+            Parallel.For(0, count, new ParallelOptions() { MaxDegreeOfParallelism = connection.PoolSize }, i =>
             {
                 try
                 {
