@@ -6,6 +6,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Net;
 using System.Net.WebSockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using TDengineDriver;
@@ -22,9 +23,11 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         public bool ChangeDatabase(string databaseName)
         {
+            Close(_builder);
             _databaseName = databaseName;
             _builder.DataBase = _databaseName;
-            return true;
+            var result = Open(_builder);
+            return result;
         }
 
         public void Close(TaosConnectionStringBuilder connectionStringBuilder)
@@ -34,6 +37,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 #else
             _ws_client?.Dispose();
             _stmt_client?.Dispose();
+            _schemaless_client?.Dispose();
 #endif
         }
 
@@ -94,20 +98,24 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
             if (_init.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _init.code, Error = _init.message });
             req_id++;
-
-            var _prepare = WSExecute<WSStmtRsp>(_stmt_client, "prepare", new { req_id, stmt_id, sql = _commandText });
+            var sql = StatementObject.ResolveCommandText(_commandText);
+            var _prepare = WSExecute<WSStmtRsp>(_stmt_client, "prepare", new { req_id, stmt_id, sql = sql.CommandText });
             if (_prepare.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _prepare.code, Error = _prepare.message });
+          
+            BindParamters(pms, out var columns, out var tags,out var subtablename);
             req_id++;
-            if (!string.IsNullOrEmpty(pms.SubTableName))
+            if (!string.IsNullOrEmpty(subtablename))
             {
-                var _set_table_name = WSExecute<WSStmtRsp>(_stmt_client, "set_table_name", new { req_id, stmt_id, name = pms.SubTableName });
+                var _set_table_name = WSExecute<WSStmtRsp>(_stmt_client, "set_table_name", new { req_id, stmt_id, name = subtablename });
                 if (_set_table_name.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _set_table_name.code, Error = _set_table_name.message });
                 req_id++;
             }
-            BindParamters(pms, out var columns, out var tags);
-            var _set_tags = WSExecute<WSStmtRsp>(_stmt_client, "set_tags", new { req_id, stmt_id, tags });
-            if (_set_tags.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _set_tags.code, Error = _set_tags.message });
-            req_id++;
+            if (tags.Count > 0)
+            {
+                var _set_tags = WSExecute<WSStmtRsp>(_stmt_client, "set_tags", new { req_id, stmt_id, tags });
+                if (_set_tags.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _set_tags.code, Error = _set_tags.message });
+                req_id++;
+            }
             var _bind = WSExecute<WSStmtRsp>(_stmt_client, "bind", new { req_id, stmt_id, columns });
             if (_bind.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _bind.code, Error = _bind.message });
             req_id++;
@@ -123,10 +131,11 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             return wSResult;
         }
 
-        private void BindParamters(TaosParameterCollection pms, out List<object[]> _datas, out List<string> _tags)
+        private void BindParamters(TaosParameterCollection pms, out List<object[]> _datas, out List<string> _tags,out string _subtablename)
         {
             _datas = new List<object[]>();
             _tags = new List<string>();
+            _subtablename = string.Empty;
             for (int i = 0; i < pms.Count; i++)
             {
                 var tp = pms[i];
@@ -239,6 +248,10 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                 {
                     _datas.Add(new object[] { _bind.Value });
                 }
+                else if (tp.ParameterName.StartsWith("#"))
+                {
+                    _subtablename = tp.Value as string;
+                }
             }
         }
 
@@ -253,7 +266,10 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             var _req = JsonConvert.SerializeObject(new WSActionReq<object>() { Action = _action, Args = req });
             _client.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(_req)), WebSocketMessageType.Text, true, CancellationToken.None).Wait(TimeSpan.FromSeconds(_builder.ConnectionTimeout));
         }
-
+        private R WSExecute<R, T>(ClientWebSocket _client, string _action, T req, Action<byte[], int> _deserialize_binary = null)
+        {
+           return WSExecute<R, T>(_client, new WSActionReq<T>() { Action = _action, Args = req }, _deserialize_binary);
+        }
         private R WSExecute<R, T>(ClientWebSocket _client, WSActionReq<T> req, Action<byte[], int> _deserialize_binary = null)
         {
             R _result = default;
@@ -354,10 +370,10 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                                }
                          );
                         repfetch = WSExecute<WSFetchRsp, WSFetchReq>(_ws_client, new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
-                        _rows += repfetch.rows;
+                        // _rows += repfetch.rows;
                         data.AddRange(buffer);
                     } while (!repfetch.completed);
-                    var free_result = WSExecute<WSFetchRsp, WSFetchReq>(_ws_client, new WSActionReq<WSFetchReq>() { Action = "free_result", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
+                    WSExecute(_ws_client, "free_result", new { repquery.req_id, repquery.id });
                     wSResult = new TaosWSResult() { data = data.ToArray(), meta = repquery, rows = _rows };
                 }
                 else
@@ -408,7 +424,11 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             {
                 TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = (int)_stmt_client.CloseStatus, Error = _stmt_client.CloseStatusDescription });
             }
-            var rep = WSExecute<WSConnRsp, WSConnReq>(_stmt_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0 } });
+            var rep = WSExecute<WSConnRsp, WSConnReq>(_stmt_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0,db=builder.DataBase } });
+            if (rep.code==899)
+            {
+                  rep = WSExecute<WSConnRsp, WSConnReq>(_stmt_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0} });
+            }
             if (rep.code != 0)
             {
                 TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = rep.code, Error = rep.message });
@@ -425,12 +445,15 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             {
                 TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = (int)_ws_client.CloseStatus, Error = _ws_client.CloseStatusDescription });
             }
-            var rep = WSExecute<WSConnRsp, WSConnReq>(_ws_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0 } });
+            var rep = WSExecute<WSConnRsp, WSConnReq>(_ws_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0, db = builder.DataBase } });
+            if (rep.code == 899)
+            {
+                rep = WSExecute<WSConnRsp, WSConnReq>(_ws_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0 } });
+            }
             if (rep.code != 0)
             {
                 TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = rep.code, Error = rep.message });
             }
-
             return rep.code == 0;
         }
 

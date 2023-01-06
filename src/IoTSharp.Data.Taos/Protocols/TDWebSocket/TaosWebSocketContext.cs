@@ -40,6 +40,10 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                     blockDecode(tr.data);
                 }
                 _rows = tr.rows;
+                if (numOfRows!=tr.rows)
+                {
+                    TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = -1, Error = "数据解析格式异常。" });
+                }
             }
             else if (tr.StmtExec!=null)//insert 
             {
