@@ -11,10 +11,7 @@
 
 		<RepositoryUrl>https://github.com/IoTSharp/EntityFrameworkCore.Taos</RepositoryUrl>
 
-		<PackageReleaseNotes>
-			IoTSharp.ORM.Taos   访问TDengine数据库的便捷ORM。
-
-		</PackageReleaseNotes>
+		<PackageReleaseNotes>IoTSharp.ORM.Taos   访问TDengine数据库的便捷ORM。</PackageReleaseNotes>
 
 		<Copyright>Copyright © 2019-2023 IoTSharp All rights reserved.</Copyright>
 
@@ -23,13 +20,27 @@
 		<Platforms>AnyCPU;x64;x86</Platforms>
 
 		<PackageIcon>logo.png</PackageIcon>
+
+		<ApplicationIcon>favicon.ico</ApplicationIcon>
+
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+
+		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="..\..\docs\logo.png" Link="48876650.jpg">
-			<PackagePath></PackagePath>
-			<Pack>True</Pack>
-		</None>
+	  <Content Include="favicon.ico" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="..\..\docs\logo.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 	<ItemGroup>

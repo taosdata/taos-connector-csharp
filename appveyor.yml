@@ -1,4 +1,4 @@
-version: 3.0.{build}
+version: 3.0.2.{build}
 image: Visual Studio 2022
 assembly_info:
   patch: true
@@ -23,3 +23,7 @@ artifacts:
   name: IoTSharp.EntityFrameworkCore.Taos
 - path: src\IoTSharp.HealthChecks.Taos\bin\Release\*.nupkg
   name: IoTSharp.HealthChecks.Taos
+- path: src\IoTSharp.ORM.Taos\bin\Release\*.nupkg
+  name: IoTSharp.ORM.Taos
+
+  
