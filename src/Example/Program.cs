@@ -35,7 +35,8 @@ namespace TaosADODemo
         {
             var IS_RUNNING_IN_CONTAINER = bool.TryParse(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out bool _DOTNET_RUNNING_IN_CONTAINER) && _DOTNET_RUNNING_IN_CONTAINER;
             var _dbhost = IS_RUNNING_IN_CONTAINER ? "taos" : System.Net.Dns.GetHostName();
-            Console.WriteLine($"主机名:{_dbhost} 当前程序运行在{(IS_RUNNING_IN_CONTAINER ? "容器内" : "主机中")}");
+            Console.WriteLine($"主机名:{_dbhost} 当前程序运行在{(IS_RUNNING_IN_CONTAINER ? "容器内" : "主机中")} ");
+            Console.WriteLine($"CPU:{Environment.ProcessorCount} 主机名:{Environment.MachineName}");
             var p = new Ping();
             var pr = p.Send(_dbhost, (int)TimeSpan.FromSeconds(5).TotalMilliseconds);
             Console.WriteLine($"{pr.Status} {pr.RoundtripTime}");
@@ -48,7 +49,8 @@ namespace TaosADODemo
                 DataBase = database,
                 Username = "root",
                 Password = "taosdata",
-                Port = 6030
+                Port = 6030,
+                PoolSize = 20
             };
 #if DEBUG
             ExecSqlByNative(builder.UseNative());
