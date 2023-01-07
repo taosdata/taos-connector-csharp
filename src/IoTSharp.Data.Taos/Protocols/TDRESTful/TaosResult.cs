@@ -10,10 +10,9 @@ namespace IoTSharp.Data.Taos.Protocols.TDRESTful
 
         public List<List<string>> column_meta { get; set; }
 
+        public object Scalar => (data?.First?.First as JValue)?.Value;
         public JArray data { get; set; }
 
         public int rows { get; set; }
-
-        public object Scalar => (data?.First?.First as JValue)?.Value;
     }
 }

@@ -45,14 +45,14 @@ namespace TaosADODemo
                 Port = 6030
             };
 #if DEBUG
-            ExecSqlByStmt(builder.UseWebSocket());
-            ExecSqlByWebSocket(builder.UseWebSocket());
-            UseTaosEFCore(builder.UseWebSocket());
+            //ExecSqlByStmt(builder.UseWebSocket());
+            //ExecSqlByWebSocket(builder.UseWebSocket());
+            //UseTaosEFCore(builder.UseWebSocket());
 
             ExecSqlByRESTFul(builder.UseRESTful());
-            ExecSqlByNative(builder.UseNative());
+            //ExecSqlByNative(builder.UseNative());
 
-            UseTaosEFCore(builder.UseNative());
+            //UseTaosEFCore(builder.UseNative());
 #else
             ExecSqlByStmt(builder.UseWebSocket());
             ExecSqlByWebSocket(builder.UseWebSocket());

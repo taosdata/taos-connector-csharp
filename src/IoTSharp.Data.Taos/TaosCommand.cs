@@ -3,7 +3,6 @@
 
 using IoTSharp.Data.Taos.Driver;
 using IoTSharp.Data.Taos.Protocols;
-using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

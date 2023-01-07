@@ -8,9 +8,7 @@ namespace IoTSharp.Data.Taos
     {
  
         public int Code  { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
+ 
         public string Error  { get; set; }
     }
 }

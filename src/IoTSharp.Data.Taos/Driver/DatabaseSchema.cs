@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -41,7 +41,7 @@ namespace IoTSharp.Data.Taos.Driver
         /// </summary>
         public string keep { get; set; }
      
-        [Column("cache(MB)")]
+        [JsonProperty("cache(MB)")]
         public int cache  { get; set; }
         /// <summary>
         /// 

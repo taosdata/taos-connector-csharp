@@ -1,27 +1,20 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using TDengineDriver;
+using Newtonsoft.Json.Linq;
+
+
 namespace IoTSharp.Data.Taos
 {
+
     public static class DataReaderExtensions
     {
-        public static T ToJson<T>(this IDataReader dataReader) where T : class
-        {
-            return dataReader.ToJson().ToObject<T>();
-        }
-        public static List<T> ToList<T>(this IDataReader dataReader) where T : class
-        {
-            return dataReader.ToJson().ToObject<List<T>>();
-        }
+       
         public static List<T> ToObject<T>(this IDataReader dataReader)
         {
             List<T> jArray = new List<T>();
@@ -40,7 +33,8 @@ namespace IoTSharp.Data.Taos
                             var _value = dataReader[i];
                             if (_value != DBNull.Value)
                             {
-                                var pr = from p in pots where (p.Name == strKey ||  p.ColumnNameIs(strKey)) && p.CanWrite select p;
+                                //var pr = from p in pots where (p.Name == strKey ||  p.ColumnNameIs(strKey)) && p.CanWrite select p;
+                                var pr = from p in pots where (p.Name == strKey) && p.CanWrite select p;
                                 if (pr.Any())
                                 {
                                     var pi = pr.FirstOrDefault();
@@ -63,11 +57,12 @@ namespace IoTSharp.Data.Taos
             return jArray;
         }
 
-        internal static bool ColumnNameIs(this System.Reflection.PropertyInfo p, string strKey)
-        {
-            return (p.IsDefined(typeof(ColumnAttribute), true) && (p.GetCustomAttributes(typeof(ColumnAttribute), true) as ColumnAttribute[])?.FirstOrDefault().Name == strKey);
-        }
-
+        //internal static bool ColumnNameIs(this System.Reflection.PropertyInfo p, string strKey)
+        //{
+        //    return (p.IsDefined(typeof(ColumnAttribute), true) && (p.GetCustomAttributes(typeof(ColumnAttribute), true) as ColumnAttribute[])?.FirstOrDefault().Name == strKey);
+        //}
+ 
+    
         public static JArray ToJson(this IDataReader dataReader)
         {
             JArray jArray = new JArray();
@@ -102,6 +97,8 @@ namespace IoTSharp.Data.Taos
             }
             return jArray;
         }
+
+
         public static DataTable ToDataTable(this IDataReader reader)
         {
             var datatable = new DataTable();

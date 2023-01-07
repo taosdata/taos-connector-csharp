@@ -1,16 +1,19 @@
-﻿using Newtonsoft.Json.Linq;
-using RestSharp;
-using RestSharp.Authenticators;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
+using System.Net.Http;
+using System.Net;
 using TDengineDriver;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace IoTSharp.Data.Taos.Protocols.TDRESTful
 {
     internal class TaosRESTful : ITaosProtocol
     {
-        private RestClient _client = null;
+        private System.Net.Http.HttpClient _client = null;
+        private Uri _uri;
         private string _databaseName;
         private TaosConnectionStringBuilder _builder;
 
@@ -24,11 +27,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDRESTful
 
         public void Close(TaosConnectionStringBuilder connectionStringBuilder)
         {
-#if NET46
-
-#else
             _client?.Dispose();
-#endif
         }
 
         public TaosDataReader ExecuteReader(CommandBehavior behavior, TaosCommand command)
@@ -77,47 +76,69 @@ namespace IoTSharp.Data.Taos.Protocols.TDRESTful
             Console.WriteLine($"_commandText:{_commandText}");
 #endif
             var body = _commandText;
-#if NET46
-            var request = new RestRequest();
-
-            request.AddParameter("", body, "text/plain", ParameterType.RequestBody);
-#else
-            var request = new RestRequest("", Method.Post);
-            request.AddHeader("User-Agent", "Maikebing.Data.Taos/0.0.1");
-            request.AddHeader("Content-Type", "text/plain");
-            request.AddParameter("", body, ParameterType.RequestBody);
-#endif
-            request.AddHeader("User-Agent", "Maikebing.Data.Taos/0.0.1");
-            request.AddHeader("Content-Type", "text/plain");
-#if NET46
-            var response = _client.Execute(request, Method.POST);
-#else
-            var response = _client.Execute(request, Method.Post);
-#endif
-            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            var rest = new HttpRequestMessage(HttpMethod.Post, _uri);
+         
+            rest.Content = new StringContent(body);
+            HttpResponseMessage response = null;
+            string context = string.Empty;
+            var task = Task.Run(async () =>
+             {
+                 response = await _client.SendAsync(rest);
+                 context = await response.Content?.ReadAsStringAsync();
+             });
+            try
             {
-                result = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosResult>(response.Content);
-#if DEBUG
-                Console.WriteLine($"Exec code {result.code},rows:{result.rows},cols:{result.column_meta?.Count}");
-#endif
-                if (result.code != 0)
+                var isok = Task.WaitAll(new[] { task }, _client.Timeout);
+                if (isok)
                 {
-                    TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = result.code, Error = result.desc });
+                    result = JsonDeserialize<TaosResult>(context);
+                    if (response.IsSuccessStatusCode)
+                    {
+
+                        Debug.WriteLine($"Exec code {result.code},rows:{result.rows},cols:{result.column_meta?.Count}");
+                        if (result.code != 0)
+                        {
+                            TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = result.code, Error = result.desc });
+                        }
+                    }
+                    else if (result != null)
+                    {
+                        TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = result.code, Error = result.desc });
+                    }
+                    else
+                    {
+                        TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = (int)response.StatusCode, Error = response.ReasonPhrase });
+                    }
+                }
+                else
+                {
+                    TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = -1, Error = task.Exception?.Message + "\n" + task.Exception?.InnerException?.Message });
                 }
             }
-            else if (string.IsNullOrEmpty(response.Content))
+            catch (Exception ex)
             {
-                TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = (int)response.StatusCode, Error = response.ErrorMessage });
-            }
-            else
-            {
-                var tr = Newtonsoft.Json.JsonConvert.DeserializeObject<TaosResult>(response.Content);
-#if DEBUG
-                Console.WriteLine($"Exec code:{tr.code},message:{tr.desc}");
-#endif
-                TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = tr.code, Error = tr.desc });
+                TaosException.ThrowExceptionForRC(_commandText, new TaosErrorResult() { Code = -2, Error = ex.Message + "\n" + ex.InnerException?.Message });
             }
             return result;
+        }
+
+        private static T JsonDeserialize<T>(string context)
+        {
+//#if NET46_OR_GREATER || NETSTANDARD2_0_OR_GREATER
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(context);
+//#else
+//            return System.Text.Json.JsonSerializer.Deserialize<T>(context);
+//#endif
+        }
+
+
+        private static string JsonSerialize<T>(T obj)
+        {
+#if NET46_OR_GREATER || NETSTANDARD2_0_OR_GREATER
+            return Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+#else
+            return System.Text.Json.JsonSerializer.Serialize(obj);
+#endif
         }
 
         public string GetClientVersion()
@@ -145,15 +166,16 @@ namespace IoTSharp.Data.Taos.Protocols.TDRESTful
         {
             var builder = connectionStringBuilder;
             string _timez = string.IsNullOrEmpty(builder.TimeZone) ? "" : $"?tz={builder.TimeZone}";
-#if NET46
-            _client = new RestClient($"http://{builder.DataSource}:{builder.Port}/rest/sql/{builder.DataBase}{_timez}");
-            _client.Timeout = builder.ConnectionTimeout;
-            _client.Authenticator = new HttpBasicAuthenticator(builder.Username, builder.Password);
-#else
-            _client = new RestClient($"http://{builder.DataSource}:{builder.Port}/rest/sql/{builder.DataBase}{_timez}");
-            _client.Options.MaxTimeout = builder.ConnectionTimeout;
-            _client.UseAuthenticator(new HttpBasicAuthenticator(builder.Username, builder.Password));
-#endif
+            var httpClientHandler = new HttpClientHandler();
+            _client = new HttpClient(httpClientHandler);
+            _uri= new Uri($"http://{builder.DataSource}:{builder.Port}/rest/sql/{builder.DataBase}{_timez}"); 
+            _client.Timeout = TimeSpan.FromSeconds(builder.ConnectionTimeout);
+            var authToken = Encoding.ASCII.GetBytes($"{builder.Username}:{builder.Password}");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",Convert.ToBase64String(authToken));
+            _client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/plain"));
+            _client.DefaultRequestHeaders.AcceptCharset.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("utf-8"));
+            var _name = typeof(TaosRESTful).Assembly.GetName();
+            _client.DefaultRequestHeaders.Add("User-Agent", $"{_name.Name}/{_name.Version}");
         }
 
         public void Return(nint taos)
