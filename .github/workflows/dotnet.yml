@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Setup TDengine
-      uses: iotsharp/tdengine-action@v1
+      uses: iotsharp/tdengine-action@latest
       with:
         tdengine_version: latest
     - name: Setup .NET
