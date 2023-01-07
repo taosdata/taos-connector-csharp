@@ -13,17 +13,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    services:
-      taos:
-        image: tdengine/tdengine:3.0.2.1
-        ports:
-          - 6030:6030
-          - 6035:6035
-          - 6041:6041
-          - 6030-6040:6030-6040/udp 
-
     steps:
     - uses: actions/checkout@v3
+    - name: Setup TDengine
+      uses: iotsharp/tdengine-action@v1
+      with:
+        influxdb_version: latest
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
@@ -31,13 +26,6 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore EFCore.Taos.sln
     - name: Build
-      run: dotnet build   -c Release --no-restore EFCore.Taos.sln
-    - name: Install  TDengine-client
-      run: | 
-          curl -o TDengine-client.tar.gz "https://www.taosdata.com/assets-download/3.0/TDengine-client-3.0.2.1-Linux-x64.tar.gz"  &&
-          tar  -xvf TDengine-client.tar.gz  &&
-          rm TDengine-client.tar.gz -f  &&
-          cd  $(ls TDengine-client*  -d)   && 
-          ./install_client.sh          
+      run: dotnet build   -c Release --no-restore EFCore.Taos.sln        
     - name: Test
       run: dotnet run  -c Release --no-build  --no-restore --project src/Example/
