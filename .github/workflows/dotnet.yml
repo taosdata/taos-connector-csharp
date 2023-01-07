@@ -31,7 +31,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore EFCore.Taos.sln
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore EFCore.Taos.sln
     - name: Install  TDengine-client
       run: > 
           curl -o TDengine-client.tar.gz "https://www.taosdata.com/assets-download/3.0/TDengine-client-3.0.2.1-Linux-x64.tar.gz"  
