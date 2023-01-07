@@ -45,23 +45,22 @@ namespace IoTSharp.Data.Taos
             TimeOut,
             Protocol,
             TimeZone
-
-
         }
 
         private static readonly IReadOnlyList<string> _validKeywords;
         private static readonly IReadOnlyDictionary<string, Keywords> _keywords;
 
         private string _dataSource = string.Empty;
-        private string _dataBase=string.Empty;
+        private string _dataBase = string.Empty;
         private string _userName = string.Empty;
         private string _charset = "UTF-8";
         private string _password = string.Empty;
-        private int  _port =6030;
-        private int _PoolSize=Environment.ProcessorCount;
+        private int _port = 6030;
+        private int _PoolSize = Environment.ProcessorCount;
         private int _timeout = 30;
         private string _protocol = Protocol_Native;
         private string _timezone = string.Empty;
+
         static TaosConnectionStringBuilder()
         {
             var validKeywords = new string[10];
@@ -69,7 +68,7 @@ namespace IoTSharp.Data.Taos
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
             validKeywords[(int)Keywords.Password] = PasswordKeyword;
-            validKeywords[(int)Keywords.Charset] =CharsetKeyword;
+            validKeywords[(int)Keywords.Charset] = CharsetKeyword;
             validKeywords[(int)Keywords.Port] = PortKeyword;
             validKeywords[(int)Keywords.PoolSize] = PoolSizeKeyword;
             validKeywords[(int)Keywords.TimeOut] = TimeOutKeyword;
@@ -90,7 +89,6 @@ namespace IoTSharp.Data.Taos
                 [TimeOutKeyword] = Keywords.TimeOut,
                 [ProtocolKeyword] = Keywords.Protocol,
                 [TimeZoneKeyword] = Keywords.TimeZone
-
             };
         }
 
@@ -111,45 +109,57 @@ namespace IoTSharp.Data.Taos
             => ConnectionString = connectionString;
 
         /// <summary>
-        ///     Gets or sets the database file.
+        ///   数据库服务器地址
         /// </summary>
-        /// <value>The database file.</value>
+        /// <value>数据库服务器地址</value>
         public virtual string DataSource
         {
             get => _dataSource;
             set => base[DataSourceKeyword] = _dataSource = value;
         }
 
-     
+        /// <summary>
+        /// 用户名
+        /// </summary>
         public virtual string Username
         {
             get => _userName;
             set => base[UserNameKeyword] = _userName = value;
         }
+
         /// <summary>
-        /// Charset
+        /// 字符编码
         /// </summary>
         public virtual string Charset
         {
             get => _charset;
             set => base[CharsetKeyword] = _charset = value;
         }
+
+        /// <summary>
+        /// 数据库密码
+        /// </summary>
         public virtual string Password
         {
             get => _password;
             set => base[PasswordKeyword] = _password = value;
         }
-        public virtual int  Port
+
+        public virtual int Port
         {
             get => _port;
             set => base[PortKeyword] = _port = value;
         }
 
+        /// <summary>
+        /// 线程池大小 目前仅对 libtaos 动态库有效。
+        /// </summary>
         public virtual int PoolSize
         {
             get => _PoolSize;
             set => base[PoolSizeKeyword] = _PoolSize = value;
         }
+
         /// <summary>
         /// 协议类型， 默认为空时为 Native
         /// </summary>
@@ -158,6 +168,7 @@ namespace IoTSharp.Data.Taos
             get => _protocol;
             set => base[ProtocolKeyword] = _protocol = value;
         }
+
         /// <summary>
         /// 默认为空时为 Asia/Shanghai
         /// </summary>
@@ -166,7 +177,7 @@ namespace IoTSharp.Data.Taos
             get => _timezone;
             set => base[TimeZoneKeyword] = _timezone = value;
         }
-        
+
         /// <summary>
         ///     Gets a collection containing the keys used by the connection string.
         /// </summary>
@@ -192,16 +203,20 @@ namespace IoTSharp.Data.Taos
             }
         }
 
-      
+        /// <summary>
+        /// 指定要访问的数据库。
+        /// </summary>
         public virtual string DataBase
         {
             get => _dataBase;
             set => base[DataBaseKeyword] = _dataBase = value;
         }
+
         internal bool ForceDatabaseName { get; set; } = false;
 
-      
-
+        /// <summary>
+        /// 连接超时时长
+        /// </summary>
         public int ConnectionTimeout
         {
             get => _timeout;
@@ -230,33 +245,43 @@ namespace IoTSharp.Data.Taos
                     case Keywords.DataSource:
                         DataSource = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
+
                     case Keywords.Username:
-                        Username= Convert.ToString(value, CultureInfo.InvariantCulture);
+                        Username = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
+
                     case Keywords.Password:
                         Password = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
+
                     case Keywords.DataBase:
                         DataBase = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
+
                     case Keywords.Port:
                         Port = Convert.ToInt32(value, CultureInfo.InvariantCulture);
                         return;
+
                     case Keywords.Charset:
                         Charset = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
+
                     case Keywords.PoolSize:
                         PoolSize = Convert.ToInt32(value, CultureInfo.InvariantCulture);
                         return;
+
                     case Keywords.TimeOut:
                         ConnectionTimeout = Convert.ToInt32(value, CultureInfo.InvariantCulture);
                         return;
+
                     case Keywords.Protocol:
-                         Protocol  = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        Protocol = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
+
                     case Keywords.TimeZone:
                         TimeZone = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
+
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
                         return;
@@ -369,24 +394,34 @@ namespace IoTSharp.Data.Taos
             {
                 case Keywords.DataSource:
                     return DataSource;
+
                 case Keywords.Password:
                     return Password;
+
                 case Keywords.Username:
                     return Username;
+
                 case Keywords.DataBase:
                     return DataBase;
+
                 case Keywords.Port:
                     return Port;
+
                 case Keywords.Charset:
                     return Charset;
+
                 case Keywords.PoolSize:
                     return PoolSize;
+
                 case Keywords.TimeOut:
                     return ConnectionTimeout;
+
                 case Keywords.Protocol:
                     return Protocol;
+
                 case Keywords.TimeZone:
                     return TimeZone;
+
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -405,51 +440,74 @@ namespace IoTSharp.Data.Taos
                 case Keywords.DataSource:
                     _dataSource = string.Empty;
                     return;
+
                 case Keywords.Password:
                     _password = string.Empty;
                     return;
+
                 case Keywords.Username:
                     _userName = string.Empty;
                     return;
+
                 case Keywords.DataBase:
                     _dataBase = string.Empty;
                     return;
+
                 case Keywords.Port:
-                    _port=6030;
+                    _port = 6030;
                     return;
+
                 case Keywords.Charset:
                     _charset = System.Text.Encoding.UTF8.EncodingName;
                     return;
+
                 case Keywords.PoolSize:
                     _PoolSize = Environment.ProcessorCount;
                     return;
-                case Keywords.TimeOut   :
+
+                case Keywords.TimeOut:
                     _timeout = 30;
                     return;
+
                 case Keywords.Protocol:
                     _protocol = Protocol_Native;
                     return;
+
                 case Keywords.TimeZone:
                     _timezone = string.Empty;
                     return;
+
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return;
             }
         }
 
+        /// <summary>
+        /// 使用RESTful访问数据库
+        /// </summary>
+        /// <returns></returns>
         public TaosConnectionStringBuilder UseRESTful()
         {
             Port = 6041;
             Protocol = Protocol_RESTful;
             return this;
         }
+
+        /// <summary>
+        /// 使用WebSocket访问数据库
+        /// </summary>
         public TaosConnectionStringBuilder UseWebSocket()
         {
             Port = 6041;
             Protocol = Protocol_WebSocket;
             return this;
         }
+
+        /// <summary>
+        /// 使用libtaos动态库访问数据库
+        /// </summary>
+        /// <returns></returns>
         public TaosConnectionStringBuilder UseNative()
         {
             Port = 6030;
