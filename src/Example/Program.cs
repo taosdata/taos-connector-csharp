@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -491,7 +492,7 @@ namespace TaosADODemo
             AddTag(tags, "t10", "你好", "nchar");
             payload.Add("tags", tags);
 
-            int resultjson3 = connection.ExecuteBulkInsert(new JObject[] { payload });
+            int resultjson3 = connection.ExecuteBulkInsert(new JArray(payload));
             Console.WriteLine($"行插入{resultjson3}");
             if (resultjson3 != 1)
             {
@@ -509,9 +510,29 @@ namespace TaosADODemo
             tags.Add(name, tag);
             return tag;
         }
-
         private static void BulkInsertByJsonAndTags(TaosConnection connection)
         {
+            var jo = new JsonObject
+                {
+                    { "metric", "stb0_0" },
+                    { "timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() },// 1626006833610);
+                    { "value", 10 }
+                };
+            var tags1 = new JsonObject
+                {
+                    { "t1", true },
+                    { "t2", false },
+                    { "t3", 10 },
+                    { "t4", "123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>" }
+                };
+            jo.Add("tags", tags1);
+            int resultjson2 = connection.ExecuteBulkInsert(new JsonArray(jo), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
+            Console.WriteLine($"行插入{resultjson2}");
+          
+        }
+        private static void BulkInsertByJsonAndTags2(TaosConnection connection)
+        {
+           
             var jo = new JObject
                 {
                     { "metric", "stb0_0" },
@@ -526,7 +547,7 @@ namespace TaosADODemo
                     { "t4", "123_abc_.!@#$%^&*:;,./?|+-=()[]{}<>" }
                 };
             jo.Add("tags", tags1);
-            int resultjson2 = connection.ExecuteBulkInsert(new JObject[] { jo }, TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
+            int resultjson2 = connection.ExecuteBulkInsert(new JArray ( jo ), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
             Console.WriteLine($"行插入{resultjson2}");
         }
 
