@@ -18,7 +18,7 @@ jobs:
     - name: Setup TDengine
       uses: iotsharp/tdengine-action@v1
       with:
-        influxdb_version: latest
+        tdengine_version: latest
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
