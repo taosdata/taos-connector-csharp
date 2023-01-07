@@ -19,7 +19,9 @@ using System.Collections;
 using IoTSharp.Data.Taos.Protocols;
 using IoTSharp.Data.Taos.Protocols.TDRESTful;
 using IoTSharp.Data.Taos.Protocols.TDWebSocket;
-
+#if NETCOREAPP
+using System.Text.Json.Nodes;
+#endif
 namespace IoTSharp.Data.Taos
 {
     /// <summary>
@@ -344,12 +346,12 @@ namespace IoTSharp.Data.Taos
 
         internal bool SelectedDataBase => _nowdatabase != string.Empty ;
 
-        public int Protocol { get;  set; }
 
         /// <summary>
-        ///     Changes the current database.  
+        ///    更改当前数据库.  
         /// </summary>
-        /// <param name="databaseName">The name of the database to use.</param>
+        /// <param name="databaseName">要使用的数据库名称</param>
+        /// <remarks>当使用WebSocket协议时会自动重新连接数据库。</remarks>
         public override void ChangeDatabase(string databaseName)
         {
             var result = taos.ChangeDatabase(databaseName);
@@ -358,7 +360,11 @@ namespace IoTSharp.Data.Taos
                 _nowdatabase = databaseName;
             }
         }
-
+        /// <summary>
+        /// 判断数据库是否存在
+        /// </summary>
+        /// <param name="databaseName">指定的数据库名称</param>
+        /// <returns></returns>
         public bool DatabaseExists(string databaseName)
         {
             var _sql = "SHOW DATABASES";
@@ -366,7 +372,7 @@ namespace IoTSharp.Data.Taos
             return (bool)(ds?.Any(d => d.name == databaseName));
         }
         /// <summary>
-        /// 
+        /// 使用 TSDB_SML_LINE_PROTOCOL 协议
         /// </summary>
         /// <param name="lines">
         /// 示例:
@@ -376,27 +382,53 @@ namespace IoTSharp.Data.Taos
         ///     "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
         /// </param>
         /// <param name="precision"></param>
-        /// <returns></returns>
-        public int ExecuteBulkInsert(string[] lines, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS) =>
+        /// <returns>返回数量</returns>
+        public int ExecuteLineBulkInsert(string[] lines, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS) =>
           taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
 
 #if NETCOREAPP
+        /// <summary>
+        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
+        /// </summary>
+        /// <returns>返回数量</returns>
         public int ExecuteBulkInsert(RecordData data)
         {
             return ExecuteBulkInsert(new RecordData[] {data }, TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED, null);
         }
+        /// <summary>
+        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
+        /// </summary>
+        /// <returns>返回数量</returns>
         public int ExecuteBulkInsert(IEnumerable<RecordData> data)
         {
             return ExecuteBulkInsert(data, TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED, null);
         }
+        /// <summary>
+        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
+        /// </summary>
+        /// <param name="data">使用InfluxDB的RecordData方式合成数据</param>
+        /// <returns>返回数量</returns>
         public int ExecuteBulkInsert(IEnumerable<RecordData> data,RecordSettings settings)
         {
             return ExecuteBulkInsert(data,  TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED, settings);
         }
+        /// <summary>
+        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
+        /// </summary>
+        /// <param name="data">使用InfluxDB的RecordData方式合成数据</param>
+        /// <param name="precision">时间精度 </param>
+        /// <returns>返回数量</returns>
         public int ExecuteBulkInsert(IEnumerable<RecordData> data, TDengineSchemalessPrecision precision)
         {
             return ExecuteBulkInsert(data, precision, null);
         }
+        /// <summary>
+        /// 使用Schemales的 TSDB_SML_LINE_PROTOCOL 将 <paramref name="data"/>插入TDengine
+        /// </summary>
+        /// <param name="data">使用InfluxDB的RecordData方式合成数据</param>
+        /// <param name="precision">时间精度 </param>
+        /// <param name="settings">RecordSettings配置，请参考 InfluxDB的用法。</param>
+        /// <returns>返回数量</returns>
         public int ExecuteBulkInsert(IEnumerable<RecordData> data, TDengineSchemalessPrecision precision, RecordSettings settings)
         {
             Arguments.CheckNotEmpty(data, "ExecuteBulkInsert(IEnumerable<RecordData> data)");
@@ -425,20 +457,61 @@ namespace IoTSharp.Data.Taos
             return taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_LINE_PROTOCOL, precision);
         }
 #endif
+        /// <summary>
+        /// 使用Schemales的 TSDB_SML_JSON_PROTOCOL 将<paramref name="array"/>插入TDengine
+        /// </summary>
+        /// <param name="array">对象数组， 在.Net6/7中会使用 System.Text.Json序列化，其他情况下使用Newtonsoft.Json序列化</param>
+        /// <param name="precision">时间精度 默认值为 TSDB_SML_TIMESTAMP_MILLI_SECONDS</param>
+        /// <returns>返回数量</returns>
         public int ExecuteBulkInsert<T>(IEnumerable<T> array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
         {
+#if NETCOREAPP
+            var lines = array.Select(x => System.Text.Json.JsonSerializer.Serialize(x)).ToArray();
+#else
             var lines = array.Select(x => Newtonsoft.Json.JsonConvert.SerializeObject(x)).ToArray();
+#endif
             return taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
         }
 
+        /// <summary>
+        /// 使用Schemales的 TSDB_SML_JSON_PROTOCOL 将<paramref name="array"/>插入TDengine
+        /// </summary>
+        /// <param name="array"> Json数组  </param>
+        /// <param name="precision">时间精度 默认值为 TSDB_SML_TIMESTAMP_MILLI_SECONDS</param>
+        /// <returns>返回数量</returns>
         public int ExecuteBulkInsert(JArray array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
         {
             var lines = array.Children().Select(x => x.ToString()).ToArray();
             return taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
         }
-   
+#if NETCOREAPP
+        /// <summary>
+        /// 使用Schemales的 TSDB_SML_JSON_PROTOCOL 将<paramref name="array"/>插入TDengine
+        /// </summary>
+        /// <param name="array"> Json数组  </param>
+        /// <param name="precision">时间精度，默认值为 TSDB_SML_TIMESTAMP_MILLI_SECONDS</param>
+        /// <returns>返回数量</returns>
+        public int ExecuteBulkInsert(JsonArray array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_MILLI_SECONDS)
+        {
+            var lines = array.Select(x => x.ToString()).ToArray();
+            return taos.ExecuteBulkInsert(lines, TDengineSchemalessProtocol.TSDB_SML_JSON_PROTOCOL, precision);
+        }
+#endif
+        /// <summary>
+        /// 使用Schemales的 TSDB_SML_TELNET_PROTOCOL 将数据插入TDengine
+        /// </summary>
+        /// <param name="array">字符串数据</param>
+        /// <param name="precision">时间精度</param>
+        /// <returns>返回数量</returns>
+        public int ExecuteTelnetBulkInsert(string[] array, TDengineSchemalessPrecision precision = TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED)
+        {
+            return taos.ExecuteBulkInsert(array, TDengineSchemalessProtocol.TSDB_SML_TELNET_PROTOCOL, precision);
+        }
 
-   
+     
+
+
+
         private class AggregateContext<T>
         {
             public AggregateContext(T seed)

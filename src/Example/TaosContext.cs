@@ -7,7 +7,7 @@ using System.Text;
 
 namespace TaosADODemo
 {
-    public class  sensor
+    public class  Sensor
     {
         [Key]
         public DateTime ts { get; set; }
@@ -21,7 +21,7 @@ namespace TaosADODemo
         {
 
         }
-        public DbSet<sensor> sensor { get; set; }
+        public DbSet<Sensor> Sensor { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

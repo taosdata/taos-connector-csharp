@@ -6,9 +6,32 @@
 Entity, Framework, EF, Core, Data, O/RM, entity-framework-core,TDengine
 --
 
-IoTSharp.Data.Taos  是一个采用TDengine的原生动态库构建的ADO.Net提供程序。 它将允许你通过.Net Core 访问TDengine 数据库， 这包括实现了通过行协议、Json协议的批量插入 ExecuteBulkInsert 方法。
+IoTSharp.Data.Taos  是 TDengine的ADO.Net提供程序。 它将允许你通过原生动态库、WebSocket、RESTful 三种协议访问TDengine，通过 Schemaless 完美实现了ExecuteBulkInsert批量插入、Stmt 实现了参数化执行。
 
 ---
+
+
+| 协议    | 依赖| 说明                                                     |
+| ----------- | --------  | --------  | ------------------------------------------------------------ |
+| WebSocket |无依赖 | 纯C#实现， 支持 Schemaless 和 Stmt参数化
+| Native | libtaos | 原生协议， 支持3.0.x  libtaos 动态库，支持 Schemaless 和 Stmt参数化。使用前必须安装 TDengine-client 
+| RESTful | 无依赖 |   纯C#实现， 不支持  Schemaless 和 Stmt参数化
+
+
+
+## Schemaless 
+
+通过 Schemaless 实现的 ExecuteBulkInsert  支持 TSDB_SML_LINE_PROTOCOL 和TSDB_SML_JSON_PROTOCOL 。
+透过TSDB_SML_JSON_PROTOCOL也支持了InfluxDB Client中的 RecordData 的数据写法。 
+
+ RecordData示例
+```c#
+  var rec=  RecordData.table("meters").Tag("location", "Beijing.Haidian").Tag("groupid", "2").Timestamp(DateTime.Now.ToUniversalTime(), TimePrecision.Ms)
+                .Field("current", 12.1).Field("voltage", 234.0).Field("phase",0.33);
+            int result = connection.ExecuteBulkInsert(rec);
+
+```
+
 
 IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器， 基于IoTSharp.Data.Taos实现。 
 (原名称为 Maikebing.EntityFrameworkCore.Taos)
@@ -140,10 +163,3 @@ IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器，
         
 ```
 
-### RecordData示例
-```c#
-  var rec=  RecordData.table("meters").Tag("location", "Beijing.Haidian").Tag("groupid", "2").Timestamp(DateTime.Now.ToUniversalTime(), TimePrecision.Ms)
-                .Field("current", 12.1).Field("voltage", 234.0).Field("phase",0.33);
-            int result = connection.ExecuteBulkInsert(rec);
-
-```

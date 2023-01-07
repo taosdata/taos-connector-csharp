@@ -19,7 +19,7 @@ namespace EntityFrameworkCore.Taos.Tests
             const string SQLDemo2 = @"SELECT DISTINCT tbname,point_code,pol_code,station_code,station_name/* 站点名 */
     ,station_uid,longitude,latitude,mn,dev_code,pol_name,pol_unit,pol_id FROM st_pmcm WHERE point_code = @p1;";
             const string SQLDemo3 = "SELECT * FROM bytable WHERE t1 = @t1 AND t2 LIKE @t11 LIMIT @t3;";
-            const string SQLDemo4 = "INSERT INTO t_status USING st_status (status_key) TAGS ('s1') (status_time, val) VALUES (@x1, @x2);";
+           // const string SQLDemo4 = "INSERT INTO t_status USING st_status (status_key) TAGS ('s1') (status_time, val) VALUES (@x1, @x2);";
             var s1 = SqlParser.Parse(SQLDemo1);
             Assert.AreEqual(0, ((int?)s1.Parameters?.Count).GetValueOrDefault());
             var s2 = SqlParser.Parse(SQLDemo2);
@@ -32,8 +32,8 @@ namespace EntityFrameworkCore.Taos.Tests
             Assert.AreEqual("@p1", pn2.Keys.ToArray()[0]);
             var s3 = SqlParser.Parse(SQLDemo3);
             Assert.AreEqual(7, s3.Parameters?.Count);
-            Assert.AreEqual("@t1", s3.Parameters.ToArray()[1].Key);
-            Assert.AreEqual("@t11", s3.Parameters.ToArray()[3].Key);
+            Assert.AreEqual("@t1", s3.Parameters?.ToArray()[1].Key);
+            Assert.AreEqual("@t11", s3.Parameters?.ToArray()[3].Key);
         //    Assert.AreEqual(" LIMIT ",s3.);
             //Assert.AreEqual("@t3", s3[5].OriginalText);
             //Assert.AreEqual(";", s3[6].OriginalText);

@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -18,7 +19,7 @@ namespace EntityFrameworkCore.Taos.Tests
     public class UnitTestTaos
     {
         private IContainerService container;
-        private string database;
+        private string database = "";
         private TaosConnectionStringBuilder builder;
 
         [TestInitialize]
@@ -26,7 +27,6 @@ namespace EntityFrameworkCore.Taos.Tests
         {
             database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-        
             DbProviderFactories.RegisterFactory("TDengine", TaosFactory.Instance);
             var hosts = new Hosts().Discover();
             var _docker = hosts.FirstOrDefault(x => x.IsNative) ?? hosts.FirstOrDefault(x => x.Name == "default");
@@ -37,13 +37,13 @@ namespace EntityFrameworkCore.Taos.Tests
             });
             container.Start();
             var f = container.GetRunningProcesses().Rows.ToList();
-            container.WaitForProcess("taosd -c /tmp/taos",(long)TimeSpan.FromSeconds(60).TotalMilliseconds);
-            container.WaitForProcess("taosadapter",(long)TimeSpan.FromSeconds(60).TotalMilliseconds);
+            container.WaitForProcess("taosd -c /tmp/taos", (long)TimeSpan.FromSeconds(60).TotalMilliseconds);
+            container.WaitForProcess("taosadapter", (long)TimeSpan.FromSeconds(60).TotalMilliseconds);
             container.WaitForHttp($"http://{System.Net.Dns.GetHostName()}:6041/rest/login/root/taosdata", (int)TimeSpan.FromSeconds(60).TotalMilliseconds, (Ductus.FluentDocker.Common.RequestResponse response, int stat) =>
               {
                   var jo = JObject.Parse(response.Body);
                   int result = stat;
-                  if (jo.TryGetValue("code", out JToken? code))
+                  if (jo.TryGetValue("code", out JToken code))
                   {
                       result = (int)(code?.Value<int>());
                   }
@@ -61,16 +61,15 @@ namespace EntityFrameworkCore.Taos.Tests
             {
                 NativeLibrary.SetDllImportResolver(Assembly.GetExecutingAssembly(), DllImportResolver);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                Debug.Write(ex.Message);
             }
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
                 connection.Open();
                 connection.CreateCommand($"create database {database};").ExecuteNonQuery();
                 connection.ChangeDatabase(database);
-                connection.Close();
             }
         }
         private static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
@@ -103,9 +102,9 @@ namespace EntityFrameworkCore.Taos.Tests
                 container?.Stop();
                 container?.Dispose();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                Debug.Write(ex.Message);
             }
         }
         [TestMethod]
@@ -119,21 +118,27 @@ namespace EntityFrameworkCore.Taos.Tests
                 var tags = new JObject();
                 payload.Add("metric", "stb3_0");
 
-                var timestamp = new JObject();
-                timestamp.Add("value", 1626006833);
-                timestamp.Add("type", "s");
+                var timestamp = new JObject
+                {
+                    { "value", 1626006833 },
+                    { "type", "s" }
+                };
                 payload.Add("timestamp", timestamp);
                 static JObject AddTag(JObject tags, string name, object value, string type)
                 {
-                    var tag = new JObject();
-                    tag.Add("value", true);
-                    tag.Add("type", "bool");
+                    var tag = new JObject
+                    {
+                        { "value", true },
+                        { "type", "bool" }
+                    };
                     tags.Add(name, tag);
                     return tag;
                 }
-                var metric_val = new JObject();
-                metric_val.Add("value", "hello");
-                metric_val.Add("type", "nchar");
+                var metric_val = new JObject
+                {
+                    { "value", "hello" },
+                    { "type", "nchar" }
+                };
                 payload.Add("value", metric_val);
                 AddTag(tags, "t1", true, "bool");
                 AddTag(tags, "t2", false, "bool");
@@ -165,7 +170,7 @@ namespace EntityFrameworkCore.Taos.Tests
                     "meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249",
                     "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
                 };
-                int result = connection.ExecuteBulkInsert(lines);
+                int result = connection.ExecuteLineBulkInsert(lines);
                 Assert.AreEqual(lines.Length, result);
                 connection.Close();
             }
@@ -181,12 +186,11 @@ namespace EntityFrameworkCore.Taos.Tests
             {
                 connection.Open();
                 connection.ChangeDatabase(database);
-           
                 using var cmd = connection.CreateCommand("create table test4(ts timestamp,c1 int,c2 int,c3 int,c4 int,c5 int,c6 int,c7 binary(10),c8 binary(10),c9 binary(10));");
                 cmd.ExecuteScalar();
                 for (int i = 0; i < 100000; i++)
                 {
-                      var  total = GC.GetTotalMemory(false);
+                    var total = GC.GetTotalMemory(false);
                     using var command = connection.CreateCommand();
                     try
                     {
@@ -211,10 +215,10 @@ namespace EntityFrameworkCore.Taos.Tests
         [TestMethod]
         public void TestEntityFrameworkCore()
         {
-          var efbuilder = new TaosConnectionStringBuilder()
+            var efbuilder = new TaosConnectionStringBuilder()
             {
                 DataSource = System.Net.Dns.GetHostName(),
-                DataBase =  "db_" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                DataBase = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss"),
                 Username = "root",
                 Password = "taosdata",
                 Port = 6030
@@ -226,10 +230,10 @@ namespace EntityFrameworkCore.Taos.Tests
                 for (int i = 0; i < 10; i++)
                 {
                     var rd = new Random();
-                    context.sensor.Add(new sensor() { ts = DateTime.Now.AddMilliseconds(i + 10), degree = rd.NextDouble(), pm25 = rd.Next(1, 1000) });
+                    context.Sensor.Add(new sensor() { ts = DateTime.Now.AddMilliseconds(i + 10), degree = rd.NextDouble(), pm25 = rd.Next(1, 1000) });
                 }
                 Assert.AreEqual(10, context.SaveChanges());
-                var f = from s in context.sensor where s.pm25 > 0 select s;
+                var f = from s in context.Sensor where s.pm25 > 0 select s;
                 Assert.AreEqual(10, f.Count());
                 context.Database.EnsureDeleted();
             }

@@ -21,7 +21,7 @@ namespace EntityFrameworkCore.Taos.Tests
         {
 
         }
-        public DbSet<sensor> sensor { get; set; }
+        public DbSet<sensor> Sensor { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

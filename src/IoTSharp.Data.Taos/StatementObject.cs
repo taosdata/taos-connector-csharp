@@ -17,7 +17,7 @@ namespace IoTSharp.Data.Taos
         Comment = 5,
     }
 
-    public abstract class StatementPart
+    internal abstract class StatementPart
     {
         protected readonly string _Text;
         protected StatementPart(string text)
@@ -28,21 +28,21 @@ namespace IoTSharp.Data.Taos
         public virtual string GetText() => _Text;
     }
 
-    public sealed class Body : StatementPart
+    internal sealed class Body : StatementPart
     {
         public Body(string text) : base(text)
         {
         }
     }
 
-    public sealed class Literal : StatementPart
+    internal sealed class Literal : StatementPart
     {
         public Literal(string text) : base(text)
         {
         }
     }
 
-    public sealed class Comment : StatementPart
+    internal sealed class Comment : StatementPart
     {
         public Comment(string text) : base(text)
         {
@@ -50,7 +50,7 @@ namespace IoTSharp.Data.Taos
         public override string GetText() => " ";
     }
 
-    public sealed class Param : StatementPart
+    internal sealed class Param : StatementPart
     {
         public Param(string text) : base(text)
         {
@@ -58,7 +58,7 @@ namespace IoTSharp.Data.Taos
         public override string GetText() => "?";
     }
 
-    public sealed class StatementObject : IReadOnlyCollection<StatementPart>
+    internal sealed class StatementObject : IReadOnlyCollection<StatementPart>
     {
         private readonly StatementPart[] _Parts;
         private StatementObject(IEnumerable<StatementPart> parts)

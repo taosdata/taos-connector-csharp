@@ -45,14 +45,14 @@ namespace TaosADODemo
                 Port = 6030
             };
 #if DEBUG
-            //ExecSqlByStmt(builder.UseWebSocket());
-            //ExecSqlByWebSocket(builder.UseWebSocket());
-            //UseTaosEFCore(builder.UseWebSocket());
+            ExecSqlByStmt(builder.UseWebSocket());
+            ExecSqlByWebSocket(builder.UseWebSocket());
+            UseTaosEFCore(builder.UseWebSocket());
 
             ExecSqlByRESTFul(builder.UseRESTful());
-            //ExecSqlByNative(builder.UseNative());
+            ExecSqlByNative(builder.UseNative());
 
-            //UseTaosEFCore(builder.UseNative());
+            UseTaosEFCore(builder.UseNative());
 #else
             ExecSqlByStmt(builder.UseWebSocket());
             ExecSqlByWebSocket(builder.UseWebSocket());
@@ -80,7 +80,7 @@ namespace TaosADODemo
                         string.Format("meters,tname=cpu1,location=California.LosAngeles,groupid=2 current=11.8,voltage=221,phase=0.28 {0}",DateTimeToLongTimeStamp()),
                 };
 
-                    int result = connection.ExecuteBulkInsert(lines);
+                    int result = connection.ExecuteLineBulkInsert(lines);
                     Console.WriteLine($"行插入{result}");
                     if (result != lines.Length)
                     {
@@ -428,7 +428,6 @@ namespace TaosADODemo
 
                 Console.WriteLine("DROP DATABASE IoTSharp", database, connection.CreateCommand($"DROP DATABASE IoTSharp;").ExecuteNonQuery());
 
-                connection.Close();
             }
         }
 
@@ -443,7 +442,7 @@ namespace TaosADODemo
                 for (int i = 0; i < 10; i++)
                 {
                     var rd = new Random();
-                    context.sensor.Add(new sensor() { ts = DateTime.Now.AddMilliseconds(i + 10), degree = rd.NextDouble(), pm25 = rd.Next(0, 1000) });
+                    context.Sensor.Add(new Sensor() { ts = DateTime.Now.AddMilliseconds(i + 10), degree = rd.NextDouble(), pm25 = rd.Next(0, 1000) });
                     Thread.Sleep(10);
                 }
                 Console.WriteLine("Saveing");
@@ -451,7 +450,7 @@ namespace TaosADODemo
                 Console.WriteLine("");
                 Console.WriteLine("from s in context.sensor where s.pm25 > 0 select s ");
                 Console.WriteLine("");
-                var f = from s in context.sensor where s.pm25 > 0 select s;
+                var f = from s in context.Sensor where s.pm25 > 0 select s;
                 var ary = f.ToArray();
                 if (ary.Any())
                 {
@@ -558,14 +557,32 @@ namespace TaosADODemo
                 "meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249",
                 "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
             };
-            int result = connection.ExecuteBulkInsert(lines);
+            int result = connection.ExecuteLineBulkInsert(lines);
             Console.WriteLine($"行插入{result}");
             if (result != lines.Length)
             {
                 throw new Exception("ExecuteBulkInsert");
             }
         }
-
+        private static void TelnetBulkLines(TaosConnection connection)
+        {
+            string[] lines = {
+                "meters.current 1648432611249 10.3 location=California.SanFrancisco groupid=2",
+                "meters.current 1648432611250 12.6 location=California.SanFrancisco groupid=2",
+                "meters.current 1648432611249 10.8 location=California.LosAngeles groupid=3",
+                "meters.current 1648432611250 11.3 location=California.LosAngeles groupid=3",
+                "meters.voltage 1648432611249 219 location=California.SanFrancisco groupid=2",
+                "meters.voltage 1648432611250 218 location=California.SanFrancisco groupid=2",
+                "meters.voltage 1648432611249 221 location=California.LosAngeles groupid=3",
+                "meters.voltage 1648432611250 217 location=California.LosAngeles groupid=3",
+            };
+            int result = connection.ExecuteTelnetBulkInsert(lines);
+            Console.WriteLine($"行插入{result}");
+            if (result != lines.Length)
+            {
+                throw new Exception("ExecuteBulkInsert");
+            }
+        }
         /// <summary>
         /// taos_schemaless_insert 数值类型 和 时间精度 #18413
         /// </summary>
