@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,7 +34,11 @@ namespace TaosADODemo
         private static void Main(string[] args)
         {
             var IS_RUNNING_IN_CONTAINER = bool.TryParse(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out bool _DOTNET_RUNNING_IN_CONTAINER) && _DOTNET_RUNNING_IN_CONTAINER;
-            var _dbhost = IS_RUNNING_IN_CONTAINER ? "taos" : "localhost";
+            var _dbhost = IS_RUNNING_IN_CONTAINER ? "taos" : System.Net.Dns.GetHostName();
+            Console.WriteLine($"主机名:{_dbhost} 当前程序运行在{(IS_RUNNING_IN_CONTAINER ? "容器内" : "主机中")}");
+            var p = new Ping();
+            var pr = p.Send(_dbhost, (int)TimeSpan.FromSeconds(5).TotalMilliseconds);
+            Console.WriteLine($"{pr.Status} {pr.RoundtripTime}");
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             DbProviderFactories.RegisterFactory("TDengine", TaosFactory.Instance);
             string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
