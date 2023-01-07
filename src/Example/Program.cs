@@ -254,7 +254,7 @@ namespace TaosADODemo
                 connection.Open();
                 Console.WriteLine("ServerVersion:{0}", connection.ServerVersion);
                 connection.DatabaseExists(database);
-                Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
+                Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database if not exists {database};").ExecuteNonQuery());
                 Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table {database}.t (ts timestamp, cdata binary(255));").ExecuteNonQuery());
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
                 Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"use {database};").ExecuteNonQuery());
@@ -349,7 +349,7 @@ namespace TaosADODemo
                 connection.Open();
                 Console.WriteLine("ServerVersion:{0}", connection.ServerVersion);
                 connection.DatabaseExists(database);
-                Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
+                Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database if not exists {database};").ExecuteNonQuery());
                 Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table {database}.t (ts timestamp, cdata binary(255));").ExecuteNonQuery());
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
                 Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"use {database};").ExecuteNonQuery());
