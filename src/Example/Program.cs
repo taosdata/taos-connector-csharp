@@ -52,7 +52,18 @@ namespace TaosADODemo
                 Port = 6030,
                 PoolSize = 20
             };
+            var builder_cloud = new TaosConnectionStringBuilder()
+            {
+                DataSource = "gw.us-east.azure.cloud.tdengine.com",
+                DataBase = "iotsharp",
+                Username = "root",
+                Password = "taosdata",
+                Token = "4592d868d1b57c812edb3d8c11b4bbd1ffc747c0",
+                Port = 80,
+                PoolSize = 20
+            };
 #if DEBUG
+            ExecSqlByNative(builder_cloud.UseCloud_DSN());
             ExecSqlByNative(builder.UseNative());
             UseTaosEFCore(builder.UseNative());
             ExecSqlByRESTFul(builder.UseRESTful());

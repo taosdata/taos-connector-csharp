@@ -23,11 +23,9 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         public bool ChangeDatabase(string databaseName)
         {
-            Close(_builder);
             _databaseName = databaseName;
             _builder.DataBase = _databaseName;
-            var result = Open(_builder);
-            return result;
+            return _ws_conn(_builder,_ws_client) && _ws_conn(_builder, _schemaless_client);
         }
 
         public void Close(TaosConnectionStringBuilder connectionStringBuilder)
@@ -417,38 +415,22 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         private bool _open_stmt(TaosConnectionStringBuilder builder)
         {
-            _stmt_client.Options.Credentials = new NetworkCredential(builder.Username, builder.Password);
-            var url = $"ws://{builder.DataSource}:{builder.Port}/rest/stmt";
-            _stmt_client.ConnectAsync(new Uri(url), CancellationToken.None).Wait(TimeSpan.FromSeconds(builder.ConnectionTimeout));
-            if (_stmt_client.State != WebSocketState.Open)
-            {
-                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = (int)_stmt_client.CloseStatus, Error = _stmt_client.CloseStatusDescription });
-            }
-            var rep = WSExecute<WSConnRsp, WSConnReq>(_stmt_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0,db=builder.DataBase } });
-            if (rep.code==899)
-            {
-                  rep = WSExecute<WSConnRsp, WSConnReq>(_stmt_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0} });
-            }
-            if (rep.code != 0)
-            {
-                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = rep.code, Error = rep.message });
-            }
-            return rep.code == 0;
+            _open__ws_client(builder, _stmt_client, "/rest/stmt");
+            return _ws_conn(builder, _stmt_client);
         }
 
         private bool _open_ws(TaosConnectionStringBuilder builder)
         {
-            _ws_client.Options.Credentials = new NetworkCredential(builder.Username, builder.Password);
-            var url = $"ws://{builder.DataSource}:{builder.Port}/rest/ws";
-            _ws_client.ConnectAsync(new Uri(url), CancellationToken.None).Wait(TimeSpan.FromSeconds(builder.ConnectionTimeout));
-            if (_ws_client.State != WebSocketState.Open)
-            {
-                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = (int)_ws_client.CloseStatus, Error = _ws_client.CloseStatusDescription });
-            }
-            var rep = WSExecute<WSConnRsp, WSConnReq>(_ws_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0, db = builder.DataBase } });
+            _open__ws_client(builder, _ws_client, "/rest/ws");
+            return _ws_conn(builder, _ws_client);
+        }
+
+        private bool _ws_conn(TaosConnectionStringBuilder builder,ClientWebSocket _client)
+        {
+            var rep = WSExecute<WSConnRsp, WSConnReq>(_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0, db = builder.DataBase } });
             if (rep.code == 899)
             {
-                rep = WSExecute<WSConnRsp, WSConnReq>(_ws_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0 } });
+                rep = WSExecute<WSConnRsp, WSConnReq>(_client, new WSActionReq<WSConnReq>() { Action = "conn", Args = new WSConnReq() { user = builder.Username, password = builder.Password, req_id = 0 } });
             }
             if (rep.code != 0)
             {
@@ -468,14 +450,25 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         private void _open__schemaless(TaosConnectionStringBuilder builder)
         {
-            _schemaless_client.Options.Credentials = new NetworkCredential(builder.Username, builder.Password);
-            var url = $"ws://{builder.DataSource}:{builder.Port}/rest/schemaless";
-            _schemaless_client.ConnectAsync(new Uri(url), CancellationToken.None).Wait(TimeSpan.FromSeconds(builder.ConnectionTimeout));
-            if (_ws_client.State != WebSocketState.Open)
+            _open__ws_client(builder,_schemaless_client, "/rest/schemaless");
+            WSExecute(_schemaless_client, "conn", new { user = builder.Username, password = builder.Password });
+        }
+        private void _open__ws_client(TaosConnectionStringBuilder builder,ClientWebSocket _client, string path)
+        {
+            var url = $"ws://{builder.DataSource}:{builder.Port}{path}";
+            if (string.IsNullOrEmpty(builder.Token))
             {
-                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = (int)_ws_client.CloseStatus, Error = _ws_client.CloseStatusDescription });
+                _client.Options.Credentials = new NetworkCredential(builder.Username, builder.Password);
             }
-            WSExecute(_ws_client, "conn", new { user = builder.Username, password = builder.Password });
+            else
+            {
+                url += $"?token={builder.Token}";
+            }
+            _client.ConnectAsync(new Uri(url), CancellationToken.None).Wait(TimeSpan.FromSeconds(builder.ConnectionTimeout));
+            if (_client.State != WebSocketState.Open)
+            {
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = (int)_client.CloseStatus, Error = _client.CloseStatusDescription });
+            }
         }
 
         public int ExecuteBulkInsert(string[] lines, TDengineSchemalessProtocol protocol, TDengineSchemalessPrecision _precision)

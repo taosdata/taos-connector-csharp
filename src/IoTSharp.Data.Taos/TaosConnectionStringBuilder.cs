@@ -32,7 +32,7 @@ namespace IoTSharp.Data.Taos
         public const string Protocol_RESTful = "RESTful";
         public const string Protocol_Native = "Native";
         public const string Protocol_WebSocket = "WebSocket";
-
+        private const string TokenKeyword = "Token";
         private enum Keywords
         {
             DataSource,
@@ -44,7 +44,9 @@ namespace IoTSharp.Data.Taos
             PoolSize,
             TimeOut,
             Protocol,
-            TimeZone
+            TimeZone,
+            Token
+
         }
 
         private static readonly IReadOnlyList<string> _validKeywords;
@@ -60,10 +62,11 @@ namespace IoTSharp.Data.Taos
         private int _timeout = 30;
         private string _protocol = Protocol_Native;
         private string _timezone = string.Empty;
+        private string _token = string.Empty;
 
         static TaosConnectionStringBuilder()
         {
-            var validKeywords = new string[10];
+            var validKeywords = new string[11];
             validKeywords[(int)Keywords.DataSource] = DataSourceKeyword;
             validKeywords[(int)Keywords.DataBase] = DataBaseKeyword;
             validKeywords[(int)Keywords.Username] = UserNameKeyword;
@@ -74,9 +77,10 @@ namespace IoTSharp.Data.Taos
             validKeywords[(int)Keywords.TimeOut] = TimeOutKeyword;
             validKeywords[(int)Keywords.Protocol] = ProtocolKeyword;
             validKeywords[(int)Keywords.TimeZone] = TimeZoneKeyword;
+            validKeywords[(int)Keywords.Token] = TokenKeyword;
             _validKeywords = validKeywords;
 
-            _keywords = new Dictionary<string, Keywords>(10, StringComparer.OrdinalIgnoreCase)
+            _keywords = new Dictionary<string, Keywords>(11, StringComparer.OrdinalIgnoreCase)
             {
                 [DataSourceKeyword] = Keywords.DataSource,
                 [UserNameKeyword] = Keywords.Username,
@@ -88,7 +92,8 @@ namespace IoTSharp.Data.Taos
                 [PoolSizeKeyword] = Keywords.PoolSize,
                 [TimeOutKeyword] = Keywords.TimeOut,
                 [ProtocolKeyword] = Keywords.Protocol,
-                [TimeZoneKeyword] = Keywords.TimeZone
+                [TimeZoneKeyword] = Keywords.TimeZone,
+                [TokenKeyword] = Keywords.Token
             };
         }
 
@@ -178,6 +183,11 @@ namespace IoTSharp.Data.Taos
             set => base[TimeZoneKeyword] = _timezone = value;
         }
 
+        public virtual string Token
+        {
+            get => _token;
+            set => base[TokenKeyword] = _token = value;
+        }
         /// <summary>
         ///     Gets a collection containing the keys used by the connection string.
         /// </summary>
@@ -281,7 +291,9 @@ namespace IoTSharp.Data.Taos
                     case Keywords.TimeZone:
                         TimeZone = Convert.ToString(value, CultureInfo.InvariantCulture);
                         return;
-
+                    case Keywords.Token:
+                        Token = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        return;
                     default:
                         Debug.Assert(false, "Unexpected keyword: " + keyword);
                         return;
@@ -421,7 +433,8 @@ namespace IoTSharp.Data.Taos
 
                 case Keywords.TimeZone:
                     return TimeZone;
-
+                case Keywords.Token:
+                    return Token;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return null;
@@ -476,7 +489,9 @@ namespace IoTSharp.Data.Taos
                 case Keywords.TimeZone:
                     _timezone = string.Empty;
                     return;
-
+                case Keywords.Token:
+                    _token = string.Empty;
+                    return;
                 default:
                     Debug.Assert(false, "Unexpected keyword: " + index);
                     return;
@@ -503,7 +518,15 @@ namespace IoTSharp.Data.Taos
             Protocol = Protocol_WebSocket;
             return this;
         }
+        public TaosConnectionStringBuilder UseCloud_DSN() => UseCloud_DSN(string.Empty);
 
+        public TaosConnectionStringBuilder UseCloud_DSN(string _token)
+        {
+            Port = 80;
+            Protocol = Protocol_WebSocket;
+            if (!string.IsNullOrEmpty(_token)) Token= _token;
+            return this;
+        }
         /// <summary>
         /// 使用libtaos动态库访问数据库
         /// </summary>
