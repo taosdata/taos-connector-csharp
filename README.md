@@ -3,17 +3,18 @@
 ## 项目简介
 
 
-Entity, Framework, EF, Core, Data, O/RM, entity-framework-core,TDengine
+ADO.Net Entity, Framework, EF, Core, Data, O/RM, entity-framework-core,TDengine
 --
 
 IoTSharp.Data.Taos  是 TDengine的ADO.Net提供程序。 它将允许你通过原生动态库、WebSocket、RESTful 三种协议访问TDengine，通过 Schemaless 完美实现了ExecuteBulkInsert批量插入、Stmt 实现了参数化执行。
 
 ---
-| 协议    | 依赖| 说明                                                     |
-| ----------- | --------  | ------------------------------------------------------------ |
-| WebSocket |无依赖 | 纯C#实现， 支持 Schemaless 和 Stmt参数化
-| Native | libtaos | 原生协议， 支持3.0.x  libtaos 动态库，支持 Schemaless 和 Stmt参数化。使用前必须安装 TDengine-client 
-| RESTful | 无依赖 |   纯C#实现， 不支持  Schemaless 和 Stmt参数化
+| 协议    | 使用|依赖| 说明                                                     |
+| ----------|--- | --------  | ------------------------------------------------------------ |
+| WebSocket |builder.UseWebSocket()|无依赖 | 纯C#实现， 支持 Schemaless 和 Stmt参数化
+| Cloud DSN |builder_cloud.UseCloud_DSN()|无依赖 | 纯C#实现， 支持 Schemaless 和 Stmt参数化  
+| Native | builder.UseNative()|libtaos | 原生协议， 支持3.0.x  libtaos 动态库，支持 Schemaless 和 Stmt参数化。使用前必须安装 TDengine-client 
+| RESTful | builder.UseRESTful() |无依赖|   纯C#实现， 不支持  Schemaless 和 Stmt参数化
 
 
 
