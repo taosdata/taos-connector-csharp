@@ -353,27 +353,30 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                 {
                     List<byte> data = new List<byte>();
                     int _rows = repfetch.rows;
-                    do
+                    if (_rows > 0)
                     {
-                        byte[] buffer = new byte[] { };
-                        var repfetch_block = WSExecute<byte[], WSFetchReq>
-                           (
-                               _ws_client, new WSActionReq<WSFetchReq>()
-                               {
-                                   Action = "fetch_block",
-                                   Args = new WSFetchReq() { req_id = repquery.req_id, id = repfetch.id }
-                               },
-                               (byte[] bytes, int len) =>
-                               {
-                                   buffer = new byte[len];
-                                   Array.Copy(bytes, buffer, len);
-                               }
-                         );
-                        repfetch = WSExecute<WSFetchRsp, WSFetchReq>(_ws_client, new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
-                        // _rows += repfetch.rows;
-                        data.AddRange(buffer);
-                    } while (!repfetch.completed);
-                    WSExecute(_ws_client, "free_result", new { repquery.req_id, repquery.id });
+                        do
+                        {
+                            byte[] buffer = new byte[] { };
+                            var repfetch_block = WSExecute<byte[], WSFetchReq>
+                               (
+                                   _ws_client, new WSActionReq<WSFetchReq>()
+                                   {
+                                       Action = "fetch_block",
+                                       Args = new WSFetchReq() { req_id = repquery.req_id, id = repfetch.id }
+                                   },
+                                   (byte[] bytes, int len) =>
+                                   {
+                                       buffer = new byte[len];
+                                       Array.Copy(bytes, buffer, len);
+                                   }
+                             );
+                            repfetch = WSExecute<WSFetchRsp, WSFetchReq>(_ws_client, new WSActionReq<WSFetchReq>() { Action = "fetch", Args = new WSFetchReq { req_id = repquery.req_id, id = repquery.id } });
+                            // _rows += repfetch.rows;
+                            data.AddRange(buffer);
+                        } while (!repfetch.completed);
+                        WSExecute(_ws_client, "free_result", new { repquery.req_id, repquery.id });
+                    }
                     wSResult = new TaosWSResult() { data = data.ToArray(), meta = repquery, rows = _rows };
                 }
                 else
