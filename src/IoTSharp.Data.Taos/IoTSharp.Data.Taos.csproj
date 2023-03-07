@@ -38,16 +38,11 @@
 		<Version>1.0.1</Version>
 
 		<Platforms>AnyCPU</Platforms>
-
 		<PackageIcon>logo.png</PackageIcon>
-
-		<ApplicationIcon>favicon.ico</ApplicationIcon>
-
 		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="favicon.ico" />
 		<Compile Update="TaosCommand.cs" />
 		<Compile Update="TaosConnection.cs" />
 		<None Include="..\..\docs\logo.png">

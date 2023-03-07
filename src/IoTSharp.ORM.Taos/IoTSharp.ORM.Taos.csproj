@@ -18,19 +18,10 @@
 		<Version>1.0.1</Version>
 
 		<Platforms>AnyCPU;x64;x86</Platforms>
-
 		<PackageIcon>logo.png</PackageIcon>
-
-		<ApplicationIcon>favicon.ico</ApplicationIcon>
-
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-
 		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
-
-	<ItemGroup>
-	  <Content Include="favicon.ico" />
-	</ItemGroup>
 
 	<ItemGroup>
 	  <None Include="..\..\docs\logo.png">

@@ -6,33 +6,7 @@
     <Authors>Maikebing</Authors>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
-    <Platforms>AnyCPU;x64;x86</Platforms>
-    <PackageIcon>48876650.jpg</PackageIcon>
-    <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="TDengine-client\**" />
-    <EmbeddedResource Remove="TDengine-client\**" />
-    <None Remove="TDengine-client\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="favicon.ico" />
-  </ItemGroup>
-
   
 
   <ItemGroup>
@@ -45,12 +19,6 @@
   <ItemGroup>
     <ProjectReference Include="..\EFCore.Taos.Core\IoTSharp.EntityFrameworkCore.Taos.csproj" />
     <ProjectReference Include="..\IoTSharp.Data.Taos\IoTSharp.Data.Taos.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="taos.cfg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
