@@ -148,6 +148,7 @@ namespace TaosADODemo
                 if (reader.Read())
                 {
                     var ts = reader.GetDateTime("ts");
+                    reader.GetString(1);
                 }
                 Console.WriteLine($"cdata index at {index}");
                 Console.WriteLine(cmd_select.CommandText);
