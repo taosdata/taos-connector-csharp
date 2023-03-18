@@ -63,7 +63,7 @@ namespace TaosADODemo
                 PoolSize = 20
             };
 #if DEBUG
-            ExecSqlByNative(builder_cloud.UseCloud_DSN());
+           // ExecSqlByNative(builder_cloud.UseCloud_DSN());
             ExecSqlByNative(builder.UseNative());
             UseTaosEFCore(builder.UseNative());
             ExecSqlByRESTFul(builder.UseRESTful());
