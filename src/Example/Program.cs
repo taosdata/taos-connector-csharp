@@ -98,7 +98,7 @@ namespace TaosADODemo
                 };
 
                     int result = connection.ExecuteLineBulkInsert(lines);
-                    Console.WriteLine($"行插入 LN101 {result}");
+                    Console.WriteLine($"行插入 {result}");
                     if (result != lines.Length)
                     {
                         throw new Exception("ExecuteBulkInsert");
@@ -560,7 +560,7 @@ namespace TaosADODemo
             payload.Add("tags", tags);
 
             int resultjson3 = connection.ExecuteBulkInsert(new JArray(payload));
-            Console.WriteLine($"行插入 LN513 {resultjson3}");
+            Console.WriteLine($"行插入 {resultjson3}");
             if (resultjson3 != 1)
             {
                 throw new Exception("ExecuteBulkInsert");
@@ -594,7 +594,7 @@ namespace TaosADODemo
                 };
             jo.Add("tags", tags1);
             int resultjson2 = connection.ExecuteBulkInsert(new JsonArray(jo), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
-            Console.WriteLine($"行插入 LN547 {resultjson2}");
+            Console.WriteLine($"行插入 {resultjson2}");
           
         }
         private static void BulkInsertByJsonAndTags2(TaosConnection connection)
@@ -615,7 +615,7 @@ namespace TaosADODemo
                 };
             jo.Add("tags", tags1);
             int resultjson2 = connection.ExecuteBulkInsert(new JArray ( jo ), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
-            Console.WriteLine($"行插入 LN568 {resultjson2}");
+            Console.WriteLine($"行插入 {resultjson2}");
         }
 
         private static void BulkInsertJsonString(TaosConnection connection)
@@ -649,7 +649,7 @@ namespace TaosADODemo
 
             try {
                 int result = connection.ExecuteLineBulkInsert(lines);
-                Console.WriteLine($"行插入 LN599 {result}");
+                Console.WriteLine($"行插入 {result}");
                 if (result != lines.Length)
                 {
                     throw new Exception("ExecuteBulkInsert");
@@ -673,7 +673,7 @@ namespace TaosADODemo
                 "meters.voltage 1648432611250 217 location=California.LosAngeles groupid=3",
             };
             int result = connection.ExecuteTelnetBulkInsert(lines);
-            Console.WriteLine($"行插入 LN618 {result}");
+            Console.WriteLine($"行插入 {result}");
             if (result != lines.Length)
             {
                 throw new Exception("ExecuteBulkInsert");
@@ -690,7 +690,7 @@ namespace TaosADODemo
             var rec = RecordData.table("meters").Tag("location", "Beijing.Haidian").Tag("groupid", "2").Timestamp(DateTime.Now.ToUniversalTime(), TimePrecision.Ms)
                  .Field("current", 12.1).Field("voltage", 234.0).Field("phase", 0.33);
             int result = connection.ExecuteBulkInsert(rec);
-            Console.WriteLine($"行插入 LN635 {result}");
+            Console.WriteLine($"行插入 {result}");
             if (result != 1)
             {
                 throw new Exception("ExecuteBulkInsert");
