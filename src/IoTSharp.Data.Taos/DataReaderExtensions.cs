@@ -139,7 +139,8 @@ namespace IoTSharp.Data.Taos
         }
         public static string RemoveNull(this string str)
         {
-            return str[..str.IndexOf('\0')];
+            var _first_zero = string.IsNullOrEmpty(str)?-1: str.IndexOf('\0');
+            return  _first_zero>=0 ? str.Substring(0, _first_zero) : str;
         }
 
         public static IntPtr  ToIntPtr(this long val)
