@@ -42,7 +42,7 @@ namespace TaosADODemo
             Console.WriteLine($"{pr.Status} {pr.RoundtripTime}");
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             DbProviderFactories.RegisterFactory("TDengine", TaosFactory.Instance);
-            string database = "db_" + DateTime.Now.ToString("yyyyMMddHHmmss");
+            string database = "test";
             var builder = new TaosConnectionStringBuilder()
             {
                 DataSource = _dbhost,
@@ -91,14 +91,14 @@ namespace TaosADODemo
                 try
                 {
                     connection.Open();
-                    Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
+                    Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database if not exists {database};").ExecuteNonQuery());
                     connection.ChangeDatabase(database);
                     var lines = new string[] {
                         string.Format("meters,tname=cpu1,location=California.LosAngeles,groupid=2 current=11.8,voltage=221,phase=0.28 {0}",DateTimeToLongTimeStamp()),
                 };
 
                     int result = connection.ExecuteLineBulkInsert(lines);
-                    Console.WriteLine($"行插入{result}");
+                    Console.WriteLine($"行插入 {result}");
                     if (result != lines.Length)
                     {
                         throw new Exception("ExecuteBulkInsert");
@@ -108,7 +108,7 @@ namespace TaosADODemo
                     var reader = cmd_select.ExecuteReader();
                     Console.WriteLine("");
                     ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
-                    connection.CreateCommand($"DROP DATABASE {database};").ExecuteNonQuery();
+                    connection.CreateCommand($"DROP DATABASE IF EXISTS {database};").ExecuteNonQuery();
 
                     Console.WriteLine("执行TDengine成功");
                 }
@@ -128,8 +128,8 @@ namespace TaosADODemo
                 connection.Open();
                 Console.WriteLine("ServerVersion:{0}", connection.ServerVersion);
                 connection.DatabaseExists(database);
-                Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database {database};").ExecuteNonQuery());
-                Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table {database}.t (ts timestamp, cdata binary(255));").ExecuteNonQuery());
+                Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"create database if not exists {database};").ExecuteNonQuery());
+                Console.WriteLine("create table t {0} {1}", database, connection.CreateCommand($"create table if not exists {database}.t (ts timestamp, cdata binary(255));").ExecuteNonQuery());
                 Console.WriteLine("insert into t values  {0}  ", connection.CreateCommand($"insert into {database}.t values ({(long)(DateTime.Now.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalMilliseconds)}, 10);").ExecuteNonQuery());
                 Console.WriteLine("create {0} {1}", database, connection.CreateCommand($"use {database};").ExecuteNonQuery());
 
@@ -148,26 +148,46 @@ namespace TaosADODemo
                 if (reader.Read())
                 {
                     var ts = reader.GetDateTime("ts");
-                    reader.GetString(1);
+                    try {
+                        reader.GetString(1);
+                    }
+                    catch (Exception ex) 
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
                 }
                 Console.WriteLine($"cdata index at {index}");
                 Console.WriteLine(cmd_select.CommandText);
                 Console.WriteLine("");
-                ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
+                try {
+                    ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
 
                 connection.ChangeDatabase(database);
                 Console.WriteLine("");
-                connection.CreateCommand($"CREATE TABLE datas (reportTime timestamp, type int, bufferedEnd bool, address nchar(64), parameter nchar(64), `value` nchar(64)) TAGS (boxCode nchar(64), machineId int);").ExecuteNonQuery();
+                connection.CreateCommand($"CREATE TABLE IF NOT EXISTS datas (reportTime timestamp, type int, bufferedEnd bool, address nchar(64), parameter nchar(64), `value` nchar(64)) TAGS (boxCode nchar(64), machineId int);").ExecuteNonQuery();
                 connection.CreateCommand($"INSERT INTO  data_history_67 USING datas TAGS ('mongo', 67) values ( 1608173534840, 2 ,false ,'Channel1.窑.烟囱温度', '烟囱温度' ,'122.00' );").ExecuteNonQuery();
                 var cmd_datas = connection.CreateCommand();
                 cmd_datas.CommandText = $"SELECT  reportTime,type,bufferedEnd,address,parameter,`value` FROM  {database}.data_history_67 LIMIT  100";
                 var readerdatas = cmd_datas.ExecuteReader();
                 Console.WriteLine(cmd_datas.CommandText);
                 Console.WriteLine("");
-                ConsoleTableBuilder.From(readerdatas.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                try
+                {
+                    ConsoleTableBuilder.From(readerdatas.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
                 Console.WriteLine("");
 
-                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupdId int);").ExecuteNonQuery());
+                Console.WriteLine("DROP TABLE meters ", connection.CreateCommand($"DROP TABLE IF EXISTS meters;").ExecuteNonQuery());
+                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE IF NOT EXISTS meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupdId int);").ExecuteNonQuery());
                 Console.WriteLine("CREATE TABLE d1001 ", connection.CreateCommand($"CREATE TABLE d1001 USING meters TAGS (\"Beijing.Chaoyang\", 2);").ExecuteNonQuery());
                 Console.WriteLine("INSERT INTO d1001  ", connection.CreateCommand($"INSERT INTO d1001 USING METERS TAGS(\"Beijng.Chaoyang\", 2) VALUES(now, 10.2, 219, 0.32);").ExecuteNonQuery());
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
@@ -197,12 +217,24 @@ namespace TaosADODemo
                 Console.WriteLine($"UploadTelemetryDataPool 耗时:{t2}");
                 Thread.Sleep(TimeSpan.FromSeconds(2));
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
-                ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                try {
+                    ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
                 var reader3 = connection.CreateCommand("select * from telemetrydata;").ExecuteReader();
                 List<string> list = new List<string>();
                 while (reader3.Read())
                 {
-                    list.Add(reader3.GetString("keyname"));
+                    try {
+                        list.Add(reader3.GetString("keyname"));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
                 }
 
                 var k = list.GroupBy(e => e);
@@ -289,7 +321,13 @@ namespace TaosADODemo
                 Console.WriteLine($"cdata index at {index}");
                 Console.WriteLine(cmd_select.CommandText);
                 Console.WriteLine("");
-                ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
+                try {
+                    ConsoleTableBuilder.From(reader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.MarkDown).ExportAndWriteLine();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
 
                 connection.ChangeDatabase(database);
                 Console.WriteLine("");
@@ -333,12 +371,24 @@ namespace TaosADODemo
                 Console.WriteLine($"UploadTelemetryDataPool 耗时:{t2}");
                 Thread.Sleep(TimeSpan.FromSeconds(2));
                 var reader2 = connection.CreateCommand("select last_row(*) from telemetrydata group by deviceid,keyname ;").ExecuteReader();
-                ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                try {
+                    ConsoleTableBuilder.From(reader2.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
                 var reader3 = connection.CreateCommand("select * from telemetrydata;").ExecuteReader();
                 List<string> list = new List<string>();
                 while (reader3.Read())
                 {
-                    list.Add(reader3.GetString("keyname"));
+                    try {
+                        list.Add(reader3.GetString("keyname"));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
                 }
 
                 var k = list.GroupBy(e => e);
@@ -510,7 +560,7 @@ namespace TaosADODemo
             payload.Add("tags", tags);
 
             int resultjson3 = connection.ExecuteBulkInsert(new JArray(payload));
-            Console.WriteLine($"行插入{resultjson3}");
+            Console.WriteLine($"行插入 {resultjson3}");
             if (resultjson3 != 1)
             {
                 throw new Exception("ExecuteBulkInsert");
@@ -544,7 +594,7 @@ namespace TaosADODemo
                 };
             jo.Add("tags", tags1);
             int resultjson2 = connection.ExecuteBulkInsert(new JsonArray(jo), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
-            Console.WriteLine($"行插入{resultjson2}");
+            Console.WriteLine($"行插入 {resultjson2}");
           
         }
         private static void BulkInsertByJsonAndTags2(TaosConnection connection)
@@ -565,7 +615,7 @@ namespace TaosADODemo
                 };
             jo.Add("tags", tags1);
             int resultjson2 = connection.ExecuteBulkInsert(new JArray ( jo ), TDengineDriver.TDengineSchemalessPrecision.TSDB_SML_TIMESTAMP_NOT_CONFIGURED);
-            Console.WriteLine($"行插入{resultjson2}");
+            Console.WriteLine($"行插入 {resultjson2}");
         }
 
         private static void BulkInsertJsonString(TaosConnection connection)
@@ -589,17 +639,25 @@ namespace TaosADODemo
 
         private static void BulkInsertLines(TaosConnection connection)
         {
+            Console.WriteLine("DROP TABLE meters ", connection.CreateCommand($"DROP TABLE IF EXISTS meters;").ExecuteNonQuery());
             var lines = new string[] {
                 "meters,location=Beijing.Haidian,groupid=2 current=11.8,voltage=221,phase=0.28 1648432611249",
                 "meters,location=Beijing.Haidian,groupid=2 current=13.4,voltage=223,phase=0.29 1648432611250",
                 "meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249",
                 "meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250"
             };
-            int result = connection.ExecuteLineBulkInsert(lines);
-            Console.WriteLine($"行插入{result}");
-            if (result != lines.Length)
+
+            try {
+                int result = connection.ExecuteLineBulkInsert(lines);
+                Console.WriteLine($"行插入 {result}");
+                if (result != lines.Length)
+                {
+                    throw new Exception("ExecuteBulkInsert");
+                }
+            }
+            catch (Exception ex)
             {
-                throw new Exception("ExecuteBulkInsert");
+                Console.WriteLine(ex.Message);
             }
         }
         private static void TelnetBulkLines(TaosConnection connection)
@@ -615,7 +673,7 @@ namespace TaosADODemo
                 "meters.voltage 1648432611250 217 location=California.LosAngeles groupid=3",
             };
             int result = connection.ExecuteTelnetBulkInsert(lines);
-            Console.WriteLine($"行插入{result}");
+            Console.WriteLine($"行插入 {result}");
             if (result != lines.Length)
             {
                 throw new Exception("ExecuteBulkInsert");
@@ -632,7 +690,7 @@ namespace TaosADODemo
             var rec = RecordData.table("meters").Tag("location", "Beijing.Haidian").Tag("groupid", "2").Timestamp(DateTime.Now.ToUniversalTime(), TimePrecision.Ms)
                  .Field("current", 12.1).Field("voltage", 234.0).Field("phase", 0.33);
             int result = connection.ExecuteBulkInsert(rec);
-            Console.WriteLine($"行插入{result}");
+            Console.WriteLine($"行插入 {result}");
             if (result != 1)
             {
                 throw new Exception("ExecuteBulkInsert");
@@ -723,7 +781,12 @@ namespace TaosADODemo
             Console.WriteLine($"{insertSql}{0}", _insertcmd.ExecuteNonQuery());
             string querySql = $"select * from {stable}";
             var _qreader = connection.CreateCommand(querySql).ExecuteReader();
-            ConsoleTableBuilder.From(_qreader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+            try {
+                ConsoleTableBuilder.From(_qreader.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
+            }
+            catch(Exception ex) {
+                Console.WriteLine($"{ex.Message}");
+            }
         }
 
         private static void UploadTelemetryData(TaosConnection connection, string devid, string keyname, int count)
