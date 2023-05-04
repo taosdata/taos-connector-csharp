@@ -241,7 +241,7 @@ namespace IoTSharp.Data.Taos.Protocols
                         else
                         {
                             var isinsert = TDengine.StmtIsInsert(stmt);
-                            BindParamters(pms, _taos, out var datas, out var tags,out var subtablename);
+                            BindParameters(pms, _taos, out var datas, out var tags,out var subtablename);
                             int ret = -1;
                             if (isinsert)
                             {
@@ -366,7 +366,7 @@ namespace IoTSharp.Data.Taos.Protocols
             return dataReader;
         }
 
-        private void BindParamters(TaosParameterCollection pms, IntPtr _taos, out List<TAOS_MULTI_BIND> _datas, out List<TAOS_MULTI_BIND> _tags, out string _subtablename)
+        private void BindParameters(TaosParameterCollection pms, IntPtr _taos, out List<TAOS_MULTI_BIND> _datas, out List<TAOS_MULTI_BIND> _tags, out string _subtablename)
         {
             _datas = new List<TAOS_MULTI_BIND>();
             _tags = new List<TAOS_MULTI_BIND>();

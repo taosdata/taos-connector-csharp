@@ -439,7 +439,7 @@ namespace TDengineDriver
         {
             TAOS_MULTI_BIND multiBind = new TAOS_MULTI_BIND();
             int elementCount = arr.Length;
-            //TypeSize represent the Max element length of the comming arr
+            //TypeSize represent the Max element length of the coming arr
             //The size of the buffer is typeSize * elementCount
             //This buffer is used to store TAOS_MULTI_BIND.buffer
             int typeSize = MaxElementLength(arr);
@@ -495,7 +495,7 @@ namespace TDengineDriver
         {
             TAOS_MULTI_BIND multiBind = new TAOS_MULTI_BIND();
             int elementCount = arr.Length;
-            //TypeSize represent the Max element length of the comming arr
+            //TypeSize represent the Max element length of the coming arr
             //The size of the buffer is typeSize * elementCount
             //This buffer is used to store TAOS_MULTI_BIND.buffer
             int typeSize = MaxElementLength(arr);
@@ -546,7 +546,7 @@ namespace TDengineDriver
         {
             TAOS_MULTI_BIND multiBind = new TAOS_MULTI_BIND();
             int elementCount = jsonStr.Length;
-            //TypeSize represent the Max element length of the comming arr
+            //TypeSize represent the Max element length of the coming arr
             //The size of the buffer is typeSize * elementCount
             //This buffer is used to store TAOS_MULTI_BIND.buffer
             int typeSize = MaxElementLength(jsonStr);

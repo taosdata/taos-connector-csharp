@@ -187,7 +187,7 @@ namespace TaosADODemo
                 Console.WriteLine("");
 
                 Console.WriteLine("DROP TABLE meters ", connection.CreateCommand($"DROP TABLE IF EXISTS meters;").ExecuteNonQuery());
-                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE IF NOT EXISTS meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupdId int);").ExecuteNonQuery());
+                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE IF NOT EXISTS meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupId int);").ExecuteNonQuery());
                 Console.WriteLine("CREATE TABLE d1001 ", connection.CreateCommand($"CREATE TABLE d1001 USING meters TAGS (\"Beijing.Chaoyang\", 2);").ExecuteNonQuery());
                 Console.WriteLine("INSERT INTO d1001  ", connection.CreateCommand($"INSERT INTO d1001 USING METERS TAGS(\"Beijng.Chaoyang\", 2) VALUES(now, 10.2, 219, 0.32);").ExecuteNonQuery());
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
@@ -341,7 +341,7 @@ namespace TaosADODemo
                 ConsoleTableBuilder.From(readerdatas.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 Console.WriteLine("");
 
-                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE {database}.meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupdId int);").ExecuteNonQuery());
+                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE {database}.meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupId int);").ExecuteNonQuery());
                 Console.WriteLine("CREATE TABLE d1001 ", connection.CreateCommand($"CREATE TABLE {database}.d1001 USING {database}.meters TAGS (\"Beijing.Chaoyang\", 2);").ExecuteNonQuery());
                 Console.WriteLine("INSERT INTO d1001  ", connection.CreateCommand($"INSERT INTO {database}.d1001 USING {database}.METERS TAGS(\"Beijng.Chaoyang\", 2) VALUES(now, 10.2, 219, 0.32);").ExecuteNonQuery());
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
@@ -448,7 +448,7 @@ namespace TaosADODemo
                 ConsoleTableBuilder.From(readerdatas.ToDataTable()).WithFormat(ConsoleTableBuilderFormat.Default).ExportAndWriteLine();
                 Console.WriteLine("");
 
-                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupdId int);").ExecuteNonQuery());
+                Console.WriteLine("CREATE TABLE meters ", connection.CreateCommand($"CREATE TABLE meters (ts timestamp, current float, voltage int, phase float) TAGS (location binary(64), groupId int);").ExecuteNonQuery());
                 Console.WriteLine("CREATE TABLE d1001 ", connection.CreateCommand($"CREATE TABLE d1001 USING meters TAGS (\"Beijing.Chaoyang\", 2);").ExecuteNonQuery());
                 Console.WriteLine("INSERT INTO d1001  ", connection.CreateCommand($"INSERT INTO d1001 USING METERS TAGS(\"Beijng.Chaoyang\", 2) VALUES(now, 10.2, 219, 0.32);").ExecuteNonQuery());
                 Console.WriteLine("DROP TABLE  {0} {1}", database, connection.CreateCommand($"DROP TABLE  {database}.t;").ExecuteNonQuery());
@@ -513,7 +513,7 @@ namespace TaosADODemo
                     context.Sensor.Add(new Sensor() { ts = DateTime.Now.AddMilliseconds(i + 10), degree = rd.NextDouble(), pm25 = rd.Next(0, 1000) });
                     Thread.Sleep(10);
                 }
-                Console.WriteLine("Saveing");
+                Console.WriteLine("Saving");
                 context.SaveChanges();
                 Console.WriteLine("");
                 Console.WriteLine("from s in context.sensor where s.pm25 > 0 select s ");
