@@ -101,8 +101,8 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             var sql = StatementObject.ResolveCommandText(_commandText);
             var _prepare = WSExecute<WSStmtRsp>(_stmt_client, "prepare", new { req_id, stmt_id, sql = sql.CommandText });
             if (_prepare.code != 0) TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _prepare.code, Error = _prepare.message });
-          
-            BindParamters(pms, out var columns, out var tags,out var subtablename);
+
+            BindParameters(pms, out var columns, out var tags,out var subtablename);
             req_id++;
             if (!string.IsNullOrEmpty(subtablename))
             {
@@ -131,7 +131,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
             return wSResult;
         }
 
-        private void BindParamters(TaosParameterCollection pms, out List<object[]> _datas, out List<string> _tags,out string _subtablename)
+        private void BindParameters(TaosParameterCollection pms, out List<object[]> _datas, out List<string> _tags,out string _subtablename)
         {
             _datas = new List<object[]>();
             _tags = new List<string>();

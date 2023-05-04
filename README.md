@@ -120,7 +120,7 @@ IoTSharp.EntityFrameworkCore.Taos 是一个Entity Framework Core 的提供器，
             var rd = new Random();
             context.sensor.Add(new sensor() { ts = DateTime.Now.AddMilliseconds(i), degree = rd.NextDouble(), pm25 = rd.Next(0, 1000) });
         }
-        Console.WriteLine("Saveing");
+        Console.WriteLine("Saving");
         context.SaveChanges();
         Console.WriteLine("");
         Console.WriteLine("from s in context.sensor where s.pm25 > 0 select s ");

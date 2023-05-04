@@ -161,11 +161,11 @@ namespace System
             var types = GetGenericTypeImplementations(type, interfaceOrBaseType);
 
             Type singleImplementation = null;
-            foreach (var impelementation in types)
+            foreach (var implementation in types)
             {
                 if (singleImplementation == null)
                 {
-                    singleImplementation = impelementation;
+                    singleImplementation = implementation;
                 }
                 else
                 {

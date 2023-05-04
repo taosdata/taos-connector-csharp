@@ -326,7 +326,7 @@ namespace TDengineDriver
 
 
         /// <summary>
-        /// For INSERT only. Used to bind table name as a parmeter for the input stmt object.
+        /// For INSERT only. Used to bind table name as a parameter for the input stmt object.
         /// </summary>
         /// <param name="stmt">could be the value returned by 'StmtInit', that may be a valid object or NULL.</param>
         /// <param name="name">table name you want to  bind</param>
