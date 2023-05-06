@@ -1,4 +1,5 @@
 ﻿using ConsoleTableExt;
+using Example;
 using IoTSharp.Data.Taos;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
@@ -62,8 +63,9 @@ namespace TaosADODemo
                 Port = 80,
                 PoolSize = 20
             };
+            issues252.demo_code(builder);
 #if DEBUG
-           // ExecSqlByNative(builder_cloud.UseCloud_DSN());
+            // ExecSqlByNative(builder_cloud.UseCloud_DSN());
             ExecSqlByNative(builder.UseNative());
             UseTaosEFCore(builder.UseNative());
             ExecSqlByRESTFul(builder.UseRESTful());

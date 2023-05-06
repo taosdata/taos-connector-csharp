@@ -77,7 +77,6 @@ namespace IoTSharp.Data.Taos.Protocols.TDRESTful
 #endif
             var body = _commandText;
             var rest = new HttpRequestMessage(HttpMethod.Post, _uri);
-         
             rest.Content = new StringContent(body);
             HttpResponseMessage response = null;
             string context = string.Empty;
@@ -168,7 +167,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDRESTful
             string _timez = string.IsNullOrEmpty(builder.TimeZone) ? "" : $"?tz={builder.TimeZone}";
             var httpClientHandler = new HttpClientHandler();
             _client = new HttpClient(httpClientHandler);
-            _uri= new Uri($"http://{builder.DataSource}:{builder.Port}/rest/sql/{builder.DataBase}{_timez}"); 
+            _uri= new Uri($"http://{builder.DataSource}:{builder.Port}/rest/sql{(!string.IsNullOrEmpty(builder.DataBase)?"/":"")}{builder.DataBase}{_timez}"); 
             _client.Timeout = TimeSpan.FromSeconds(builder.ConnectionTimeout);
             var authToken = Encoding.ASCII.GetBytes($"{builder.Username}:{builder.Password}");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",Convert.ToBase64String(authToken));
