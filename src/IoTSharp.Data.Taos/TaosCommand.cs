@@ -387,15 +387,37 @@ namespace IoTSharp.Data.Taos
             }
             return result;
         }
-      
+        /// <summary>
+        /// 订阅数据， 使用 TaosDataReader自行处理数据。 
+        /// </summary>
+        /// <param name="subscribe"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public bool ExecuteSubscribe(string  topic, Action<TaosDataReader> subscribe)
+        {
+            throw new  NotImplementedException();
+        }
+        /// <summary>
+        /// 订阅数据， 以对象方式返回。 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="subscribe"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public bool ExecuteSubscribe<T>(string topic, Action<T> subscribe)
+        {
+            throw new NotImplementedException();
+        }
+   
         /// <summary>
         ///     Attempts to cancel the execution of the command. Does nothing.
         /// </summary>
         public override void Cancel()
         {
+            //unsubscribe 
         }
 
-      
+
     }
 
 }

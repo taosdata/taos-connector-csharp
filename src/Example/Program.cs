@@ -9,6 +9,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -82,6 +83,53 @@ namespace TaosADODemo
             ExecSqlByWebSocket(builder.UseWebSocket());
             UseTaosEFCore(builder.UseWebSocket());
 #endif
+            using (var connection = new TaosConnection(builder.ConnectionString))
+            {
+                try
+                {
+                    connection.Open();
+                    connection.CreateCommand($"select * from power.meters where current > 10").ExecuteSubscribe("topic-meter-current-bg-10", reader =>
+                    {
+                        if (reader.HasRows)
+                        {
+                            while (reader.Read())
+                            {
+                                Console.WriteLine($"ts:{reader.GetDateTime("ts")} current:{reader.GetDouble("current")}  voltage:{reader.GetDouble("voltage")}  phase:{reader.GetDouble("phase")}  location:{reader.GetDouble("location")} "); ;
+                            }
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("执行TDengine异常" + ex.Message);
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        
+
+            using (var connection = new TaosConnection(builder.ConnectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    connection.CreateCommand($"select * from power.meters where current > 10")
+                               .ExecuteSubscribe<(DateTime ts, double current, double voltage, double phase, string location)>
+                               ("topic-meter-current-bg-10", data => Console.WriteLine($"ts:{data.ts} current:{data.current}  voltage:{data.voltage}  phase:{data.phase}  location:{data.location} "));
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("执行TDengine异常" + ex.Message);
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
         }
 
         private static void ExecSqlByNative(TaosConnectionStringBuilder builder)
