@@ -33,8 +33,7 @@ namespace IoTSharp.Data.Taos
                             var _value = dataReader[i];
                             if (_value != DBNull.Value)
                             {
-                                //var pr = from p in pots where (p.Name == strKey ||  p.ColumnNameIs(strKey)) && p.CanWrite select p;
-                                var pr = from p in pots where (p.Name == strKey) && p.CanWrite select p;
+                                var pr = from p in pots where (string.Equals( p.Name ,strKey, StringComparison.OrdinalIgnoreCase)) && p.CanWrite select p;
                                 if (pr.Any())
                                 {
                                     var pi = pr.FirstOrDefault();
