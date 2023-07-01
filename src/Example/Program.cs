@@ -9,7 +9,6 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Net.NetworkInformation;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,6 +34,7 @@ namespace TaosADODemo
 
         private static void Main(string[] args)
         {
+            issue259_258();
             var IS_RUNNING_IN_CONTAINER = bool.TryParse(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out bool _DOTNET_RUNNING_IN_CONTAINER) && _DOTNET_RUNNING_IN_CONTAINER;
             var _dbhost = IS_RUNNING_IN_CONTAINER ? "taos" : System.Net.Dns.GetHostName();
             Console.WriteLine($"主机名:{_dbhost} 当前程序运行在{(IS_RUNNING_IN_CONTAINER ? "容器内" : "主机中")} ");
@@ -101,35 +101,43 @@ namespace TaosADODemo
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("执行TDengine异常" + ex.Message);
+                    Console.WriteLine($"执行TDengine异常" + ex.Message);
                 }
                 finally
                 {
                     connection.Close();
                 }
             }
-        
 
-            using (var connection = new TaosConnection(builder.ConnectionString))
-            {
-                try
-                {
-                    connection.Open();
 
-                    connection.CreateCommand($"select * from power.meters where current > 10")
-                               .ExecuteSubscribe<(DateTime ts, double current, double voltage, double phase, string location)>
-                               ("topic-meter-current-bg-10", data => Console.WriteLine($"ts:{data.ts} current:{data.current}  voltage:{data.voltage}  phase:{data.phase}  location:{data.location} "));
+            //using (var connection = new TaosConnection(builder.ConnectionString))
+            //{
+            //    try
+            //    {
+            //        connection.Open();
 
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("执行TDengine异常" + ex.Message);
-                }
-                finally
-                {
-                    connection.Close();
-                }
-            }
+            //        connection.CreateCommand($"select * from power.meters where current > 10")
+            //                   .ExecuteSubscribe<(DateTime ts, double current, double voltage, double phase, string location)>
+            //                   ("topic-meter-current-bg-10", data => Console.WriteLine($"ts:{data.ts} current:{data.current}  voltage:{data.voltage}  phase:{data.phase}  location:{data.location} "));
+
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Console.WriteLine("执行ExecuteSubscribe异常" + ex.Message);
+            //    }
+            //    finally
+            //    {
+            //        connection.Close();
+            //    }
+            //}
+        }
+        /// <summary>
+        /// #259 #258
+        /// </summary>
+        private static void issue259_258()
+        {
+             var cnt=new TaosConnection();
+            IoTSharp.Data.Taos.TaosFactory.Instance.CreateConnection();
         }
 
         private static void ExecSqlByNative(TaosConnectionStringBuilder builder)

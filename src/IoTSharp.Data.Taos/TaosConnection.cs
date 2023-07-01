@@ -65,7 +65,7 @@ namespace IoTSharp.Data.Taos
                 ConnectionStringBuilder = new TaosConnectionStringBuilder(connectionString);
                 ConnectionString = connectionString;
             }
-            switch (ConnectionStringBuilder.Protocol)
+            switch (ConnectionStringBuilder?.Protocol)
             {
                 case TaosConnectionStringBuilder.Protocol_WebSocket:
                     taos = new TaosWebSocket();
@@ -99,7 +99,7 @@ namespace IoTSharp.Data.Taos
 
         internal TaosConnectionStringBuilder ConnectionStringBuilder { get; set; }
 
-        public override int ConnectionTimeout => ConnectionStringBuilder.ConnectionTimeout;
+        public override int ConnectionTimeout => ConnectionStringBuilder?.ConnectionTimeout ?? 0;
 
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace IoTSharp.Data.Taos
             {
                 string dataSource = null;
 
-                return dataSource ?? ConnectionStringBuilder.DataSource;
+                return dataSource ?? (ConnectionStringBuilder?.DataSource);
             }
         }
 
@@ -173,8 +173,8 @@ namespace IoTSharp.Data.Taos
         /// <value>The transaction currently being used by the connection.</value>
         protected internal virtual TaosTransaction Transaction { get; set; }
 
-        public override string Database => ConnectionStringBuilder.DataBase;
-        public  int  PoolSize => ConnectionStringBuilder.PoolSize;
+        public override string Database => ConnectionStringBuilder?.DataBase;
+        public  int  PoolSize => ConnectionStringBuilder?.PoolSize??0;
 
 
         private void SetState(ConnectionState value)
@@ -203,7 +203,7 @@ namespace IoTSharp.Data.Taos
             if (result)
             {
                 SetState(ConnectionState.Open);
-                this.ChangeDatabase(ConnectionStringBuilder.DataBase);
+                this.ChangeDatabase(ConnectionStringBuilder?.DataBase);
             }
         }
 

@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "composeLaunchAction": "None",
+      "composeLaunchServiceName": "example",
+      "serviceActions": {
+        "example": "StartDebugging",
+        "taos": "StartWithoutDebugging"
+      }
+    }
+  }
+}

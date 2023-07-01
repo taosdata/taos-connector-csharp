@@ -7,7 +7,6 @@ services:
       - taos 
     links:
       - taos 
-
     build:
       context: .
       dockerfile: src/Example/Dockerfile
@@ -15,7 +14,7 @@ services:
       - taos-network
 
   taos:
-    image: tdengine/tdengine:3.0.4.1
+    image: tdengine/tdengine:3.0.5.1
     restart: always
     hostname: taos
     ports:
