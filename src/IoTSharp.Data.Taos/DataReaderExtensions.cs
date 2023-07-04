@@ -8,10 +8,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Newtonsoft.Json.Linq;
 
-
 namespace IoTSharp.Data.Taos
 {
-
     public static class DataReaderExtensions
     {
        
@@ -31,7 +29,7 @@ namespace IoTSharp.Data.Taos
                         {
                             string strKey = dataReader.GetName(i);
                             var _value = dataReader[i];
-                            if (_value != DBNull.Value)
+                            if (_value!=null &&  _value != DBNull.Value)
                             {
                                 var pr = from p in pots where (string.Equals( p.Name ,strKey, StringComparison.OrdinalIgnoreCase)) && p.CanWrite select p;
                                 if (pr.Any())
@@ -56,11 +54,6 @@ namespace IoTSharp.Data.Taos
             return jArray;
         }
 
-        //internal static bool ColumnNameIs(this System.Reflection.PropertyInfo p, string strKey)
-        //{
-        //    return (p.IsDefined(typeof(ColumnAttribute), true) && (p.GetCustomAttributes(typeof(ColumnAttribute), true) as ColumnAttribute[])?.FirstOrDefault().Name == strKey);
-        //}
- 
     
         public static JArray ToJson(this IDataReader dataReader)
         {
@@ -76,7 +69,7 @@ namespace IoTSharp.Data.Taos
                         try
                         {
                             string strKey = dataReader.GetName(i);
-                            if (dataReader[i] != DBNull.Value)
+                            if (dataReader[i] !=null &&  dataReader[i] != DBNull.Value)
                             {
                                 object obj = Convert.ChangeType(dataReader[i], dataReader.GetFieldType(i));
                                 jObject.Add(strKey, JToken.FromObject(obj));
@@ -116,7 +109,7 @@ namespace IoTSharp.Data.Taos
                         string strKey = reader.GetName(i);
                         try
                         {
-                            if (reader[i] != DBNull.Value)
+                            if (reader[i] != null &&  reader[i] != DBNull.Value)
                             {
                                 object obj = Convert.ChangeType(reader[i], reader.GetFieldType(i));
                                 row[strKey] = obj;
