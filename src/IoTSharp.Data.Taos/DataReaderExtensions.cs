@@ -37,7 +37,7 @@ namespace IoTSharp.Data.Taos
                                 if (pr.Any())
                                 {
                                     var pi = pr.FirstOrDefault();
-                                    pi.SetValue(jObject, Convert.ChangeType(_value, pi.PropertyType));
+                                    pi.SetValue(jObject, _value);
                                 }
                             }
                         }
@@ -78,7 +78,7 @@ namespace IoTSharp.Data.Taos
                             string strKey = dataReader.GetName(i);
                             if (dataReader[i] != null && dataReader[i] != DBNull.Value)
                             {
-                                object obj = Convert.ChangeType(dataReader[i], dataReader.GetFieldType(i));
+                                object obj = dataReader[i];
                                 jObject.Add(strKey, JToken.FromObject(obj));
                             }
                         }
@@ -118,7 +118,7 @@ namespace IoTSharp.Data.Taos
                         {
                             if (reader[i] != null && reader[i] != DBNull.Value)
                             {
-                                object obj = Convert.ChangeType(reader[i], reader.GetFieldType(i));
+                                object obj = reader[i];
                                 row[strKey] = obj;
                             }
                         }
