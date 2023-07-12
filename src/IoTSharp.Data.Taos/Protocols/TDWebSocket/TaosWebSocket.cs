@@ -455,6 +455,7 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
 
         private void _open__schemaless(TaosConnectionStringBuilder builder)
         {
+            if (_schemaless_client == null) _schemaless_client = new ClientWebSocket();
             _open__ws_client(builder,_schemaless_client, "/rest/schemaless");
             WSExecute(_schemaless_client, "conn", new { user = builder.Username, password = builder.Password });
         }
@@ -492,9 +493,9 @@ namespace IoTSharp.Data.Taos.Protocols.TDWebSocket
                 data = string.Join("\n", lines)
             }
             );
-            if (_insert != null)
+            if (_insert.code != 0)
             {
-                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = -1, Error = "返回值错误." });
+                TaosException.ThrowExceptionForRC(new TaosErrorResult() { Code = _insert.code, Error =  _insert.message });
             }
             return lines.Length;
         }

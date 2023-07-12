@@ -64,6 +64,7 @@ namespace TaosADODemo
                 Port = 80,
                 PoolSize = 20
             };
+            issue245.test(new TaosConnection(builder.UseWebSocket().ConnectionString));
             issues252.demo_code(builder);
 #if DEBUG
             // ExecSqlByNative(builder_cloud.UseCloud_DSN());
