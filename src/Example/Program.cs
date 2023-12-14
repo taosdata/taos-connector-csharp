@@ -36,7 +36,7 @@ namespace TaosADODemo
         {
             issue259_258();
             var IS_RUNNING_IN_CONTAINER = bool.TryParse(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out bool _DOTNET_RUNNING_IN_CONTAINER) && _DOTNET_RUNNING_IN_CONTAINER;
-            var _dbhost = IS_RUNNING_IN_CONTAINER ? "taos" : System.Net.Dns.GetHostName();
+            var _dbhost = IS_RUNNING_IN_CONTAINER ? System.Net.Dns.GetHostName() : System.Net.Dns.GetHostName();
             Console.WriteLine($"主机名:{_dbhost} 当前程序运行在{(IS_RUNNING_IN_CONTAINER ? "容器内" : "主机中")} ");
             Console.WriteLine($"CPU:{Environment.ProcessorCount} 主机名:{Environment.MachineName}");
             var p = new Ping();
@@ -323,6 +323,7 @@ namespace TaosADODemo
         {
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
+                Console.WriteLine(builder.ConnectionString);
                 connection.Open();
                 connection.CreateCommand("create database if not exists test_ws_stmt precision 'ns';").ExecuteNonQuery();
                 connection.CreateCommand("create table if not exists test_ws_stmt.st(ts timestamp,c1 bool, c2 tinyint,c3 smallint, c4 int, c5 bigint, c6 tinyint unsigned, c7 smallint unsigned, c8 int unsigned, c9 bigint unsigned, c10 float,  c11 double, c12 binary(20), c13 nchar(20) ) tags (info json);").ExecuteNonQuery();
