@@ -36,7 +36,7 @@ namespace TaosADODemo
         {
             issue259_258();
             var IS_RUNNING_IN_CONTAINER = bool.TryParse(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out bool _DOTNET_RUNNING_IN_CONTAINER) && _DOTNET_RUNNING_IN_CONTAINER;
-            var _dbhost = IS_RUNNING_IN_CONTAINER ? System.Net.Dns.GetHostName() : System.Net.Dns.GetHostName();
+            var _dbhost = IS_RUNNING_IN_CONTAINER ? "taos" : System.Net.Dns.GetHostName();
             Console.WriteLine($"主机名:{_dbhost} 当前程序运行在{(IS_RUNNING_IN_CONTAINER ? "容器内" : "主机中")} ");
             Console.WriteLine($"CPU:{Environment.ProcessorCount} 主机名:{Environment.MachineName}");
             var p = new Ping();
