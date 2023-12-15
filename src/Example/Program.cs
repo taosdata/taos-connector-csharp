@@ -64,26 +64,26 @@ namespace TaosADODemo
                 Port = 80,
                 PoolSize = 20
             };
+            Console.WriteLine("issue245");
             issue245.test(new TaosConnection(builder.UseWebSocket().ConnectionString));
+            Console.WriteLine("issues252");
             issues252.demo_code(builder);
-#if DEBUG
+
             // ExecSqlByNative(builder_cloud.UseCloud_DSN());
+            Console.WriteLine("ExecSqlByNative");
             ExecSqlByNative(builder.UseNative());
+            Console.WriteLine("UseTaosEFCore");
             UseTaosEFCore(builder.UseNative());
+            Console.WriteLine("ExecSqlByRESTFul");
             ExecSqlByRESTFul(builder.UseRESTful());
+            Console.WriteLine("ExecSqlByStmt");
             ExecSqlByStmt(builder.UseWebSocket());
+            Console.WriteLine("ExecSqlByWebSocket");
             ExecSqlByWebSocket(builder.UseWebSocket());
+            Console.WriteLine("UseTaosEFCore");
             UseTaosEFCore(builder.UseWebSocket());
 
-
-#else
-             ExecSqlByNative(builder.UseNative());
-            UseTaosEFCore(builder.UseNative());
-            ExecSqlByRESTFul(builder.UseRESTful());
-            ExecSqlByStmt(builder.UseWebSocket());
-            ExecSqlByWebSocket(builder.UseWebSocket());
-            UseTaosEFCore(builder.UseWebSocket());
-#endif
+            Console.WriteLine("select * from power.meters");
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
                 try
@@ -109,28 +109,6 @@ namespace TaosADODemo
                     connection.Close();
                 }
             }
-
-
-            //using (var connection = new TaosConnection(builder.ConnectionString))
-            //{
-            //    try
-            //    {
-            //        connection.Open();
-
-            //        connection.CreateCommand($"select * from power.meters where current > 10")
-            //                   .ExecuteSubscribe<(DateTime ts, double current, double voltage, double phase, string location)>
-            //                   ("topic-meter-current-bg-10", data => Console.WriteLine($"ts:{data.ts} current:{data.current}  voltage:{data.voltage}  phase:{data.phase}  location:{data.location} "));
-
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Console.WriteLine("执行ExecuteSubscribe异常" + ex.Message);
-            //    }
-            //    finally
-            //    {
-            //        connection.Close();
-            //    }
-            //}
         }
         /// <summary>
         /// #259 #258
@@ -323,6 +301,7 @@ namespace TaosADODemo
         {
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
+                Console.WriteLine(builder.ConnectionString);
                 connection.Open();
                 connection.CreateCommand("create database if not exists test_ws_stmt precision 'ns';").ExecuteNonQuery();
                 connection.CreateCommand("create table if not exists test_ws_stmt.st(ts timestamp,c1 bool, c2 tinyint,c3 smallint, c4 int, c5 bigint, c6 tinyint unsigned, c7 smallint unsigned, c8 int unsigned, c9 bigint unsigned, c10 float,  c11 double, c12 binary(20), c13 nchar(20) ) tags (info json);").ExecuteNonQuery();

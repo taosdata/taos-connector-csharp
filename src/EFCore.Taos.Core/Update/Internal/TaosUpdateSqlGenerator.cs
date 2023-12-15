@@ -41,49 +41,14 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Update.Internal
             : base(dependencies)
         {
         }
-
-        protected override void AppendDeleteCommand(StringBuilder commandStringBuilder, string name, string schema, IReadOnlyList<IColumnModification> conditionOperations)
-        {
-            base.AppendDeleteCommand(commandStringBuilder, name, schema, conditionOperations);
-        }
     
         protected override void AppendDeleteCommandHeader(StringBuilder commandStringBuilder, string name, string schema)
         {
             base.AppendDeleteCommandHeader(commandStringBuilder, name, schema);
         }
-        protected override ResultSetMapping AppendSelectAffectedCommand(StringBuilder commandStringBuilder, string name, string schema, IReadOnlyList<IColumnModification> readOperations, IReadOnlyList<IColumnModification> conditionOperations, int commandPosition)
-        {
-            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
-            Check.NotEmpty(name, nameof(name));
-
-            commandStringBuilder
-                .Append("SELECT changes()")
-                .AppendLine(SqlGenerationHelper.StatementTerminator)
-                .AppendLine();
-
-            return ResultSetMapping.LastInResultSet;
-        }
-        protected override void AppendIdentityWhereCondition(StringBuilder commandStringBuilder, IColumnModification columnModification)
-        {
-       
-            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
-            Check.NotNull(columnModification, nameof(columnModification));
-            SqlGenerationHelper.DelimitIdentifier(commandStringBuilder, "rowid");
-            commandStringBuilder.Append(" = ")
-                .Append("last_insert_rowid()");
-        }
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        protected override void AppendRowsAffectedWhereCondition(StringBuilder commandStringBuilder, int expectedRowsAffected)
-        {
-            Check.NotNull(commandStringBuilder, nameof(commandStringBuilder));
-
-            commandStringBuilder.Append("changes() = ").Append(expectedRowsAffected);
-        }
+     
+    
+      
 
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

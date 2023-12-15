@@ -42,12 +42,7 @@ namespace IoTSharp.EntityFrameworkCore.Taos.Query.Internal
             return tableExpression;
         }
 
-        [System.Obsolete]
-        protected override string GenerateOperator(SqlBinaryExpression binaryExpression)
-            => binaryExpression.OperatorType == ExpressionType.Add
-                && binaryExpression.Type == typeof(string)
-                    ? " || "
-                    : base.GetOperator(binaryExpression);
+    
       
         protected override void GenerateLimitOffset(SelectExpression selectExpression)
         {
