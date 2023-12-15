@@ -68,11 +68,17 @@ namespace TaosADODemo
             issues252.demo_code(builder);
 #if DEBUG
             // ExecSqlByNative(builder_cloud.UseCloud_DSN());
+            Console.WriteLine("ExecSqlByNative");
             ExecSqlByNative(builder.UseNative());
+            Console.WriteLine("UseTaosEFCore");
             UseTaosEFCore(builder.UseNative());
+            Console.WriteLine("ExecSqlByRESTFul");
             ExecSqlByRESTFul(builder.UseRESTful());
+            Console.WriteLine("ExecSqlByStmt");
             ExecSqlByStmt(builder.UseWebSocket());
+            Console.WriteLine("ExecSqlByWebSocket");
             ExecSqlByWebSocket(builder.UseWebSocket());
+            Console.WriteLine("UseTaosEFCore");
             UseTaosEFCore(builder.UseWebSocket());
 
 
@@ -84,6 +90,7 @@ namespace TaosADODemo
             ExecSqlByWebSocket(builder.UseWebSocket());
             UseTaosEFCore(builder.UseWebSocket());
 #endif
+            Console.WriteLine("select * from power.meters");
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
                 try
@@ -109,28 +116,6 @@ namespace TaosADODemo
                     connection.Close();
                 }
             }
-
-
-            //using (var connection = new TaosConnection(builder.ConnectionString))
-            //{
-            //    try
-            //    {
-            //        connection.Open();
-
-            //        connection.CreateCommand($"select * from power.meters where current > 10")
-            //                   .ExecuteSubscribe<(DateTime ts, double current, double voltage, double phase, string location)>
-            //                   ("topic-meter-current-bg-10", data => Console.WriteLine($"ts:{data.ts} current:{data.current}  voltage:{data.voltage}  phase:{data.phase}  location:{data.location} "));
-
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Console.WriteLine("执行ExecuteSubscribe异常" + ex.Message);
-            //    }
-            //    finally
-            //    {
-            //        connection.Close();
-            //    }
-            //}
         }
         /// <summary>
         /// #259 #258
