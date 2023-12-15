@@ -64,9 +64,11 @@ namespace TaosADODemo
                 Port = 80,
                 PoolSize = 20
             };
+            Console.WriteLine("issue245");
             issue245.test(new TaosConnection(builder.UseWebSocket().ConnectionString));
+            Console.WriteLine("issues252");
             issues252.demo_code(builder);
-#if DEBUG
+
             // ExecSqlByNative(builder_cloud.UseCloud_DSN());
             Console.WriteLine("ExecSqlByNative");
             ExecSqlByNative(builder.UseNative());
@@ -81,15 +83,6 @@ namespace TaosADODemo
             Console.WriteLine("UseTaosEFCore");
             UseTaosEFCore(builder.UseWebSocket());
 
-
-#else
-             ExecSqlByNative(builder.UseNative());
-            UseTaosEFCore(builder.UseNative());
-            ExecSqlByRESTFul(builder.UseRESTful());
-            ExecSqlByStmt(builder.UseWebSocket());
-            ExecSqlByWebSocket(builder.UseWebSocket());
-            UseTaosEFCore(builder.UseWebSocket());
-#endif
             Console.WriteLine("select * from power.meters");
             using (var connection = new TaosConnection(builder.ConnectionString))
             {
